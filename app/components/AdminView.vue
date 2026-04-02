@@ -631,7 +631,7 @@
 <script>
 const PB = 'http://127.0.0.1:8090';
 export default {
-  inject: ['appState', 'logout', 'showModal', 'getMapsUrl'],
+  inject: ['appState', 'logout', 'showModal', 'getMapsUrl', 'saveDemoData', 'syncBusinessEvents', 'emitBusinessEvent'],
   components: {
     DataView: Vue.defineAsyncComponent(() => loadModule('./components/DataView.vue', window.options)),
     ConfigWizard: Vue.defineAsyncComponent(() => loadModule('./components/ConfigWizard.vue', window.options)),
@@ -799,6 +799,13 @@ export default {
           
           const partnerNav = this.nav.find(n => n.id === 'partners');
           if (partnerNav) partnerNav.badge = this.pendingApps.length || null;
+          this.syncBusinessEvents({
+            shipments: this.allShipments,
+            users: this.users,
+            points: this.points,
+            commissions: this.commissions,
+            partner_applications: this.allApps
+          });
           return;
       }
 
@@ -825,6 +832,13 @@ export default {
       // Update badge
       const partnerNav = this.nav.find(n => n.id === 'partners');
       if (partnerNav) partnerNav.badge = this.pendingApps.length || null;
+      this.syncBusinessEvents({
+        shipments: this.allShipments,
+        users: this.users,
+        points: this.points,
+        commissions: this.commissions,
+        partner_applications: this.allApps
+      });
     },
 
     // Status helpers
@@ -873,6 +887,13 @@ export default {
             verified: true, emailVisibility: true
           });
           if (r.code) { this.formMsg = r.message; return; }
+          this.emitBusinessEvent({
+            audience: ['admin', this.userForm.role],
+            severity: 'success',
+            icon: 'person-plus-fill',
+            title: 'Nuevo usuario activado',
+            message: `${this.userForm.full_name || this.userForm.email} ya tiene acceso listo en Easypoint.`
+          });
         }
         this.showUserForm = false;
         await this.loadAll();
@@ -882,6 +903,13 @@ export default {
       const ok = await this.showModal({ title: 'Aprobar Usuario', message: `Deseas activar el acceso para ${u.full_name || u.email}?`, type: 'confirm' });
       if (!ok) return;
       await this.patch(`/api/collections/users/records/${u.id}`, { verified: true });
+      this.emitBusinessEvent({
+        audience: ['admin', u.role || 'operator'],
+        severity: 'success',
+        icon: 'patch-check-fill',
+        title: 'Acceso aprobado',
+        message: `${u.full_name || u.email} ya puede entrar y operar su panel.`
+      });
       await this.loadAll();
     },
     async deleteUser(u) {
@@ -976,17 +1004,38 @@ export default {
         description: app.description, horarios: app.horarios
       });
       await this.patch(`/api/collections/partner_applications/records/${app.id}`, { status: 'approved' });
+      this.emitBusinessEvent({
+        audience: ['admin', 'sales'],
+        severity: 'success',
+        icon: 'shop',
+        title: 'Afiliacion aprobada',
+        message: `${app.business_name} ya puede pasar a onboarding operativo.`
+      });
       await this.loadAll();
       this.section = 'points';
     },
     async rejectApp(app) {
       await this.patch(`/api/collections/partner_applications/records/${app.id}`, { status: 'rejected' });
+      this.emitBusinessEvent({
+        audience: ['admin', 'sales'],
+        severity: 'warning',
+        icon: 'x-octagon-fill',
+        title: 'Solicitud rechazada',
+        message: `${app.business_name} fue descartado del pipeline comercial.`
+      });
       await this.loadAll();
     },
 
     // Commissions
     async markPaid(c) {
       await this.patch(`/api/collections/commissions/records/${c.id}`, { status: 'paid' });
+      this.emitBusinessEvent({
+        audience: ['admin', 'operator'],
+        severity: 'success',
+        icon: 'cash-coin',
+        title: 'Comision liquidada',
+        message: `${c.point || c.point_name || 'Un local'} ya tiene su pago marcado como liquidado.`
+      });
       await this.loadAll();
     },
 

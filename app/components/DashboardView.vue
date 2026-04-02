@@ -225,7 +225,7 @@ const { loadModule } = window['vue3-sfc-loader'];
 const PB = 'http://127.0.0.1:8090';
 
 export default {
-  inject: ['appState', 'logout', 'showModal', 'getMapsUrl'],
+  inject: ['appState', 'logout', 'showModal', 'getMapsUrl', 'syncBusinessEvents', 'emitBusinessEvent'],
   components: {
     DataView: Vue.defineAsyncComponent(() => loadModule('./components/DataView.vue', options)),
     Scanner: Vue.defineAsyncComponent(() => loadModule('./components/Scanner.vue', options))
@@ -273,12 +273,18 @@ export default {
     async fetchData() {
       this.isLoading = true;
       try {
-        if (!this.user?.point_ref) return;
+        if (!this.user?.point_ref) {
+          this.point = null;
+          this.shipments = [];
+          this.syncBusinessEvents({ point: null, shipments: [] });
+          return;
+        }
 
         if (this.appState.demoMode) {
            const d = this.appState.demoData || {};
            this.point = d.points?.find(p => p.id === this.user.point_ref);
            this.shipments = d.shipments?.filter(s => s.expand?.point_id?.id === this.user.point_ref || s.expand?.point_id === this.user.point_ref || s.point_id === this.user.point_ref) || [];
+           this.syncBusinessEvents({ point: this.point, points: d.points || [], shipments: this.shipments });
            return;
         }
 
@@ -293,6 +299,7 @@ export default {
         const sRes = await fetch(`${PB}/api/collections/shipments/records?filter=(point_id='${this.user.point_ref}')&perPage=500&sort=-updated`, { headers: h });
         const sData = await sRes.json();
         this.shipments = sData.items || [];
+        this.syncBusinessEvents({ point: this.point, shipments: this.shipments });
       } catch (e) {
         console.error(e);
       } finally {
@@ -310,6 +317,7 @@ export default {
       await this.updateShipmentStatus(shipment, 'delivered');
     },
     async updateShipmentStatus(shipment, newStatus) {
+      const pointName = this.point?.name || 'tu local';
       if (this.appState.demoMode) {
         const d = this.appState.demoData;
         const shp = d.shipments.find(s => s.id === shipment.id);
@@ -319,6 +327,14 @@ export default {
            localStorage.setItem('ep_demo_data', JSON.stringify(d));
            this.shipments = this.shipments.map(s => s.id === shipment.id ? shp : s);
         }
+        this.emitBusinessEvent({
+          audience: ['operator', 'admin'],
+          severity: newStatus === 'delivered' ? 'success' : 'info',
+          icon: newStatus === 'delivered' ? 'check2-circle' : 'box-seam-fill',
+          title: newStatus === 'delivered' ? 'Entrega completada en local' : 'Paquete recibido en local',
+          message: `${shipment.tracking_id} ya cambio a ${newStatus === 'delivered' ? 'entregado al cliente' : `recibido en ${pointName}`}.`
+        });
+        this.syncBusinessEvents({ point: this.point, points: d.points || [], shipments: this.shipments });
         return;
       }
       try {
@@ -327,6 +343,13 @@ export default {
             method: 'PATCH',
             headers: { 'Content-Type': 'application/json', 'Authorization': token },
             body: JSON.stringify({ status: newStatus })
+        });
+        this.emitBusinessEvent({
+          audience: ['operator', 'admin'],
+          severity: newStatus === 'delivered' ? 'success' : 'info',
+          icon: newStatus === 'delivered' ? 'check2-circle' : 'box-seam-fill',
+          title: newStatus === 'delivered' ? 'Entrega completada en local' : 'Paquete recibido en local',
+          message: `${shipment.tracking_id} ya cambio a ${newStatus === 'delivered' ? 'entregado al cliente' : `recibido en ${pointName}`}.`
         });
         await this.fetchData();
       } catch (e) {

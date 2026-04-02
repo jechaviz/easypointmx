@@ -153,7 +153,7 @@
 
 <script>
 export default {
-  inject: ['appState', 'pb_url', 'logout', 'showModal', 'saveDemoData'],
+  inject: ['appState', 'pb_url', 'logout', 'showModal', 'saveDemoData', 'syncBusinessEvents', 'emitBusinessEvent'],
   components: {
     DataView: Vue.defineAsyncComponent(() => loadModule('./components/DataView.vue', options)),
     AddressInput: Vue.defineAsyncComponent(() => loadModule('./components/AddressInput.vue', options))
@@ -196,6 +196,7 @@ export default {
     async refresh() {
        if (this.appState.demoMode) {
           this.prospects = this.appState.demoData.partner_applications || [];
+          this.syncBusinessEvents({ partner_applications: this.prospects });
           return;
        }
        
@@ -205,9 +206,11 @@ export default {
           });
           const data = await res.json();
           this.prospects = data.items || [];
+          this.syncBusinessEvents({ partner_applications: this.prospects });
        } catch (e) {
           console.error('Fetch error:', e);
           this.prospects = [];
+          this.syncBusinessEvents({ partner_applications: [] });
        }
     },
     formatDate(d) { return new Date(d).toLocaleDateString(); },
@@ -234,6 +237,13 @@ export default {
           if(!this.appState.demoData.partner_applications) this.appState.demoData.partner_applications = [];
           this.appState.demoData.partner_applications.unshift(newP);
           this.saveDemoData({ ...this.appState.demoData });
+          this.emitBusinessEvent({
+            audience: ['sales', 'admin'],
+            severity: 'info',
+            icon: 'megaphone-fill',
+            title: 'Prospecto capturado',
+            message: `${newP.business_name} entro al pipeline comercial para evaluacion.`
+          });
           this.refresh();
           this.showNewApp = false;
           this.form = { biz: '', contact: '', addr: '', wa: '' };
@@ -251,6 +261,13 @@ export default {
              body: JSON.stringify(newP)
           });
           if (res.ok) {
+             this.emitBusinessEvent({
+               audience: ['sales', 'admin'],
+               severity: 'info',
+               icon: 'megaphone-fill',
+               title: 'Prospecto capturado',
+               message: `${newP.business_name} entro al pipeline comercial para evaluacion.`
+             });
              this.refresh();
              this.showNewApp = false;
              this.form = { biz: '', contact: '', addr: '', wa: '' };

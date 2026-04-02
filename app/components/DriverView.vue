@@ -194,7 +194,7 @@
 
 <script>
 export default {
-  inject: ['appState', 'pb_url', 'logout', 'showModal', 'getMapsUrl'],
+  inject: ['appState', 'pb_url', 'logout', 'showModal', 'getMapsUrl', 'syncBusinessEvents', 'emitBusinessEvent'],
   components: {
     DataView: Vue.defineAsyncComponent(() => loadModule('./components/DataView.vue', options)),
     Scanner: Vue.defineAsyncComponent(() => loadModule('./components/Scanner.vue', options))
@@ -226,6 +226,7 @@ export default {
         if (this.appState.demoMode) {
            const d = this.appState.demoData || {};
            this.packages = d.shipments?.filter(s => s.status === 'pending' || s.status === 'in_transit') || [];
+           this.syncBusinessEvents({ shipments: this.packages });
            return;
         }
 
@@ -234,6 +235,7 @@ export default {
         });
         const data = await res.json();
         this.packages = data.items || [];
+        this.syncBusinessEvents({ shipments: this.packages });
       } catch (e) {
         console.error('Fetch error:', e);
       } finally {
@@ -251,6 +253,7 @@ export default {
       await this.applyStatus(id, newStatus);
     },
     async applyStatus(id, newStatus) {
+      const shipment = this.packages.find(item => item.id === id);
       if (this.appState.demoMode) {
         const d = this.appState.demoData;
         const shp = d.shipments.find(s => s.id === id);
@@ -258,6 +261,13 @@ export default {
            shp.status = newStatus;
            shp.updated = new Date().toISOString();
            localStorage.setItem('ep_demo_data', JSON.stringify(d));
+           this.emitBusinessEvent({
+             audience: ['driver', 'admin', 'operator'],
+             severity: newStatus === 'at_point' ? 'success' : 'info',
+             icon: newStatus === 'at_point' ? 'building-check' : 'truck-flatbed',
+             title: newStatus === 'at_point' ? 'Entrega al local confirmada' : 'Paquete recolectado por ruta',
+             message: `${shp.tracking_id} ya cambio a ${newStatus === 'at_point' ? 'en local' : 'en transito'}.`
+           });
            this.fetchRoute();
         }
         return;
@@ -272,6 +282,15 @@ export default {
           body: JSON.stringify({ status: newStatus })
         });
         if(res.ok) {
+           if (shipment) {
+             this.emitBusinessEvent({
+               audience: ['driver', 'admin', 'operator'],
+               severity: newStatus === 'at_point' ? 'success' : 'info',
+               icon: newStatus === 'at_point' ? 'building-check' : 'truck-flatbed',
+               title: newStatus === 'at_point' ? 'Entrega al local confirmada' : 'Paquete recolectado por ruta',
+               message: `${shipment.tracking_id} ya cambio a ${newStatus === 'at_point' ? 'en local' : 'en transito'}.`
+             });
+           }
            this.fetchRoute(); // Reload array
         }
       } catch (e) {

@@ -21,6 +21,8 @@
       v-model="appState.loading"
       :message="appState.loadingMsg"
     />
+
+    <NotificationCenter />
   </div>
 </template>
 
@@ -35,7 +37,8 @@ export default {
     DriverView:    Vue.defineAsyncComponent(() => loadModule('./components/DriverView.vue', window.options)),
     SalesView:     Vue.defineAsyncComponent(() => loadModule('./components/SalesView.vue', window.options)),
     Modal:         Vue.defineAsyncComponent(() => loadModule('./components/Modal.vue', window.options)),
-    Loading:       Vue.defineAsyncComponent(() => loadModule('./components/Loading.vue', window.options))
+    Loading:       Vue.defineAsyncComponent(() => loadModule('./components/Loading.vue', window.options)),
+    NotificationCenter: Vue.defineAsyncComponent(() => loadModule('./components/NotificationCenter.vue', window.options))
   }
 }
 </script>
