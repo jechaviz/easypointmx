@@ -16,6 +16,102 @@ window.options = {
 const options = window.options;
 
 const PB_URL = 'http://127.0.0.1:8090';
+const APP_BASE_SEGMENT = '/app';
+const PUSH_TAG_KEYS = ['role', 'point_ref', 'auth_source'];
+
+function getAppBasePath(pathname = window.location.pathname) {
+    const idx = pathname.indexOf(APP_BASE_SEGMENT);
+    if (idx >= 0) return pathname.slice(0, idx + APP_BASE_SEGMENT.length);
+    return APP_BASE_SEGMENT;
+}
+
+function getAppDirectoryPath(pathname = window.location.pathname) {
+    const basePath = getAppBasePath(pathname);
+    return basePath.endsWith('/') ? basePath : `${basePath}/`;
+}
+
+function buildAbsoluteAppUrl(pathname = window.location.pathname) {
+    return `${window.location.origin}${getAppDirectoryPath(pathname)}`;
+}
+
+function resolvePushConfig(config = {}) {
+    const scope = String(config.serviceWorkerScope || getAppDirectoryPath());
+    return {
+        enabled: Boolean(config.enabled && config.oneSignalAppId),
+        configured: Boolean(config.oneSignalAppId),
+        oneSignalAppId: String(config.oneSignalAppId || ''),
+        serviceWorkerPath: String(config.serviceWorkerPath || 'OneSignalSDKWorker.js'),
+        serviceWorkerScope: scope.endsWith('/') ? scope : `${scope}/`,
+        defaultTitle: String(config.defaultTitle || 'Easypoint'),
+        defaultUrl: String(config.defaultUrl || buildAbsoluteAppUrl())
+    };
+}
+
+const PUSH_CONFIG = resolvePushConfig(window.EASYPOINT_PUSH_CONFIG || {});
+
+function emptyPushState() {
+    return {
+        configured: PUSH_CONFIG.configured,
+        enabled: PUSH_CONFIG.enabled,
+        supported: false,
+        initialized: false,
+        permission: false,
+        optedIn: false,
+        externalId: '',
+        subscriptionId: '',
+        initError: '',
+        lastError: '',
+        syncing: false,
+        prompting: false
+    };
+}
+
+let oneSignalReadyPromise = null;
+let oneSignalInitStarted = false;
+
+function waitForOneSignalClient() {
+    if (!PUSH_CONFIG.enabled || !PUSH_CONFIG.oneSignalAppId) return Promise.resolve(null);
+    if (oneSignalInitStarted && window.OneSignal && window.OneSignal.User) return Promise.resolve(window.OneSignal);
+    if (oneSignalReadyPromise) return oneSignalReadyPromise;
+    if (!window.OneSignalDeferred || typeof window.OneSignalDeferred.push !== 'function') {
+        return Promise.reject(new Error('OneSignal no esta disponible en esta pagina.'));
+    }
+
+    const pendingInit = new Promise((resolve, reject) => {
+        const timeoutId = window.setTimeout(() => {
+            reject(new Error('OneSignal no respondio a tiempo.'));
+        }, 8000);
+
+        window.OneSignalDeferred.push(async function (OneSignal) {
+            try {
+                if (!oneSignalInitStarted) {
+                    oneSignalInitStarted = true;
+                    await OneSignal.init({
+                        appId: PUSH_CONFIG.oneSignalAppId,
+                        serviceWorkerPath: PUSH_CONFIG.serviceWorkerPath,
+                        serviceWorkerParam: {
+                            scope: PUSH_CONFIG.serviceWorkerScope
+                        },
+                        autoResubscribe: false
+                    });
+                }
+                window.clearTimeout(timeoutId);
+                resolve(OneSignal);
+            } catch (error) {
+                window.clearTimeout(timeoutId);
+                reject(error);
+            }
+        });
+    });
+
+    oneSignalReadyPromise = pendingInit.catch((error) => {
+        oneSignalReadyPromise = null;
+        oneSignalInitStarted = false;
+        throw error;
+    });
+
+    return oneSignalReadyPromise;
+}
 
 // Pre-defined demo users — always available synchronously (before mounted())
 const DEMO_USERS = [
@@ -366,6 +462,7 @@ const app = Vue.createApp({
             notificationReads: {},
             manualBusinessEvents: [],
             businessSnapshot: {},
+            pushState: emptyPushState(),
             modal: {
                 show: false,
                 title: '',
@@ -407,6 +504,15 @@ const app = Vue.createApp({
             },
             closeNotificationCenter: () => {
                 this.notificationCenterOpen = false;
+            },
+            refreshPushState: () => {
+                return this.refreshPushState();
+            },
+            enablePushNotifications: () => {
+                return this.enablePushNotifications();
+            },
+            disablePushNotifications: () => {
+                return this.disablePushNotifications();
             },
             markNotificationRead: (id) => {
                 if (!id) return;
@@ -487,6 +593,7 @@ const app = Vue.createApp({
                 storage.setItem('ep_token',    this.token);
                 storage.setItem('ep_user',     JSON.stringify(this.user));
                 storage.setItem('ep_demo_mode', this.demoMode ? '1' : '0');
+                localStorage.setItem('ep_remember', rememberMe ? '1' : '0');
 
                 const role = this.user.role;
                 if      (role === 'admin')  this.currentRoute = 'admin';
@@ -497,6 +604,9 @@ const app = Vue.createApp({
                 this.notificationCenterOpen = false;
                 this.businessSnapshot = this.demoMode ? (this.demoData || {}) : {};
                 this.refreshNotifications();
+                this.syncPushIdentity().catch((error) => {
+                    this.applyPushState({ lastError: error?.message || 'No se pudo sincronizar push.' });
+                });
             },
             registerUser: async ({ full_name, email, password, role }) => {
                 const normalizedEmail = String(email || '').trim().toLowerCase();
@@ -546,11 +656,13 @@ const app = Vue.createApp({
                 return newUser;
             },
             logout: () => {
+                this.clearPushIdentity().catch(() => {});
                 this.user  = null;
                 this.token = null;
                 this.notifications = [];
                 this.notificationCenterOpen = false;
                 this.businessSnapshot = {};
+                this.pushState = emptyPushState();
                 localStorage.removeItem('ep_token');
                 localStorage.removeItem('ep_user');
                 localStorage.removeItem('ep_remember');
@@ -658,9 +770,173 @@ const app = Vue.createApp({
 
             this.businessSnapshot = this.demoMode ? (this.demoData || {}) : {};
             this.refreshNotifications();
+            this.syncPushIdentity().catch((error) => {
+                this.applyPushState({ lastError: error?.message || 'No se pudo sincronizar push.' });
+            });
         }
+
+        this.refreshPushState().catch(() => {});
     },
     methods: {
+        applyPushState(patch = {}) {
+            this.pushState = {
+                ...emptyPushState(),
+                ...this.pushState,
+                ...patch
+            };
+        },
+        updatePushStateFromSDK(OneSignal) {
+            const pushSubscription = OneSignal?.User?.PushSubscription || {};
+            const isSupported = typeof OneSignal?.Notifications?.isPushSupported === 'function'
+                ? Boolean(OneSignal.Notifications.isPushSupported())
+                : Boolean(pushSubscription.id || OneSignal?.Notifications?.permission);
+
+            this.applyPushState({
+                configured: PUSH_CONFIG.configured,
+                enabled: PUSH_CONFIG.enabled,
+                supported: isSupported,
+                initialized: true,
+                permission: Boolean(OneSignal?.Notifications?.permission),
+                optedIn: Boolean(pushSubscription.optedIn),
+                externalId: String(OneSignal?.User?.externalId || ''),
+                subscriptionId: String(pushSubscription.id || ''),
+                initError: ''
+            });
+        },
+        async ensurePushClientReady() {
+            if (!PUSH_CONFIG.configured) {
+                this.applyPushState({
+                    configured: false,
+                    enabled: false,
+                    initialized: false
+                });
+                return null;
+            }
+
+            if (!PUSH_CONFIG.enabled) {
+                this.applyPushState({
+                    configured: true,
+                    enabled: false,
+                    initialized: false
+                });
+                return null;
+            }
+
+            try {
+                const OneSignal = await waitForOneSignalClient();
+                if (!OneSignal) return null;
+                this.updatePushStateFromSDK(OneSignal);
+                return OneSignal;
+            } catch (error) {
+                this.applyPushState({
+                    configured: true,
+                    enabled: true,
+                    initialized: false,
+                    initError: error?.message || 'No se pudo inicializar push.'
+                });
+                return null;
+            }
+        },
+        async refreshPushState() {
+            const OneSignal = await this.ensurePushClientReady();
+            if (!OneSignal) return null;
+            this.updatePushStateFromSDK(OneSignal);
+            return this.pushState;
+        },
+        async syncPushIdentity() {
+            const OneSignal = await this.ensurePushClientReady();
+            if (!OneSignal || !this.user?.id) return null;
+
+            this.applyPushState({
+                syncing: true,
+                lastError: ''
+            });
+
+            try {
+                await OneSignal.login(String(this.user.id));
+
+                const tags = {
+                    role: String(this.user.role || 'guest'),
+                    auth_source: this.demoMode ? 'demo' : 'live'
+                };
+
+                if (this.user.point_ref) {
+                    tags.point_ref = String(this.user.point_ref);
+                } else {
+                    try {
+                        await OneSignal.User.removeTags(['point_ref']);
+                    } catch (_) {}
+                }
+
+                await OneSignal.User.addTags(tags);
+                this.updatePushStateFromSDK(OneSignal);
+                return OneSignal;
+            } catch (error) {
+                this.applyPushState({
+                    lastError: error?.message || 'No se pudo sincronizar push.'
+                });
+                throw error;
+            } finally {
+                this.applyPushState({ syncing: false });
+            }
+        },
+        async clearPushIdentity() {
+            const OneSignal = await this.ensurePushClientReady();
+            if (!OneSignal) return null;
+
+            try {
+                await OneSignal.User.removeTags(PUSH_TAG_KEYS);
+            } catch (_) {}
+
+            try {
+                await OneSignal.logout();
+            } catch (_) {}
+
+            this.updatePushStateFromSDK(OneSignal);
+            return OneSignal;
+        },
+        async enablePushNotifications() {
+            this.applyPushState({
+                prompting: true,
+                lastError: ''
+            });
+
+            try {
+                const OneSignal = await this.syncPushIdentity();
+                if (!OneSignal) return false;
+                await OneSignal.User.PushSubscription.optIn();
+                this.updatePushStateFromSDK(OneSignal);
+                return Boolean(this.pushState.optedIn);
+            } catch (error) {
+                this.applyPushState({
+                    lastError: error?.message || 'No se pudo activar push.'
+                });
+                return false;
+            } finally {
+                this.applyPushState({ prompting: false });
+            }
+        },
+        async disablePushNotifications() {
+            this.applyPushState({
+                prompting: true,
+                lastError: ''
+            });
+
+            try {
+                const OneSignal = await this.ensurePushClientReady();
+                if (!OneSignal) return false;
+                await OneSignal.User.PushSubscription.optOut();
+                this.updatePushStateFromSDK(OneSignal);
+                return !this.pushState.optedIn;
+            } catch (error) {
+                this.applyPushState({
+                    lastError: error?.message || 'No se pudo desactivar push.'
+                });
+                return false;
+            } finally {
+                this.applyPushState({ prompting: false });
+            }
+        },
         refreshNotifications() {
             if (!this.user?.role) {
                 this.notifications = [];

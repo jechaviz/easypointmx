@@ -60,6 +60,43 @@
           </div>
 
           <div class="flex-1 overflow-y-auto px-4 py-4 space-y-3">
+            <div class="rounded-[1.5rem] border border-slate-800 bg-slate-900/80 px-4 py-4">
+              <div class="flex items-start gap-3">
+                <div class="w-11 h-11 rounded-2xl flex items-center justify-center border flex-shrink-0" :class="pushIconClass">
+                  <i class="bi text-base" :class="pushIcon"></i>
+                </div>
+                <div class="min-w-0 flex-1">
+                  <div class="flex items-center gap-2 flex-wrap">
+                    <h4 class="text-sm font-black text-white leading-tight">Push para este dispositivo</h4>
+                    <span class="px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-[0.16em]" :class="pushBadgeClass">
+                      {{ pushBadgeLabel }}
+                    </span>
+                  </div>
+                  <p class="text-xs text-slate-400 leading-relaxed mt-1">{{ pushDescription }}</p>
+                  <p v-if="appState.demoMode" class="text-[10px] text-slate-500 mt-2">
+                    En modo demo solo se registra como dispositivo de prueba.
+                  </p>
+                  <p v-if="pushState.initError || pushState.lastError" class="text-[10px] text-red-400 mt-2">
+                    {{ pushState.initError || pushState.lastError }}
+                  </p>
+                  <div class="flex items-center justify-between gap-3 mt-4">
+                    <span class="text-[10px] font-black uppercase tracking-[0.18em]" :class="pushAccentClass">
+                      {{ pushStatusLabel }}
+                    </span>
+                    <button
+                      type="button"
+                      class="px-3 py-2 rounded-xl text-[10px] font-black uppercase tracking-[0.18em] transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                      :class="pushButtonClass"
+                      :disabled="pushActionDisabled"
+                      @click.stop="handlePushToggle"
+                    >
+                      {{ pushActionLabel }}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
             <div
               v-for="event in notifications"
               :key="event.id"
@@ -112,11 +149,17 @@ export default {
     'toggleNotificationCenter',
     'closeNotificationCenter',
     'markNotificationRead',
-    'markAllNotificationsRead'
+    'markAllNotificationsRead',
+    'refreshPushState',
+    'enablePushNotifications',
+    'disablePushNotifications'
   ],
   computed: {
     notifications() {
       return Array.isArray(this.appState.notifications) ? this.appState.notifications : [];
+    },
+    pushState() {
+      return this.appState.pushState || {};
     },
     unreadCount() {
       return this.notifications.filter(event => !event.readAt).length;
@@ -128,9 +171,118 @@ export default {
         driver: 'Eventos de ruta',
         sales: 'Eventos comerciales'
       }[this.appState.user?.role] || 'Eventos de operacion';
+    },
+    pushBadgeLabel() {
+      if (!this.pushState.configured) return 'Falta config';
+      if (!this.pushState.enabled) return 'Apagado';
+      if (!this.pushState.initialized) return 'Listo';
+      if (!this.pushState.supported) return 'Sin soporte';
+      return this.pushState.optedIn ? 'Activo' : 'Pendiente';
+    },
+    pushStatusLabel() {
+      if (!this.pushState.configured) return 'Configura push-config.js';
+      if (!this.pushState.enabled) return 'Activa el flag enabled';
+      if (!this.pushState.initialized) return 'Cliente web listo para enlazar';
+      if (!this.pushState.supported) return 'Push web no disponible';
+      if (this.pushState.optedIn) return 'Alertas push activas';
+      if (this.pushState.permission) return 'Permiso listo para activar';
+      return 'Se pedira permiso del navegador';
+    },
+    pushDescription() {
+      if (!this.pushState.configured) {
+        return 'Agrega tu OneSignal App ID en push-config.js para encender este canal sin tocar la app.';
+      }
+      if (!this.pushState.enabled) {
+        return 'La integracion ya existe, pero sigue apagada por configuracion publica para no romper despliegues.';
+      }
+      if (!this.pushState.initialized) {
+        return 'Este panel puede activar alertas de negocio para tu rol cuando la configuracion quede lista.';
+      }
+      if (!this.pushState.supported) {
+        return 'Este navegador o contexto no permite recibir push web en este momento.';
+      }
+      if (this.pushState.optedIn) {
+        return 'Recibiras eventos criticos del negocio aunque no tengas abierta la app.';
+      }
+      if (this.pushState.permission) {
+        return 'El navegador ya concedio permiso. Solo falta dejar activa la suscripcion de este dispositivo.';
+      }
+      return 'Activa push para recibir avisos de aprobaciones, entregas y cambios importantes del negocio.';
+    },
+    pushActionLabel() {
+      if (this.pushState.prompting) return 'Procesando...';
+      if (!this.pushState.configured || !this.pushState.enabled) return 'No disponible';
+      if (this.pushState.initialized && !this.pushState.supported) return 'No disponible';
+      return this.pushState.optedIn ? 'Desactivar push' : 'Activar push';
+    },
+    pushActionDisabled() {
+      return Boolean(
+        this.pushState.prompting ||
+        !this.pushState.configured ||
+        !this.pushState.enabled ||
+        (this.pushState.initialized && !this.pushState.supported)
+      );
+    },
+    pushIcon() {
+      if (!this.pushState.configured || !this.pushState.enabled) return 'bi-toggles';
+      if (this.pushState.optedIn) return 'bi-bell-fill';
+      if (this.pushState.supported === false && this.pushState.initialized) return 'bi-bell-slash-fill';
+      return 'bi-broadcast-pin';
+    },
+    pushIconClass() {
+      if (!this.pushState.configured || !this.pushState.enabled) {
+        return 'bg-slate-950 text-slate-400 border-slate-800';
+      }
+      if (this.pushState.optedIn) {
+        return 'bg-brand-500/10 text-brand-400 border-brand-500/20';
+      }
+      if (this.pushState.supported === false && this.pushState.initialized) {
+        return 'bg-red-500/10 text-red-400 border-red-500/20';
+      }
+      return 'bg-blue-500/10 text-blue-400 border-blue-500/20';
+    },
+    pushBadgeClass() {
+      if (!this.pushState.configured || !this.pushState.enabled) {
+        return 'bg-slate-800 text-slate-300';
+      }
+      if (this.pushState.optedIn) {
+        return 'bg-brand-500 text-slate-950';
+      }
+      if (this.pushState.supported === false && this.pushState.initialized) {
+        return 'bg-red-500/15 text-red-300';
+      }
+      return 'bg-blue-500/15 text-blue-300';
+    },
+    pushAccentClass() {
+      if (!this.pushState.configured || !this.pushState.enabled) return 'text-slate-400';
+      if (this.pushState.optedIn) return 'text-brand-400';
+      if (this.pushState.supported === false && this.pushState.initialized) return 'text-red-400';
+      return 'text-blue-400';
+    },
+    pushButtonClass() {
+      if (this.pushActionDisabled) return 'bg-slate-900 border border-slate-800 text-slate-500';
+      return this.pushState.optedIn
+        ? 'bg-slate-950 border border-slate-700 text-slate-300 hover:text-white hover:border-slate-600'
+        : 'bg-brand-500 text-slate-950 hover:bg-brand-400';
+    }
+  },
+  watch: {
+    'appState.notificationCenterOpen'(isOpen) {
+      if (isOpen) {
+        this.refreshPushState().catch(() => {});
+      }
     }
   },
   methods: {
+    async handlePushToggle() {
+      if (this.pushActionDisabled) return;
+      if (this.pushState.optedIn) {
+        await this.disablePushNotifications();
+      } else {
+        await this.enablePushNotifications();
+      }
+      this.refreshPushState().catch(() => {});
+    },
     severityLabel(severity) {
       return {
         warning: 'Alta prioridad',
