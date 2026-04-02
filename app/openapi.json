@@ -1,0 +1,115 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Easypoint Platform API",
+    "description": "API oficial para la red de puntos de entrega OOH en México. Permite gestionar envíos, consultar puntos de recolección y sincronizar estados de entrega.",
+    "version": "1.0.0",
+    "contact": {
+      "name": "Easypoint Support",
+      "url": "https://easypoint.mx/support"
+    }
+  },
+  "servers": [
+    {
+      "url": "http://127.0.0.1:8090/api",
+      "description": "Servidor de Desarrollo Local"
+    }
+  ],
+  "paths": {
+    "/collections/points/records": {
+      "get": {
+        "summary": "Listar Puntos Easypoint",
+        "description": "Obtiene la lista de puntos de recolección activos con sus coordenadas y horarios.",
+        "responses": {
+          "200": {
+            "description": "Lista de puntos obtenida exitosamente.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "items": {
+                      "type": "array",
+                      "items": { "$ref": "#/components/schemas/Point" }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/collections/shipments/records": {
+      "get": {
+        "summary": "Consultar Envío",
+        "parameters": [
+          {
+            "name": "filter",
+            "in": "query",
+            "description": "Filtro para buscar por tracking_id. Ejemplo: (tracking_id='MXL123')",
+            "schema": { "type": "string" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Detalles del envío encontrados.",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Shipment" }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "summary": "Crear Nuevo Envío",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/ShipmentCreate" }
+            }
+          }
+        },
+        "responses": {
+          "201": { "description": "Envío creado exitosamente." }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "Point": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "name": { "type": "string" },
+          "address": { "type": "string" },
+          "lat": { "type": "number" },
+          "lng": { "type": "number" },
+          "type": { "type": "string", "enum": ["convenience", "locker", "pharmacy"] }
+        }
+      },
+      "Shipment": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "tracking_id": { "type": "string" },
+          "status": { "type": "string", "enum": ["pending", "in_transit", "at_point", "delivered"] },
+          "point_id": { "type": "string" },
+          "updated": { "type": "string", "format": "date-time" }
+        }
+      },
+      "ShipmentCreate": {
+        "type": "object",
+        "required": ["tracking_id", "point_id"],
+        "properties": {
+          "tracking_id": { "type": "string" },
+          "point_id": { "type": "string" },
+          "external_id": { "type": "string" }
+        }
+      }
+    }
+  }
+}
