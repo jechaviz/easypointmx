@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Easypoint | Tus compras online, cerca de ti siempre.</title>
+    
+    <!-- Meta SEO -->
+    <meta name="description" content="La red de entrega y recolección de paquetes más grande de México. Envía a un Punto Easypoint y recoge en tus propios horarios.">
+    <meta name="keywords" content="logística, ecommerce, puntos de recolección, méxico, envíos, última milla">
+    
+    <!-- Fonts & Icons -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@100;300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    
+    <!-- Tailwind CSS (CDN for consistency) -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#f7fee7', 100: '#ecfccb', 200: '#d9f99d', 300: '#bef264',
+                            400: '#a3e635', 500: '#84cc16', 600: '#65a30d', 700: '#4d7c0f',
+                            800: '#3f6212', 900: '#365314', 950: '#1a2e05',
+                        },
+                    },
+                    fontFamily: {
+                        sans: ['Outfit', 'sans-serif'],
+                    },
+                }
+            }
+        }
+    </script>
+
+    <!-- Vue 3 & SFC Loader -->
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/vue3-sfc-loader/dist/vue3-sfc-loader.js"></script>
+</head>
+<body class="bg-white text-slate-900 selection:bg-brand-500/30">
+    <div id="app"></div>
+
+    <script>
+        const { loadModule } = window['vue3-sfc-loader'];
+
+        const options = {
+            moduleCache: { vue: Vue },
+            async getFile(url) {
+                const res = await fetch(url);
+                if (!res.ok) throw Object.assign(new Error(res.statusText + ' ' + url), { res });
+                return { getContentData: asBinary => asBinary ? res.arrayBuffer() : res.text() }
+            },
+            addStyle(textContent) {
+                const style = Object.assign(document.createElement('style'), { textContent });
+                document.head.appendChild(style);
+            },
+        };
+
+        const app = Vue.createApp({
+            template: '<SiteApp/>',
+            components: {
+                SiteApp: Vue.defineAsyncComponent(() => loadModule('./components/SiteApp.vue', options))
+            }
+        });
+
+        app.mount('#app');
+    </script>
+</body>
+</html>
