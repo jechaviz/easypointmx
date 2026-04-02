@@ -10,7 +10,7 @@
     <div class="relative z-10 w-full max-w-md px-8 animate-fade-in py-8">
 
       <!-- Logo (Elite Styling - Compact) -->
-      <a href="/easypoint/website/" class="block text-center mb-8 group transition-all">
+      <a :href="websiteHref" class="block text-center mb-8 group transition-all">
         <div class="inline-flex items-center justify-center w-14 h-14 rounded-[1.25rem] bg-slate-900 border border-slate-800 shadow-2xl mb-4 group-hover:scale-105 transition-transform relative overflow-hidden">
            <div class="absolute inset-0 bg-brand-500 opacity-10 blur-xl"></div>
            <i class="bi bi-box-fill text-2xl text-brand-400 relative z-10"></i>
@@ -122,11 +122,18 @@
 const PB = 'http://127.0.0.1:8090';
 const MAX_ATTEMPTS = 5;
 const LOCKOUT_SECONDS = 30;
+const APP_BASE_SEGMENT = '/app';
+
+function getRepoBasePath(pathname = window.location.pathname) {
+  const idx = pathname.indexOf(APP_BASE_SEGMENT);
+  return idx >= 0 ? pathname.slice(0, idx) : '';
+}
 
 export default {
   inject: ['login'],
   data() {
     return {
+      websiteHref: `${getRepoBasePath()}/website/`,
       mode: 'login',
       email: '', password: '', showPwd: false, rememberMe: true,
       loading: false, errorMsg: '',

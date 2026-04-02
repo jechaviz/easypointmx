@@ -11,6 +11,13 @@
 </template>
 
 <script>
+const WEBSITE_BASE_SEGMENT = '/website';
+
+function getRepoBasePath(pathname = window.location.pathname) {
+  const idx = pathname.indexOf(WEBSITE_BASE_SEGMENT);
+  return idx >= 0 ? pathname.slice(0, idx) : '';
+}
+
 export default {
   mounted() {
     if (!window.Redoc) {
@@ -24,7 +31,7 @@ export default {
   },
   methods: {
     initRedoc() {
-      Redoc.init('/easypoint/app/openapi.json', {
+      Redoc.init(`${getRepoBasePath()}/app/openapi.json`, {
         theme: {
           colors: { 
             primary: { main: '#84cc16' },

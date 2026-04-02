@@ -10,7 +10,7 @@
         <div class="flex items-center justify-between">
           
           <!-- Logo -->
-          <a href="#" class="flex items-center gap-3 group">
+          <a :href="siteHref('/')" @click.prevent="navigate('/')" class="flex items-center gap-3 group">
             <div class="w-10 h-10 rounded-xl bg-brand-500 flex items-center justify-center shadow-lg shadow-brand-500/30 group-hover:scale-105 transition-transform">
               <i class="bi bi-box-seam text-slate-900 text-xl"></i>
             </div>
@@ -19,15 +19,15 @@
 
           <!-- Desktop Nav -->
           <nav class="hidden lg:flex items-center gap-7">
-            <a href="/easypoint/website/" @click.prevent="navigate('/')" class="text-sm font-semibold text-slate-300 hover:text-white transition-colors">Inicio</a>
+            <a :href="siteHref('/')" @click.prevent="navigate('/')" class="text-sm font-semibold text-slate-300 hover:text-white transition-colors">Inicio</a>
             <button @click="openModal('map')" class="text-sm font-semibold text-slate-300 hover:text-white transition-colors">Mapa</button>
-            <a href="/easypoint/website/locales" @click.prevent="navigate('/locales')" class="text-sm font-semibold text-slate-300 hover:text-white transition-colors">Para Locales</a>
-            <a href="/easypoint/website/ecommerce" @click.prevent="navigate('/ecommerce')" class="text-sm font-semibold text-slate-300 hover:text-white transition-colors">Para E-commerce</a>
-            <a href="/easypoint/website/developers" @click.prevent="navigate('/developers')" class="text-sm font-semibold text-slate-300 hover:text-white transition-colors">Developers</a>
+            <a :href="siteHref('/locales')" @click.prevent="navigate('/locales')" class="text-sm font-semibold text-slate-300 hover:text-white transition-colors">Para Locales</a>
+            <a :href="siteHref('/ecommerce')" @click.prevent="navigate('/ecommerce')" class="text-sm font-semibold text-slate-300 hover:text-white transition-colors">Para E-commerce</a>
+            <a :href="siteHref('/developers')" @click.prevent="navigate('/developers')" class="text-sm font-semibold text-slate-300 hover:text-white transition-colors">Developers</a>
             <!-- Divider -->
             <div class="h-5 w-px bg-slate-700"></div>
-            <a href="/easypoint/app/" class="text-sm font-semibold text-brand-400 hover:text-brand-300 transition-colors">Acceder <i class="bi bi-box-arrow-in-right ml-1"></i></a>
-            <a href="/easypoint/website/ecommerce" @click.prevent="navigate('/ecommerce')" class="bg-brand-500 text-slate-900 hover:bg-brand-400 px-6 py-2.5 rounded-full text-sm font-bold transition-all hover:shadow-lg hover:shadow-brand-500/20 hover:-translate-y-0.5">Ser Partner</a>
+            <a :href="repoHref('/app/')" class="text-sm font-semibold text-brand-400 hover:text-brand-300 transition-colors">Acceder <i class="bi bi-box-arrow-in-right ml-1"></i></a>
+            <a :href="siteHref('/ecommerce')" @click.prevent="navigate('/ecommerce')" class="bg-brand-500 text-slate-900 hover:bg-brand-400 px-6 py-2.5 rounded-full text-sm font-bold transition-all hover:shadow-lg hover:shadow-brand-500/20 hover:-translate-y-0.5">Ser Partner</a>
           </nav>
 
           <!-- Mobile Nav Toggle -->
@@ -55,9 +55,9 @@
           </div>
           
           <div class="flex flex-wrap gap-4 md:gap-6 text-sm font-medium">
-            <a href="/easypoint/website/condiciones" @click.prevent="navigate('/condiciones')" class="hover:text-white transition-colors">Términos y Condiciones</a>
-            <a href="/easypoint/website/privacidad" @click.prevent="navigate('/privacidad')" class="hover:text-white transition-colors">Política de Privacidad</a>
-            <a href="/easypoint/website/developers" @click.prevent="navigate('/developers')" class="hover:text-white transition-colors">Developer Portal</a>
+            <a :href="siteHref('/condiciones')" @click.prevent="navigate('/condiciones')" class="hover:text-white transition-colors">Términos y Condiciones</a>
+            <a :href="siteHref('/privacidad')" @click.prevent="navigate('/privacidad')" class="hover:text-white transition-colors">Política de Privacidad</a>
+            <a :href="siteHref('/developers')" @click.prevent="navigate('/developers')" class="hover:text-white transition-colors">Developer Portal</a>
           </div>
           
           <div class="text-sm">
@@ -228,6 +228,28 @@ const options = {
     },
 };
 
+const WEBSITE_BASE_SEGMENT = '/website';
+
+function getWebsiteBasePath(pathname = window.location.pathname) {
+    const idx = pathname.indexOf(WEBSITE_BASE_SEGMENT);
+    if (idx >= 0) return pathname.slice(0, idx + WEBSITE_BASE_SEGMENT.length);
+    return WEBSITE_BASE_SEGMENT;
+}
+
+function getRepoBasePath(pathname = window.location.pathname) {
+    const siteBasePath = getWebsiteBasePath(pathname);
+    return siteBasePath.endsWith(WEBSITE_BASE_SEGMENT)
+        ? siteBasePath.slice(0, -WEBSITE_BASE_SEGMENT.length)
+        : '';
+}
+
+function getCurrentRoute(pathname = window.location.pathname) {
+    const siteBasePath = getWebsiteBasePath(pathname);
+    return pathname.startsWith(siteBasePath)
+        ? pathname.slice(siteBasePath.length).replace(/\/$/, '') || '/'
+        : '/';
+}
+
 export default {
   components: {
     HomeView: Vue.defineAsyncComponent(() => loadModule('./components/HomeView.vue', options)),
@@ -239,7 +261,9 @@ export default {
   },
   data() {
     return {
-      currentRoute: window.location.pathname.replace('/easypoint/website', '').replace(/\/$/, '') || '/',
+      siteBasePath: getWebsiteBasePath(),
+      repoBasePath: getRepoBasePath(),
+      currentRoute: getCurrentRoute(),
       isScrolled: false,
       activeModal: null,
       activePointId: null,
@@ -287,13 +311,19 @@ export default {
     window.removeEventListener('popstate', this.handlePopState);
   },
   methods: {
+    siteHref(path) {
+      return `${this.siteBasePath}${path === '/' ? '' : path}`;
+    },
+    repoHref(path) {
+      return `${this.repoBasePath}${path}`;
+    },
     handlePopState() {
-      this.currentRoute = window.location.pathname.replace('/easypoint/website', '').replace(/\/$/, '') || '/';
+      this.currentRoute = getCurrentRoute(window.location.pathname);
     },
     navigate(path) {
       if (this.currentRoute !== path) {
         this.currentRoute = path;
-        window.history.pushState(null, '', '/easypoint/website' + (path === '/' ? '' : path));
+        window.history.pushState(null, '', this.siteHref(path));
       }
       window.scrollTo({ top: 0, behavior: 'smooth' });
     },

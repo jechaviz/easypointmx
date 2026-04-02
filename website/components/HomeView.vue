@@ -198,7 +198,7 @@
                   </button>
                </div>
                <div class="relative min-h-[400px]">
-                  <img src="/easypoint/img/store-premium.png" class="absolute inset-0 w-full h-full object-cover">
+                  <img :src="storeImageSrc" class="absolute inset-0 w-full h-full object-cover">
                </div>
             </div>
          </div>
@@ -209,6 +209,13 @@
 </template>
 
 <script>
+const WEBSITE_BASE_SEGMENT = '/website';
+
+function getRepoBasePath(pathname = window.location.pathname) {
+    const idx = pathname.indexOf(WEBSITE_BASE_SEGMENT);
+    return idx >= 0 ? pathname.slice(0, idx) : '';
+}
+
 export default {
     emits: ['open-modal'],
     data() {
@@ -226,6 +233,9 @@ export default {
        }
     },
     computed: {
+        storeImageSrc() {
+            return `${getRepoBasePath()}/img/store-premium.png`;
+        },
         currentStepIdx() {
             if (!this.trackingResult) return -1;
             return this.timelineSteps.findIndex(s => s.key === this.trackingResult.status);
