@@ -108,7 +108,7 @@
           </button>
 
           <div class="pt-3 border-t border-slate-800/80 text-center space-y-2">
-            <p class="text-[10px] text-slate-600 font-bold uppercase tracking-[0.22em]">Nuevo en Easypoint</p>
+            <p class="text-[10px] text-slate-600 font-bold uppercase tracking-[0.22em]">¿Nuevo en Easypoint?</p>
             <button
               type="button"
               @click="switchMode('register')"
