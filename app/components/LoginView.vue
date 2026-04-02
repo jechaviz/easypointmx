@@ -23,7 +23,7 @@
           <div class="w-4 h-4 border-2 border-brand-500/30 border-t-brand-500 rounded-full animate-spin"></div>
         </div>
 
-        <div v-else-if="testModeEnabled" class="flex flex-col gap-2.5">
+        <div v-else-if="mode === 'login' && testModeEnabled" class="flex flex-col gap-2.5">
           <div class="flex items-center justify-between">
             <span class="text-amber-500 text-[8px] font-black uppercase tracking-[0.2em]">Elige usuario demo</span>
             <i class="bi bi-lightning-charge-fill text-amber-500 text-[9px]"></i>
@@ -93,14 +93,9 @@
               <input type="checkbox" v-model="rememberMe" class="accent-brand-500">
               Mantener sesion
             </label>
-            <div class="flex items-center gap-3">
-              <button type="button" @click="switchMode('register')" class="text-[10px] text-slate-400 hover:text-white font-bold uppercase tracking-wider">
-                Crear cuenta
-              </button>
-              <button type="button" @click="switchMode('reset')" class="text-[10px] text-brand-400 hover:text-brand-300 font-bold uppercase tracking-wider">
-                Olvide mi contraseña
-              </button>
-            </div>
+            <button type="button" @click="switchMode('reset')" class="text-[10px] text-brand-400 hover:text-brand-300 font-bold uppercase tracking-wider">
+              Olvide mi contraseña
+            </button>
           </div>
 
           <button
@@ -111,6 +106,18 @@
             <i v-else class="bi bi-box-arrow-in-right"></i>
             {{ loading ? 'Verificando...' : 'Iniciar sesion' }}
           </button>
+
+          <div class="pt-3 border-t border-slate-800/80 text-center space-y-2">
+            <p class="text-[10px] text-slate-600 font-bold uppercase tracking-[0.22em]">Nuevo en Easypoint</p>
+            <button
+              type="button"
+              @click="switchMode('register')"
+              class="inline-flex items-center justify-center gap-2 text-xs font-black text-white hover:text-brand-400 transition-colors"
+            >
+              <i class="bi bi-person-plus-fill text-brand-400"></i>
+              Crear cuenta
+            </button>
+          </div>
         </form>
 
         <div v-else-if="mode === 'reset'" class="space-y-3">
