@@ -1,0 +1,7 @@
+Thumbs.db
+.DS_Store
+
+pb/pb_data/logs.db
+pb/pb_data/*.db-shm
+pb/pb_data/*.db-wal
+pb/pb_data/backups/
