@@ -139,7 +139,7 @@
             <p class="text-slate-400 text-sm">{{ users.length }} usuarios registrados</p>
             <button @click="showUserForm = true; editingUser = null; userForm = {email:'',password:'',full_name:'',role:'operator',point_ref:''}" 
               class="bg-brand-500 text-slate-900 font-bold px-4 py-2 rounded-xl text-xs hover:bg-brand-400 flex items-center gap-2">
-              <i class="bi bi-plus-circle"></i> Nuevo Operador
+              <i class="bi bi-plus-circle"></i> Nuevo Usuario
             </button>
           </div>
 
@@ -151,8 +151,8 @@
               </td>
               <td class="px-6 py-4">
                 <span class="px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider" 
-                  :class="item.role === 'admin' ? 'bg-purple-500/10 text-purple-400' : 'bg-brand-500/10 text-brand-400'">
-                  {{ item.role || 'operator' }}
+                  :class="roleBadgeClass(item.role)">
+                  {{ roleLabel(item.role) }}
                 </span>
               </td>
               <td class="px-6 py-4">
@@ -163,6 +163,7 @@
               </td>
             </template>
             <template #actions="{ item }">
+               <button v-if="!item.verified" @click="approveUser(item)" class="text-amber-400 hover:text-brand-400 transition-colors mr-3 shadow-sm hover:scale-110"><i class="bi bi-person-check"></i></button>
                <button @click="editUser(item)" class="text-slate-400 hover:text-brand-400 transition-colors mr-3 shadow-sm hover:scale-110"><i class="bi bi-pencil"></i></button>
                <button @click="deleteUser(item)" class="text-slate-600 hover:text-red-400 transition-colors"><i class="bi bi-trash"></i></button>
             </template>
@@ -172,14 +173,20 @@
                   <div class="w-10 h-10 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center text-brand-400 font-bold group-hover:border-brand-500/50">
                     {{ (item.full_name || item.email).charAt(0).toUpperCase() }}
                   </div>
-                  <button @click="editUser(item)" class="text-slate-500 hover:text-white"><i class="bi bi-pencil"></i></button>
+                  <div class="flex items-center gap-3">
+                    <button v-if="!item.verified" @click="approveUser(item)" class="text-amber-400 hover:text-brand-400"><i class="bi bi-person-check"></i></button>
+                    <button @click="editUser(item)" class="text-slate-500 hover:text-white"><i class="bi bi-pencil"></i></button>
+                  </div>
                 </div>
                 <h4 class="text-white font-bold">{{ item.full_name || 'Sin nombre' }}</h4>
                 <p class="text-slate-500 text-[10px] mb-4">{{ item.email }}</p>
                 <div class="flex items-center justify-between">
-                  <span class="px-2 py-0.5 rounded-lg bg-slate-800 text-slate-400 text-[9px] font-black uppercase tracking-widest">{{ item.role }}</span>
+                  <span class="px-2 py-0.5 rounded-lg text-[9px] font-black uppercase tracking-widest" :class="roleBadgeClass(item.role)">{{ roleLabel(item.role) }}</span>
                   <span class="text-[10px] font-bold" :class="item.verified ? 'text-green-500' : 'text-amber-500'">● {{ item.verified ? 'Activo' : 'Pendiente' }}</span>
                 </div>
+                <button v-if="!item.verified" @click="approveUser(item)" class="w-full mt-4 bg-amber-500/10 text-amber-400 border border-amber-500/20 font-black py-2 rounded-xl text-[10px] hover:bg-amber-500/20">
+                  Aprobar acceso
+                </button>
               </div>
             </template>
           </DataView>
@@ -187,7 +194,7 @@
           <!-- User Form Modal -->
           <div v-if="showUserForm" class="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
             <div class="bg-slate-900 border border-slate-700 rounded-2xl p-8 w-full max-w-md">
-              <h3 class="text-white font-black text-lg mb-6">{{ editingUser ? 'Editar Usuario' : 'Nuevo Operador' }}</h3>
+              <h3 class="text-white font-black text-lg mb-6">{{ editingUser ? 'Editar Usuario' : 'Nuevo Usuario' }}</h3>
               <div class="space-y-4">
                 <div>
                   <label class="label-sm">Nombre completo</label>
@@ -227,7 +234,9 @@
                 <div>
                   <label class="label-sm">Rol</label>
                   <select v-model="userForm.role" class="input-dark">
-                    <option value="operator">Operador de Punto</option>
+                    <option value="operator">Local</option>
+                    <option value="driver">Repartidor</option>
+                    <option value="sales">Ventas</option>
                     <option value="admin">Administrador</option>
                   </select>
                 </div>
@@ -825,6 +834,22 @@ export default {
     statusIcon(s) { return { pending:'clock-history', in_transit:'truck', at_point:'building-check', delivered:'check-circle-fill' }[s] || 'box'; },
     statusBadge(s) { return { pending:'bg-slate-700/50 text-slate-400', in_transit:'bg-blue-900/50 text-blue-400', at_point:'bg-brand-500/10 text-brand-400', delivered:'bg-green-900/50 text-green-400' }[s] || ''; },
     invStatusLabel(s) { return { draft:'Borrador', sent:'Enviada', paid:'Pagada' }[s] || s; },
+    roleLabel(role) {
+      return {
+        operator: 'Local',
+        driver: 'Repartidor',
+        sales: 'Ventas',
+        admin: 'Administrador'
+      }[role] || role || 'Local';
+    },
+    roleBadgeClass(role) {
+      return {
+        admin: 'bg-purple-500/10 text-purple-400',
+        sales: 'bg-blue-500/10 text-blue-400',
+        driver: 'bg-amber-500/10 text-amber-400',
+        operator: 'bg-brand-500/10 text-brand-400'
+      }[role] || 'bg-slate-800 text-slate-400';
+    },
 
     // Users
     editUser(u) { this.editingUser = u; this.userForm = { ...u, password: '' }; this.showUserForm = true; this.formMsg = ''; this.pwdStrength = 0; },
@@ -852,6 +877,12 @@ export default {
         this.showUserForm = false;
         await this.loadAll();
       } catch(e) { this.formMsg = e.message; }
+    },
+    async approveUser(u) {
+      const ok = await this.showModal({ title: 'Aprobar Usuario', message: `Deseas activar el acceso para ${u.full_name || u.email}?`, type: 'confirm' });
+      if (!ok) return;
+      await this.patch(`/api/collections/users/records/${u.id}`, { verified: true });
+      await this.loadAll();
     },
     async deleteUser(u) {
       const ok = await this.showModal({ title: 'Confirmar Eliminación', message: `¿Estás seguro de eliminar a ${u.full_name}?`, type: 'confirm' });

@@ -19,16 +19,16 @@ const PB_URL = 'http://127.0.0.1:8090';
 
 // Pre-defined demo users — always available synchronously (before mounted())
 const DEMO_USERS = [
-    { id: 'u1', full_name: 'Admin Demo',       name: 'Admin Demo',       email: 'admin@demo.mx',        role: 'admin',    point_ref: null },
-    { id: 'u2', full_name: 'Roberto Operador', name: 'Roberto Operador', email: 'roberto@punto.mx',     role: 'operator', point_ref: 'p1' },
-    { id: 'u3', full_name: 'Maria Papelería',  name: 'Maria Papelería',  email: 'maria@yopmail.com',    role: 'operator', point_ref: 'p2' },
-    { id: 'u4', full_name: 'Juan Driver',      name: 'Juan Driver',      email: 'driver@easypoint.mx',  role: 'driver',   point_ref: null },
-    { id: 'u5', full_name: 'Carlos Ventas',    name: 'Carlos Ventas',    email: 'carlos@sales.mx',      role: 'sales',    point_ref: null }
+    { id: 'u1', full_name: 'Admin Demo',       name: 'Admin Demo',       email: 'admin@demo.mx',        role: 'admin',    point_ref: null, verified: true },
+    { id: 'u2', full_name: 'Roberto Operador', name: 'Roberto Operador', email: 'roberto@punto.mx',     role: 'operator', point_ref: 'p1', verified: true },
+    { id: 'u3', full_name: 'Maria Papelería',  name: 'Maria Papelería',  email: 'maria@yopmail.com',    role: 'operator', point_ref: 'p2', verified: true },
+    { id: 'u4', full_name: 'Juan Driver',      name: 'Juan Driver',      email: 'driver@easypoint.mx',  role: 'driver',   point_ref: null, verified: true },
+    { id: 'u5', full_name: 'Carlos Ventas',    name: 'Carlos Ventas',    email: 'carlos@sales.mx',      role: 'sales',    point_ref: null, verified: true }
 ];
 const DEMO_PWDS = ['Punto2024!', 'easypoint123'];
 
 const DEFAULT_DEMO_DATA = {
-    _v: 2, // Version flag to force cache breaks when schema updates
+    _v: 3, // Version flag to force cache breaks when schema updates
     shipments: [
         { id: 'mock1', tracking_id: 'EP-9921-X', recipient_name: 'Alejandro Ruiz',   status: 'at_point',   created: '2026-03-25T10:00:00Z', updated: '2026-03-26T09:00:00Z', expand: { point_id: { name: 'Punto Roma Norte', address: 'Av. Álvaro Obregón 154, Roma Norte' } } },
         { id: 'mock2', tracking_id: 'EP-1045-A', recipient_name: 'Beatriz Solis',    status: 'delivered',  created: '2026-03-24T14:30:00Z', updated: '2026-03-25T11:20:00Z', expand: { point_id: { name: 'Punto Condesa',    address: 'Amsterdam 123, Hipódromo Condesa'   } } },
@@ -114,6 +114,9 @@ const app = Vue.createApp({
                     });
                     if (res.ok) {
                         const data = await res.json();
+                        if (data.record && data.record.verified === false) {
+                            throw new Error('Tu cuenta sigue pendiente de aprobación por un admin.');
+                        }
                         this.token = data.token;
                         this.user  = data.record;
                         this.demoMode = false;
@@ -126,6 +129,9 @@ const app = Vue.createApp({
                     const users = this.demoData?.users || DEMO_USERS;
                     const dUser = users.find(u => u.email === email);
                     if (dUser && DEMO_PWDS.includes(password)) {
+                        if (dUser.verified === false) {
+                            throw new Error('Tu cuenta sigue pendiente de aprobación por un admin.');
+                        }
                         this.user  = dUser;
                         this.token = 'demo_' + Date.now();
                         this.demoMode = true;
@@ -146,6 +152,53 @@ const app = Vue.createApp({
                 else if (role === 'driver') this.currentRoute = 'driver';
                 else if (role === 'sales')  this.currentRoute = 'sales';
                 else                        this.currentRoute = 'dashboard';
+            },
+            registerUser: async ({ full_name, email, password, role }) => {
+                const normalizedEmail = String(email || '').trim().toLowerCase();
+                const payload = {
+                    email: normalizedEmail,
+                    password,
+                    passwordConfirm: password,
+                    full_name: String(full_name || '').trim(),
+                    role,
+                    emailVisibility: true
+                };
+
+                try {
+                    const res = await fetch(`${PB_URL}/api/collections/users/records`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+                    const data = await res.json();
+                    if (!res.ok || data?.code) throw new Error(data?.message || 'No se pudo completar el registro.');
+                    return data;
+                } catch (error) {
+                    const offlineLike = !error?.message || /failed to fetch|networkerror|load failed/i.test(error.message);
+                    if (!offlineLike) throw error;
+                }
+
+                const demoData = this.demoData || DEFAULT_DEMO_DATA;
+                const users = [...(demoData.users || DEMO_USERS)];
+                if (users.some(u => String(u.email || '').toLowerCase() === normalizedEmail)) {
+                    throw new Error('Ya existe una cuenta con ese correo.');
+                }
+
+                const newUser = {
+                    id: 'demo_' + Date.now(),
+                    email: normalizedEmail,
+                    full_name: String(full_name || '').trim(),
+                    role,
+                    point_ref: null,
+                    verified: false,
+                    emailVisibility: true,
+                    created: new Date().toISOString(),
+                    updated: new Date().toISOString()
+                };
+
+                this.demoData = { ...demoData, users: [newUser, ...users] };
+                localStorage.setItem('ep_demo_data', JSON.stringify(this.demoData));
+                return newUser;
             },
             logout: () => {
                 this.user  = null;
@@ -223,6 +276,16 @@ const app = Vue.createApp({
             }
 
             const userRole = this.user?.role;
+            if (this.user?.verified === false) {
+                this.user = null;
+                this.token = null;
+                localStorage.removeItem('ep_token');
+                localStorage.removeItem('ep_user');
+                sessionStorage.removeItem('ep_token');
+                sessionStorage.removeItem('ep_user');
+                this.currentRoute = 'login';
+                return;
+            }
             if      (userRole === 'admin')  this.currentRoute = 'admin';
             else if (userRole === 'driver') this.currentRoute = 'driver';
             else if (userRole === 'sales')  this.currentRoute = 'sales';
