@@ -15,7 +15,7 @@ window.options = {
 };
 const options = window.options;
 
-const PB_URL = 'http://127.0.0.1:8090';
+const PB_URL = window.EASYPOINT_RUNTIME_CONFIG?.pocketBaseUrl || window.location.origin;
 const APP_BASE_SEGMENT = '/app';
 const PUSH_TAG_KEYS = ['role', 'point_ref', 'auth_source'];
 

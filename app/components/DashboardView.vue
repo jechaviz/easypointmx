@@ -79,7 +79,7 @@
                    <p class="text-[10px] font-black uppercase tracking-[0.3em] text-slate-500 mb-1">Terminal Activa</p>
                    <h1 class="text-3xl font-black text-white leading-tight tracking-tight">{{ point.name }}</h1>
                    <div class="flex items-center gap-4 mt-2">
-                     <a :href="getMapsUrl(point.address)" target="_blank" class="text-slate-400 text-xs font-medium hover:text-brand-400 transition-colors flex items-center gap-2">
+                     <a :href="getMapsUrl(point.address)" target="_blank" rel="noopener noreferrer" class="text-slate-400 text-xs font-medium hover:text-brand-400 transition-colors flex items-center gap-2">
                         <i class="bi bi-pin-map-fill opacity-50"></i> {{ point.address }}
                      </a>
                    </div>
@@ -222,7 +222,21 @@
 
 <script>
 const { loadModule } = window['vue3-sfc-loader'];
-const PB = 'http://127.0.0.1:8090';
+const PB = window.EASYPOINT_RUNTIME_CONFIG?.pocketBaseUrl || window.location.origin;
+
+function pbFilterString(value) {
+    return `'${String(value ?? '').replace(/\\/g, '\\\\').replace(/'/g, "\\'")}'`;
+}
+
+function pbUrl(path, params = {}) {
+    const url = new URL(path, PB);
+    for (const [key, value] of Object.entries(params)) {
+        if (value !== undefined && value !== null && value !== '') {
+            url.searchParams.set(key, String(value));
+        }
+    }
+    return url.toString();
+}
 
 export default {
   inject: ['appState', 'logout', 'showModal', 'getMapsUrl', 'syncBusinessEvents', 'emitBusinessEvent'],
@@ -296,7 +310,11 @@ export default {
         if (pRes.ok) this.point = await pRes.json();
 
         // Fetch all shipments assigned to this point
-        const sRes = await fetch(`${PB}/api/collections/shipments/records?filter=(point_id='${this.user.point_ref}')&perPage=500&sort=-updated`, { headers: h });
+        const sRes = await fetch(pbUrl('/api/collections/shipments/records', {
+          filter: `(point_id=${pbFilterString(this.user.point_ref)})`,
+          perPage: 500,
+          sort: '-updated'
+        }), { headers: h });
         const sData = await sRes.json();
         this.shipments = sData.items || [];
         this.syncBusinessEvents({ point: this.point, shipments: this.shipments });
@@ -376,7 +394,9 @@ export default {
         try {
           const token = localStorage.getItem('ep_token');
           // Find shipment by tracking_id
-          const shpRes = await fetch(`${PB}/api/collections/shipments/records?filter=(tracking_id='${code}')`, {
+          const shpRes = await fetch(pbUrl('/api/collections/shipments/records', {
+            filter: `(tracking_id=${pbFilterString(String(code).trim())})`
+          }), {
             headers: { 'Authorization': token }
           });
           const shpData = await shpRes.json();

@@ -263,7 +263,7 @@
              <template #row="{ item }">
                <td class="px-6 py-4 text-white font-bold text-xs">{{ item.name }}</td>
                <td class="px-6 py-4">
-                  <a :href="getMapsUrl(item.address)" target="_blank" class="text-slate-400 text-xs hover:text-brand-400 transition-colors truncate block max-w-xs">
+                  <a :href="getMapsUrl(item.address)" target="_blank" rel="noopener noreferrer" class="text-slate-400 text-xs hover:text-brand-400 transition-colors truncate block max-w-xs">
                     <i class="bi bi-geo-alt mr-1"></i>{{ item.address }}
                   </a>
                </td>
@@ -282,11 +282,11 @@
                     <span class="text-[10px] font-black px-2 py-1 rounded-full bg-green-500/10 text-green-400">ACTIVO</span>
                   </div>
                   <h4 class="text-white font-bold mb-1">{{ item.name }}</h4>
-                  <a :href="getMapsUrl(item.address)" target="_blank" class="text-slate-500 text-xs mb-3 flex items-start gap-1 hover:text-brand-400 transition-colors">
+                  <a :href="getMapsUrl(item.address)" target="_blank" rel="noopener noreferrer" class="text-slate-500 text-xs mb-3 flex items-start gap-1 hover:text-brand-400 transition-colors">
                     <i class="bi bi-pin-map mt-0.5"></i> {{ item.address }}
                   </a>
                   <div class="flex gap-2 text-[10px]">
-                    <a v-if="item.whatsapp" :href="'https://wa.me/'+item.whatsapp" target="_blank" class="bg-green-900/40 text-green-400 px-2 py-1 rounded-lg flex items-center gap-1 hover:bg-green-800/40">
+                    <a v-if="item.whatsapp" :href="'https://wa.me/'+item.whatsapp" target="_blank" rel="noopener noreferrer" class="bg-green-900/40 text-green-400 px-2 py-1 rounded-lg flex items-center gap-1 hover:bg-green-800/40">
                       <i class="bi bi-whatsapp"></i> {{ item.whatsapp }}
                     </a>
                   </div>
@@ -629,7 +629,7 @@
 </template>
 
 <script>
-const PB = 'http://127.0.0.1:8090';
+const PB = window.EASYPOINT_RUNTIME_CONFIG?.pocketBaseUrl || window.location.origin;
 export default {
   inject: ['appState', 'logout', 'showModal', 'getMapsUrl', 'saveDemoData', 'syncBusinessEvents', 'emitBusinessEvent'],
   components: {

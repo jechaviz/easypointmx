@@ -285,7 +285,7 @@
 </template>
 
 <script>
-const PB = 'http://127.0.0.1:8090';
+const PB = window.EASYPOINT_RUNTIME_CONFIG?.pocketBaseUrl || window.location.origin;
 const MAX_ATTEMPTS = 5;
 const LOCKOUT_SECONDS = 30;
 const APP_BASE_SEGMENT = '/app';

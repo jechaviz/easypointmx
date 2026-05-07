@@ -112,7 +112,7 @@
                            <div class="w-2 h-2 rounded-full bg-brand-500 shadow-[0_0_8px_rgba(245,158,11,0.5)]"></div>
                            {{ item.expand?.point_id?.name || 'Local no asignado' }}
                         </p>
-                        <a :href="getMapsUrl(item.expand?.point_id?.address)" target="_blank" class="text-[10px] text-slate-500 hover:text-brand-400 transition-colors flex items-start gap-2 leading-relaxed">
+                        <a :href="getMapsUrl(item.expand?.point_id?.address)" target="_blank" rel="noopener noreferrer" class="text-[10px] text-slate-500 hover:text-brand-400 transition-colors flex items-start gap-2 leading-relaxed">
                            <i class="bi bi-geo-alt-fill shrink-0 mt-0.5 opacity-50"></i> {{ item.expand?.point_id?.address || 'Sin dirección' }}
                         </a>
                      </div>
@@ -166,7 +166,7 @@
                   
                   <div class="space-y-1.5">
                      <p class="text-[11px] text-slate-300 font-black flex items-center gap-1.5"><i class="bi bi-geo-alt-fill text-brand-500"></i> {{ item.expand?.point_id?.name }}</p>
-                     <a :href="getMapsUrl(item.expand?.point_id?.address)" target="_blank" class="text-[9px] text-slate-500 hover:text-brand-400 transition-colors line-clamp-2 leading-tight flex items-start gap-1.5">
+                     <a :href="getMapsUrl(item.expand?.point_id?.address)" target="_blank" rel="noopener noreferrer" class="text-[9px] text-slate-500 hover:text-brand-400 transition-colors line-clamp-2 leading-tight flex items-start gap-1.5">
                         {{ item.expand?.point_id?.address }}
                      </a>
                   </div>
@@ -230,7 +230,14 @@ export default {
            return;
         }
 
-        const res = await fetch(`${this.pb_url}/api/collections/shipments/records?filter=(status='pending'||status='in_transit')&expand=point_id&perPage=500`, {
+        const routeUrl = new URL('/api/collections/shipments/records', this.pb_url);
+        routeUrl.search = new URLSearchParams({
+          filter: "(status='pending'||status='in_transit')",
+          expand: 'point_id',
+          perPage: '500'
+        }).toString();
+
+        const res = await fetch(routeUrl.toString(), {
           headers: { 'Authorization': this.appState.token }
         });
         const data = await res.json();
