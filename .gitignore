@@ -1,5 +1,9 @@
 Thumbs.db
 .DS_Store
+runtime-config.local.js
+runtime-config.generated.js
+local-stack.*.log
+pb/*.log
 
 pb/pb_data/logs.db
 pb/pb_data/*.db-shm

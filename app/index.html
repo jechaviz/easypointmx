@@ -107,15 +107,46 @@
     <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
     <!-- vue3-sfc-loader -->
     <script src="https://cdn.jsdelivr.net/npm/vue3-sfc-loader/dist/vue3-sfc-loader.js"></script>
-    <!-- Public push config -->
-    <script src="push-config.js"></script>
-    <!-- OneSignal Web SDK -->
+    <!-- Public runtime config -->
+    <script src="../runtime-config.js"></script>
     <script>
-        window.OneSignalDeferred = window.OneSignalDeferred || [];
-    </script>
-    <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
+        function loadOptionalScript(src, done) {
+            const script = document.createElement('script');
+            script.src = src;
+            script.async = false;
+            script.onload = done;
+            script.onerror = done;
+            document.head.appendChild(script);
+        }
 
-    <!-- App Entry Point -->
-    <script src="main.js"></script>
+        function bootApp() {
+            let booted = false;
+            function startMainApp() {
+                if (booted) return;
+                booted = true;
+
+                window.OneSignalDeferred = window.OneSignalDeferred || [];
+
+                const oneSignal = document.createElement('script');
+                oneSignal.src = 'https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js';
+                oneSignal.defer = true;
+                document.body.appendChild(oneSignal);
+
+                const main = document.createElement('script');
+                main.src = 'main.js';
+                document.body.appendChild(main);
+            }
+
+            const pushConfig = document.createElement('script');
+            pushConfig.src = 'push-config.js';
+            pushConfig.onload = startMainApp;
+            pushConfig.onerror = startMainApp;
+            document.head.appendChild(pushConfig);
+        }
+
+        loadOptionalScript('../runtime-config.generated.js', () => {
+            loadOptionalScript('../runtime-config.local.js', bootApp);
+        });
+    </script>
 </body>
 </html>
