@@ -6,7 +6,7 @@
     <title>Easypoint | Tus compras online, cerca de ti siempre.</title>
     
     <!-- Meta SEO -->
-    <meta name="description" content="La red de entrega y recolección de paquetes más grande de México. Envía a un Punto Easypoint y recoge en tus propios horarios.">
+    <meta name="description" content="Rastrea paquetes, consulta puntos Easypoint disponibles y solicita evaluación para operar como punto de entrega.">
     <meta name="keywords" content="logística, ecommerce, puntos de recolección, méxico, envíos, última milla">
     
     <!-- Fonts & Icons -->
@@ -39,34 +39,50 @@
     <!-- Vue 3 & SFC Loader -->
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/vue3-sfc-loader/dist/vue3-sfc-loader.js"></script>
+    <script src="../runtime-config.js"></script>
 </head>
 <body class="bg-white text-slate-900 selection:bg-brand-500/30">
     <div id="app"></div>
 
     <script>
-        const { loadModule } = window['vue3-sfc-loader'];
+        function loadOptionalScript(src, done) {
+            const script = document.createElement('script');
+            script.src = src;
+            script.async = false;
+            script.onload = done;
+            script.onerror = done;
+            document.head.appendChild(script);
+        }
 
-        const options = {
-            moduleCache: { vue: Vue },
-            async getFile(url) {
-                const res = await fetch(url);
-                if (!res.ok) throw Object.assign(new Error(res.statusText + ' ' + url), { res });
-                return { getContentData: asBinary => asBinary ? res.arrayBuffer() : res.text() }
-            },
-            addStyle(textContent) {
-                const style = Object.assign(document.createElement('style'), { textContent });
-                document.head.appendChild(style);
-            },
-        };
+        function mountSite() {
+            const { loadModule } = window['vue3-sfc-loader'];
 
-        const app = Vue.createApp({
-            template: '<SiteApp/>',
-            components: {
-                SiteApp: Vue.defineAsyncComponent(() => loadModule('./components/SiteApp.vue', options))
-            }
+            const options = {
+                moduleCache: { vue: Vue },
+                async getFile(url) {
+                    const res = await fetch(url);
+                    if (!res.ok) throw Object.assign(new Error(res.statusText + ' ' + url), { res });
+                    return { getContentData: asBinary => asBinary ? res.arrayBuffer() : res.text() }
+                },
+                addStyle(textContent) {
+                    const style = Object.assign(document.createElement('style'), { textContent });
+                    document.head.appendChild(style);
+                },
+            };
+
+            const app = Vue.createApp({
+                template: '<SiteApp/>',
+                components: {
+                    SiteApp: Vue.defineAsyncComponent(() => loadModule('./components/SiteApp.vue', options))
+                }
+            });
+
+            app.mount('#app');
+        }
+
+        loadOptionalScript('../runtime-config.generated.js', () => {
+            loadOptionalScript('../runtime-config.local.js', mountSite);
         });
-
-        app.mount('#app');
     </script>
 </body>
 </html>

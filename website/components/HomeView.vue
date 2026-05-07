@@ -3,12 +3,6 @@
     
     <!-- Hero Section -->
     <section class="relative pt-32 pb-16 lg:pt-40 lg:pb-24 overflow-hidden bg-slate-900 border-b border-slate-800">
-      <div class="absolute inset-0 pointer-events-none -z-10">
-        <div class="absolute top-[-20%] right-[-10%] w-[60%] h-[60%] bg-brand-500 rounded-full mix-blend-screen filter blur-[150px] opacity-20 animate-pulse"></div>
-        <div class="absolute bottom-[-20%] left-[-10%] w-[50%] h-[50%] bg-blue-600 rounded-full mix-blend-screen filter blur-[130px] opacity-20"></div>
-        <div class="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAiIGhlaWdodD0iMjAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGNpcmNsZSBjeD0iMSIgY3k9IjEiIHI9IjEiIGZpbGw9InJnYmEoMjU1LCAyNTUsIDI1NSwgMC4wNCkiLz48L3N2Zz4=')] [mask-image:linear-gradient(to_bottom,white,transparent)]"></div>
-      </div>
-
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative">
         <div class="grid lg:grid-cols-2 gap-16 lg:gap-12 items-center">
           
@@ -16,7 +10,7 @@
           <div class="max-w-2xl animate-fade-in-up mt-4 lg:mt-0">
             <div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/5 border border-white/10 text-brand-400 text-xs font-bold mb-6 backdrop-blur-sm tracking-wider">
               <span class="w-2 h-2 rounded-full bg-brand-400 animate-pulse"></span>
-              ADIÓS A LAS ENTREGAS FALLIDAS
+              RECOGE CUANDO TE CONVENGA
             </div>
             
             <h1 class="text-5xl lg:text-6xl font-extrabold text-white tracking-tight leading-[1.1] mb-6">
@@ -25,22 +19,18 @@
             </h1>
             
             <p class="text-lg text-slate-300 mb-8 leading-relaxed max-w-lg font-medium">
-              Elige enviar tus paquetes a <strong class="text-white">+1,000 locales Easypoint</strong> y recógelos en tus propios horarios. Sin dolor de cabeza.
+              Consulta puntos disponibles, rastrea tu paquete y recoge en un local autorizado cuando te quede de paso.
             </p>
             
             <div class="flex flex-col sm:flex-row gap-3 mb-8">
                <button @click="$emit('open-modal', 'map')" class="bg-brand-500 text-slate-900 px-8 py-4 rounded-xl font-bold hover:bg-brand-400 hover:shadow-[0_0_20px_rgba(163,230,53,0.3)] transition-all flex items-center justify-center gap-2 text-lg">
-                 Encuentra tu Punto <i class="bi bi-geo-alt-fill"></i>
+                 Ver puntos disponibles <i class="bi bi-geo-alt-fill"></i>
                </button>
             </div>
 
             <div class="flex items-center gap-4 text-sm text-slate-400">
-               <div class="flex -space-x-2">
-                  <div class="w-8 h-8 rounded-full border-2 border-slate-900 bg-slate-700 flex items-center justify-center text-white text-xs"><i class="bi bi-person-fill"></i></div>
-                  <div class="w-8 h-8 rounded-full border-2 border-slate-900 bg-slate-600 flex items-center justify-center text-white text-xs"><i class="bi bi-person-fill"></i></div>
-                  <div class="w-8 h-8 rounded-full border-2 border-slate-900 bg-slate-500 flex items-center justify-center text-white text-xs"><i class="bi bi-person-fill"></i></div>
-               </div>
-               <p><strong>+500,000</strong> usuarios ya confían en Easypoint.</p>
+               <i class="bi bi-shield-check text-brand-400 text-lg"></i>
+               <p>La información del punto y del paquete se confirma antes de mostrar instrucciones de retiro.</p>
             </div>
           </div>
 
@@ -55,7 +45,7 @@
                             <i class="bi bi-search text-xl font-bold"></i>
                         </div>
                         <h2 class="text-xl font-bold text-white mb-2">Localiza tu paquete</h2>
-                        <p class="text-slate-400 text-sm mb-5">Ingresa tu MXL ID para saber cuándo recogerlo.</p>
+                        <p id="tracking-help" class="text-slate-400 text-sm mb-5">Ingresa tu ID de rastreo para saber cuándo recogerlo.</p>
                         
                         <form v-if="!trackingResult" @submit.prevent="trackPackage" class="space-y-3">
                             <div class="relative">
@@ -68,6 +58,9 @@
                                     type="text" 
                                     placeholder="Ej: MXL90210" 
                                     required
+                                    autocomplete="off"
+                                    autocapitalize="characters"
+                                    aria-describedby="tracking-help tracking-error"
                                     class="w-full bg-slate-800/80 border border-slate-700 rounded-xl px-12 py-3.5 text-white placeholder-slate-500 focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 uppercase font-mono transition-colors text-sm"
                                 >
                             </div>
@@ -75,7 +68,7 @@
                                 <i v-if="isTracking" class="bi bi-arrow-repeat animate-spin"></i>
                                 {{ isTracking ? 'Buscando...' : 'Rastrear ahora' }}
                             </button>
-                            <p v-if="trackingError" class="text-red-400 text-xs mt-2 text-center">{{ trackingError }}</p>
+                            <p v-if="trackingError" id="tracking-error" role="alert" class="text-red-400 text-xs mt-2 text-center">{{ trackingError }}</p>
                         </form>
 
                         <div v-else class="space-y-4 animate-fade-in-up">
@@ -116,12 +109,13 @@
                            <!-- Action Block (Ready for Pickup) -->
                            <div v-if="trackingResult.status === 'at_point'" class="bg-brand-500/10 border border-brand-500/30 rounded-xl p-5 text-center shadow-lg shadow-brand-500/10">
                               <h3 class="text-brand-400 font-black text-lg mb-1">¡Listo para recoger!</h3>
-                              <p class="text-slate-300 text-xs mb-4">Muestra este código M-ID al operador del local.</p>
-                              <div class="w-32 h-32 bg-white rounded-xl mx-auto p-2 flex items-center justify-center border-4 border-brand-500/50 mb-4">
-                                <!-- Fake QR block -->
-                                <div class="w-full h-full bg-slate-900 grid grid-cols-4 grid-rows-4 gap-1 p-1">
-                                  <div v-for="i in 16" :key="i" class="bg-white" :class="Math.random() > 0.3 ? 'opacity-100' : 'opacity-0'"></div>
-                                </div>
+                              <p class="text-slate-300 text-xs mb-4">Muestra este ID al operador del local. No necesitas un código adicional.</p>
+                              <div class="bg-white rounded-xl mx-auto p-4 border-4 border-brand-500/50 mb-4 text-left">
+                                <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Código de retiro</p>
+                                <p class="text-slate-900 font-mono font-black text-xl break-all">{{ trackingResult.tracking_id }}</p>
+                                <p v-if="trackingPointName" class="text-slate-500 text-xs mt-3">
+                                  {{ trackingPointName }}<span v-if="trackingPointAddress"> · {{ trackingPointAddress }}</span>
+                                </p>
                               </div>
                            </div>
 
@@ -137,20 +131,20 @@
       </div>
     </section>
 
-    <!-- Brands Marquee -->
+    <!-- Capabilities -->
     <section class="py-12 border-b border-slate-200 bg-white overflow-hidden flex flex-col items-center">
       <div class="container mx-auto px-4 mb-6 text-center">
-        <p class="text-xs font-bold text-slate-400 uppercase tracking-widest">Las mejores tiendas online confían sus paquetes a Easypoint</p>
+        <p class="text-xs font-bold text-slate-400 uppercase tracking-widest">Flujos operativos soportados por la plataforma</p>
       </div>
       <div class="w-full relative flex overflow-hidden">
          <div class="flex space-x-16 animate-marquee whitespace-nowrap items-center min-w-max px-8">
-            <span class="text-3xl font-extrabold text-slate-300">ZARA</span>
-            <span class="text-3xl font-bold text-slate-300 font-serif">Massimo Dutti</span>
-            <span class="text-3xl font-extrabold text-slate-300 italic">GoTrendier</span>
-            <span class="text-3xl font-extrabold text-slate-300">Platanomelón</span>
-            <span class="text-3xl font-bold text-slate-300">OYSHO</span>
-            <span class="text-3xl font-extrabold text-slate-300 tracking-tighter">LEFTIES</span>
-            <span class="text-3xl font-bold text-slate-300">Prixz</span>
+            <span class="text-2xl font-extrabold text-slate-300">Checkout</span>
+            <span class="text-2xl font-bold text-slate-300">Mapa de puntos</span>
+            <span class="text-2xl font-extrabold text-slate-300">Rastreo</span>
+            <span class="text-2xl font-extrabold text-slate-300">Inventario</span>
+            <span class="text-2xl font-bold text-slate-300">Notificaciones</span>
+            <span class="text-2xl font-extrabold text-slate-300">API</span>
+            <span class="text-2xl font-bold text-slate-300">Comisiones</span>
          </div>
       </div>
     </section>
@@ -192,13 +186,13 @@
                <div class="p-10 lg:p-20">
                   <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-brand-500/10 border border-brand-500/20 text-brand-400 text-[10px] font-black uppercase tracking-widest mb-6">Socio Comercial</div>
                   <h2 class="text-4xl lg:text-5xl font-black text-white mb-6">Haz que tu negocio <span class="text-brand-400">crezca</span>.</h2>
-                  <p class="text-lg text-slate-400 mb-10">Atrae nuevos clientes a tu puerta sin invertir un solo peso en publicidad.</p>
+                  <p class="text-lg text-slate-400 mb-10">Recibe solicitudes, valida requisitos y opera paquetes con evidencia de cada movimiento.</p>
                   <button @click="$emit('open-modal', 'partner')" class="group bg-brand-500 text-slate-900 px-10 py-5 rounded-2xl font-black text-lg hover:bg-brand-400 transition-all flex items-center gap-3 shadow-xl">
                      Quiero ser Punto Easypoint <i class="bi bi-arrow-right-circle-fill group-hover:translate-x-1 transition-transform"></i>
                   </button>
                </div>
                <div class="relative min-h-[400px]">
-                  <img :src="storeImageSrc" class="absolute inset-0 w-full h-full object-cover">
+                  <img :src="storeImageSrc" alt="Mostrador de un local preparado para recibir paquetes" class="absolute inset-0 w-full h-full object-cover">
                </div>
             </div>
          </div>
@@ -210,6 +204,21 @@
 
 <script>
 const WEBSITE_BASE_SEGMENT = '/website';
+const PB = window.EASYPOINT_RUNTIME_CONFIG?.pocketBaseUrl || window.location.origin;
+
+function pbFilterString(value) {
+    return `'${String(value ?? '').replace(/\\/g, '\\\\').replace(/'/g, "\\'")}'`;
+}
+
+function pbUrl(path, params = {}) {
+    const url = new URL(path, PB);
+    for (const [key, value] of Object.entries(params)) {
+        if (value !== undefined && value !== null && value !== '') {
+            url.searchParams.set(key, String(value));
+        }
+    }
+    return url.toString();
+}
 
 function getRepoBasePath(pathname = window.location.pathname) {
     const idx = pathname.indexOf(WEBSITE_BASE_SEGMENT);
@@ -244,6 +253,14 @@ export default {
             if (this.currentStepIdx < 0) return '0%';
             const p = (this.currentStepIdx / (this.timelineSteps.length - 1)) * 100;
             return `calc(${p}% - 32px)`; // padding adjustment
+        },
+        trackingPointName() {
+            const point = this.trackingResult?.expand?.point_id;
+            return point?.name || '';
+        },
+        trackingPointAddress() {
+            const point = this.trackingResult?.expand?.point_id;
+            return point?.address || '';
         }
     },
     methods: {
@@ -257,8 +274,13 @@ export default {
           this.trackingError = '';
           this.trackingResult = null;
           try {
-             const url = `http://127.0.0.1:8090/api/collections/shipments/records?filter=(tracking_id='${this.trackingQuery}')&expand=point_id`;
+             const trackingId = this.trackingQuery.trim().toUpperCase();
+             const url = pbUrl('/api/collections/shipments/records', {
+                filter: `(tracking_id=${pbFilterString(trackingId)})`,
+                expand: 'point_id'
+             });
              const res = await fetch(url);
+             if (!res.ok) throw new Error('Tracking request failed');
              const data = await res.json();
              if (data.items && data.items.length > 0) {
                 this.trackingResult = data.items[0];
@@ -294,5 +316,12 @@ export default {
 @keyframes fadeInUp {
   from { opacity: 0; transform: translateY(20px); }
   to { opacity: 1; transform: translateY(0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-marquee,
+  .animate-fade-in-up {
+    animation: none;
+  }
 }
 </style>

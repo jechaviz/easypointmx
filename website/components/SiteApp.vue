@@ -27,14 +27,33 @@
             <!-- Divider -->
             <div class="h-5 w-px bg-slate-700"></div>
             <a :href="repoHref('/app/')" class="text-sm font-semibold text-brand-400 hover:text-brand-300 transition-colors">Acceder <i class="bi bi-box-arrow-in-right ml-1"></i></a>
-            <a :href="siteHref('/ecommerce')" @click.prevent="navigate('/ecommerce')" class="bg-brand-500 text-slate-900 hover:bg-brand-400 px-6 py-2.5 rounded-full text-sm font-bold transition-all hover:shadow-lg hover:shadow-brand-500/20 hover:-translate-y-0.5">Ser Partner</a>
+            <button @click="openModal('partner')" class="bg-brand-500 text-slate-900 hover:bg-brand-400 px-6 py-2.5 rounded-full text-sm font-bold transition-all hover:shadow-lg hover:shadow-brand-500/20 hover:-translate-y-0.5">Ser Partner</button>
           </nav>
 
           <!-- Mobile Nav Toggle -->
-          <button class="md:hidden text-white text-2xl">
-            <i class="bi bi-list"></i>
+          <button
+            @click="isMobileMenuOpen = !isMobileMenuOpen"
+            class="lg:hidden w-11 h-11 rounded-full bg-white/10 border border-white/10 text-white text-2xl flex items-center justify-center"
+            type="button"
+            aria-label="Abrir menu"
+            :aria-expanded="isMobileMenuOpen ? 'true' : 'false'"
+          >
+            <i :class="isMobileMenuOpen ? 'bi bi-x-lg text-lg' : 'bi bi-list'"></i>
           </button>
         </div>
+
+        <Transition name="mobile-menu">
+          <nav v-if="isMobileMenuOpen" class="lg:hidden mt-4 rounded-2xl bg-slate-950/95 border border-white/10 p-3 shadow-2xl backdrop-blur-xl">
+            <a :href="siteHref('/')" @click.prevent="navigate('/')" class="block px-4 py-3 rounded-xl text-sm font-bold text-slate-200 hover:bg-white/10">Inicio</a>
+            <button @click="openModal('map')" class="w-full text-left px-4 py-3 rounded-xl text-sm font-bold text-slate-200 hover:bg-white/10">Mapa</button>
+            <a :href="siteHref('/locales')" @click.prevent="navigate('/locales')" class="block px-4 py-3 rounded-xl text-sm font-bold text-slate-200 hover:bg-white/10">Para Locales</a>
+            <a :href="siteHref('/ecommerce')" @click.prevent="navigate('/ecommerce')" class="block px-4 py-3 rounded-xl text-sm font-bold text-slate-200 hover:bg-white/10">Para E-commerce</a>
+            <a :href="siteHref('/developers')" @click.prevent="navigate('/developers')" class="block px-4 py-3 rounded-xl text-sm font-bold text-slate-200 hover:bg-white/10">Developers</a>
+            <div class="h-px bg-white/10 my-2"></div>
+            <a :href="repoHref('/app/')" class="block px-4 py-3 rounded-xl text-sm font-bold text-brand-400 hover:bg-white/10">Acceder</a>
+            <button @click="openModal('partner')" class="w-full text-left px-4 py-3 rounded-xl text-sm font-black bg-brand-500 text-slate-950 hover:bg-brand-400">Ser Partner</button>
+          </nav>
+        </Transition>
       </div>
     </header>
 
@@ -73,16 +92,16 @@
        <div class="absolute inset-0 bg-slate-900/90 backdrop-blur-md cursor-pointer" @click="closeModal"></div>
        
        <!-- MAP EXPLORER MODAL -->
-       <div v-if="activeModal === 'map'" class="relative bg-slate-50 w-full h-full md:max-w-7xl md:h-[85vh] md:rounded-[2.5rem] shadow-2xl animate-fade-in-up flex flex-col overflow-hidden border border-white/10">
+       <div v-if="activeModal === 'map'" role="dialog" aria-modal="true" aria-labelledby="map-modal-title" class="relative bg-slate-50 w-full h-full md:max-w-7xl md:h-[85vh] md:rounded-[2.5rem] shadow-2xl animate-fade-in-up flex flex-col overflow-hidden border border-white/10">
           <div class="p-6 bg-white border-b border-slate-200 flex items-center justify-between shrink-0">
              <div class="flex items-center gap-4">
                 <div class="w-12 h-12 bg-brand-500 rounded-xl flex items-center justify-center text-slate-900 text-xl shadow-lg shadow-brand-500/20"><i class="bi bi-geo-alt-fill"></i></div>
                 <div>
-                   <h2 class="text-2xl font-black text-slate-900 tracking-tight">Red de Puntos Easypoint</h2>
+                   <h2 id="map-modal-title" class="text-2xl font-black text-slate-900 tracking-tight">Red de Puntos Easypoint</h2>
                    <p class="text-slate-500 font-medium text-xs uppercase tracking-widest">Encuentra tu centro de recolección</p>
                 </div>
              </div>
-             <button @click="closeModal" class="w-12 h-12 bg-slate-100 rounded-full flex items-center justify-center text-slate-500 hover:bg-slate-200 transition-colors">
+             <button @click="closeModal" aria-label="Cerrar mapa" class="w-12 h-12 bg-slate-100 rounded-full flex items-center justify-center text-slate-500 hover:bg-slate-200 transition-colors">
                <i class="bi bi-x-lg"></i>
              </button>
           </div>
@@ -91,10 +110,10 @@
              <!-- Sidebar Points List -->
              <div class="w-full md:w-[350px] bg-white border-r border-slate-200 flex flex-col">
                  <div class="flex-grow overflow-y-auto p-4 space-y-3 custom-scrollbar">
-                    <div v-for="point in pointsList" :key="point.id" @click="centerOnPoint(point)" class="p-4 rounded-2xl border border-slate-50 hover:border-brand-500 cursor-pointer transition-all hover:bg-slate-50 group" :class="activePointId === point.id ? 'bg-slate-50 border-brand-500 shadow-lg' : ''">
+                    <button v-for="point in pointsList" :key="point.id" type="button" @click="centerOnPoint(point)" class="w-full text-left p-4 rounded-2xl border border-slate-50 hover:border-brand-500 cursor-pointer transition-all hover:bg-slate-50 group focus:outline-none focus:ring-2 focus:ring-brand-500" :class="activePointId === point.id ? 'bg-slate-50 border-brand-500 shadow-lg' : ''">
                         <h4 class="font-black text-slate-900 text-sm mb-1 uppercase">{{ point.name }}</h4>
                         <p class="text-[10px] text-slate-400 font-bold uppercase tracking-widest">{{ point.address }}</p>
-                    </div>
+                    </button>
                  </div>
              </div>
              <!-- Map Container -->
@@ -109,33 +128,34 @@
        </div>
 
        <!-- B2B CONTACT MODAL -->
-       <div v-if="activeModal === 'b2b'" class="relative bg-slate-900 text-white rounded-[2.5rem] w-full max-w-lg p-10 shadow-2xl animate-fade-in-up border border-slate-800">
-          <button @click="closeModal" class="absolute top-8 right-8 w-12 h-12 bg-slate-800 rounded-full flex items-center justify-center text-slate-400 hover:text-white transition-all hover:rotate-90">
+       <div v-if="activeModal === 'b2b'" role="dialog" aria-modal="true" aria-labelledby="b2b-modal-title" class="relative bg-slate-900 text-white rounded-[2.5rem] w-full max-w-lg p-10 shadow-2xl animate-fade-in-up border border-slate-800">
+          <button @click="closeModal" aria-label="Cerrar formulario B2B" class="absolute top-8 right-8 w-12 h-12 bg-slate-800 rounded-full flex items-center justify-center text-slate-400 hover:text-white transition-all hover:rotate-90">
             <i class="bi bi-x-lg"></i>
           </button>
           
           <div class="w-16 h-16 bg-blue-600 rounded-2xl flex items-center justify-center text-white mb-8 text-3xl shadow-xl shadow-blue-600/20"><i class="bi bi-person-badge"></i></div>
-          <h2 class="text-3xl font-black text-white mb-2 tracking-tight">Ventas B2B</h2>
+          <h2 id="b2b-modal-title" class="text-3xl font-black text-white mb-2 tracking-tight">Ventas B2B</h2>
           <p class="text-slate-400 mb-8 font-medium">Integra tu E-commerce a la red Easypoint.</p>
+          <p v-if="formError" role="alert" class="mb-4 rounded-xl bg-red-500/10 border border-red-500/30 px-4 py-3 text-sm text-red-200">{{ formError }}</p>
           
           <form v-if="!formSuccess" @submit.prevent="submitB2BApp" class="space-y-4">
              <div class="grid md:grid-cols-2 gap-4">
                 <div>
                    <label class="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2">Empresa</label>
-                   <input v-model="form.business_name" required type="text" placeholder="Ej. Mi Tienda" class="w-full bg-slate-800 border-none ring-1 ring-slate-700 rounded-xl px-4 py-3 focus:ring-blue-500 text-white transition-all">
+                   <input v-model="form.business_name" name="business_name" autocomplete="organization" required type="text" placeholder="Ej. Mi Tienda" class="w-full bg-slate-800 border-none ring-1 ring-slate-700 rounded-xl px-4 py-3 focus:ring-blue-500 text-white transition-all">
                 </div>
                 <div>
                    <label class="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2">Sitio Web</label>
-                   <input v-model="form.website" required type="url" placeholder="https://..." class="w-full bg-slate-800 border-none ring-1 ring-slate-700 rounded-xl px-4 py-3 focus:ring-blue-500 text-white transition-all">
+                   <input v-model="form.website" name="website" autocomplete="url" required type="url" placeholder="https://..." class="w-full bg-slate-800 border-none ring-1 ring-slate-700 rounded-xl px-4 py-3 focus:ring-blue-500 text-white transition-all">
                 </div>
              </div>
              <div>
                 <label class="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2">Email Corporativo</label>
-                <input v-model="form.email" required type="email" placeholder="ventas@empresa.com" class="w-full bg-slate-800 border-none ring-1 ring-slate-700 rounded-xl px-4 py-3 focus:ring-blue-500 text-white transition-all">
+                <input v-model="form.email" name="email" autocomplete="email" required type="email" placeholder="ventas@empresa.com" class="w-full bg-slate-800 border-none ring-1 ring-slate-700 rounded-xl px-4 py-3 focus:ring-blue-500 text-white transition-all">
              </div>
              <div>
                 <label class="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2">Volumen Proyectado</label>
-                <select v-model="form.volume" class="w-full bg-slate-800 border-none ring-1 ring-slate-700 rounded-xl px-4 py-3 focus:ring-blue-500 text-white transition-all appearance-none cursor-pointer">
+                <select v-model="form.volume" name="volume" class="w-full bg-slate-800 border-none ring-1 ring-slate-700 rounded-xl px-4 py-3 focus:ring-blue-500 text-white transition-all appearance-none cursor-pointer">
                    <option value="1-100">1 - 100 paquetes/mes</option>
                    <option value="100-500">100 - 500 paquetes/mes</option>
                    <option value="500+">Más de 500 paquetes/mes</option>
@@ -156,18 +176,19 @@
        </div>
 
        <!-- PARTNER MODAL -->
-       <div v-if="activeModal === 'partner'" class="relative bg-white rounded-[2.5rem] w-full max-w-lg p-10 shadow-2xl animate-fade-in-up">
-          <button @click="closeModal" class="absolute top-8 right-8 w-12 h-12 bg-slate-100 rounded-full flex items-center justify-center text-slate-500 hover:bg-slate-200 transition-all">
+       <div v-if="activeModal === 'partner'" role="dialog" aria-modal="true" aria-labelledby="partner-modal-title" class="relative bg-white rounded-[2.5rem] w-full max-w-lg p-10 shadow-2xl animate-fade-in-up">
+          <button @click="closeModal" aria-label="Cerrar formulario de afiliación" class="absolute top-8 right-8 w-12 h-12 bg-slate-100 rounded-full flex items-center justify-center text-slate-500 hover:bg-slate-200 transition-all">
             <i class="bi bi-x-lg"></i>
           </button>
           <div class="w-16 h-16 bg-brand-500 rounded-2xl flex items-center justify-center text-slate-900 mb-8 text-3xl shadow-xl shadow-brand-500/20"><i class="bi bi-shop"></i></div>
-          <h2 class="text-3xl font-black text-slate-900 mb-2 tracking-tight">Afíliate como Punto</h2>
-          <p class="text-slate-600 mb-8 font-medium">Únete a la red OOH líder en México.</p>
+          <h2 id="partner-modal-title" class="text-3xl font-black text-slate-900 mb-2 tracking-tight">Afíliate como Punto</h2>
+          <p class="text-slate-600 mb-8 font-medium">Solicita evaluación para operar como punto de entrega Easypoint.</p>
+          <p v-if="formError" role="alert" class="mb-4 rounded-xl bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-700">{{ formError }}</p>
           
           <form v-if="!formSuccess" @submit.prevent="submitPartnerApp" class="space-y-4">
               <div>
                  <label class="block text-xs font-black text-slate-400 uppercase tracking-widest mb-2">Nombre Negocio</label>
-                 <input v-model="form.business_name" required type="text" placeholder="Mi Local" class="w-full bg-slate-50 border-none ring-1 ring-slate-100 rounded-xl px-4 py-3 focus:ring-brand-500 transition-all">
+                 <input v-model="form.business_name" name="business_name" autocomplete="organization" required type="text" placeholder="Mi Local" class="w-full bg-slate-50 border-none ring-1 ring-slate-100 rounded-xl px-4 py-3 focus:ring-brand-500 transition-all">
               </div>
               <div class="relative">
                  <label class="block text-xs font-black text-slate-400 uppercase tracking-widest mb-2">Dirección del Local</label>
@@ -176,6 +197,8 @@
                    @input="debounceAddr"
                    @blur="onBlurAddr"
                    type="text"
+                   name="address"
+                   autocomplete="street-address"
                    placeholder="Ej: Insurgentes Sur 400, Roma, CDMX"
                    class="w-full bg-slate-50 border-none ring-1 ring-slate-100 rounded-xl px-4 py-3 focus:ring-brand-500 transition-all"
                  >
@@ -190,7 +213,7 @@
               </div>
               <div>
                  <label class="block text-xs font-black text-slate-400 uppercase tracking-widest mb-2">WhatsApp</label>
-                 <input v-model="form.whatsapp" required type="tel" placeholder="52..." class="w-full bg-slate-50 border-none ring-1 ring-slate-100 rounded-xl px-4 py-3 focus:ring-brand-500 transition-all">
+                 <input v-model="form.whatsapp" name="tel" autocomplete="tel" required type="tel" placeholder="52..." class="w-full bg-slate-50 border-none ring-1 ring-slate-100 rounded-xl px-4 py-3 focus:ring-brand-500 transition-all">
               </div>
               <div>
                  <label class="block text-xs font-black text-slate-400 uppercase tracking-widest mb-2">Horario de Atención</label>
@@ -214,6 +237,7 @@
 
 <script>
 const { loadModule } = window['vue3-sfc-loader'];
+const PB = window.EASYPOINT_RUNTIME_CONFIG?.pocketBaseUrl || window.location.origin;
 
 const options = {
     moduleCache: { vue: Vue },
@@ -250,6 +274,20 @@ function getCurrentRoute(pathname = window.location.pathname) {
         : '/';
 }
 
+function escapeHtml(value) {
+  return String(value ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+function normalizeWhatsapp(value) {
+  const digits = String(value || '').replace(/\D/g, '');
+  return digits.length >= 8 ? digits : '';
+}
+
 export default {
   components: {
     HomeView: Vue.defineAsyncComponent(() => loadModule('./components/HomeView.vue', options)),
@@ -265,8 +303,11 @@ export default {
       repoBasePath: getRepoBasePath(),
       currentRoute: getCurrentRoute(),
       isScrolled: false,
+      isMobileMenuOpen: false,
       activeModal: null,
       activePointId: null,
+      map: null,
+      markers: {},
       isSubmitting: false,
       formSuccess: false,
       formError: '',
@@ -304,11 +345,13 @@ export default {
   mounted() {
     window.addEventListener('scroll', this.handleScroll);
     window.addEventListener('popstate', this.handlePopState);
+    window.addEventListener('keydown', this.handleKeydown);
     this.handleScroll();
   },
   unmounted() {
     window.removeEventListener('scroll', this.handleScroll);
     window.removeEventListener('popstate', this.handlePopState);
+    window.removeEventListener('keydown', this.handleKeydown);
   },
   methods: {
     siteHref(path) {
@@ -325,12 +368,21 @@ export default {
         this.currentRoute = path;
         window.history.pushState(null, '', this.siteHref(path));
       }
+      this.isMobileMenuOpen = false;
       window.scrollTo({ top: 0, behavior: 'smooth' });
     },
     handleScroll() {
       this.isScrolled = window.scrollY > 20;
     },
+    handleKeydown(event) {
+      if (event.key === 'Escape' && this.activeModal) {
+        this.closeModal();
+      }
+    },
     openModal(type) {
+      this.isMobileMenuOpen = false;
+      this.formError = '';
+      this.formSuccess = false;
       this.activeModal = type;
       if (type === 'map') {
         this.fetchPoints().then(() => {
@@ -348,14 +400,14 @@ export default {
          this.formSuccess = false;
          this.formError = '';
          this.addrQuery = '';
-           this.addrSuggestions = [];
-           this.form = { business_name: '', whatsapp: '', email: '', website: '', volume: '1-100', address: '', horarios: '' };
+         this.addrSuggestions = [];
+         this.form = { business_name: '', whatsapp: '', email: '', website: '', volume: '1-100', address: '', maps_url: '', horarios: '', description: '' };
       }, 300);
     },
     async fetchPoints() {
       this.isLoadingPoints = true;
       try {
-        const res = await fetch('http://127.0.0.1:8090/api/collections/points/records');
+        const res = await fetch(`${PB}/api/collections/points/records`);
         if (!res.ok) throw new Error('API Error');
         const data = await res.json();
         this.pointsList = data.items || [];
@@ -395,25 +447,32 @@ export default {
 
       this.markers = {};
       this.pointsList.forEach(p => {
-        if (p.lat && p.lng) {
+        const lat = Number(p.lat);
+        const lng = Number(p.lng);
+        if (Number.isFinite(lat) && Number.isFinite(lng)) {
+          const name = escapeHtml(p.name || 'Punto Easypoint');
+          const address = escapeHtml(p.address || '');
+          const whatsapp = normalizeWhatsapp(p.whatsapp);
           const popupHtml = `
             <div class="p-2 min-w-[180px]">
-                <h5 class="font-black text-slate-900 mb-1">${p.name}</h5>
-                <p class="text-[10px] text-slate-500 mb-3">${p.address}</p>
+                <h5 class="font-black text-slate-900 mb-1">${name}</h5>
+                <p class="text-[10px] text-slate-500 mb-3">${address}</p>
                 <div class="flex gap-2">
-                    ${p.whatsapp ? `<a href="https://wa.me/${p.whatsapp}" target="_blank" class="flex-grow bg-green-500 text-white text-[9px] font-black py-1.5 rounded-md flex items-center justify-center gap-1"><i class="bi bi-whatsapp"></i> Chat</a>` : ''}
+                    ${whatsapp ? `<a href="https://wa.me/${whatsapp}" target="_blank" rel="noopener noreferrer" class="flex-grow bg-green-500 text-white text-[9px] font-black py-1.5 rounded-md flex items-center justify-center gap-1"><i class="bi bi-whatsapp"></i> Chat</a>` : ''}
                 </div>
             </div>
           `;
-          const marker = L.marker([p.lat, p.lng]).addTo(this.map).bindPopup(popupHtml, { closeButton: false });
+          const marker = L.marker([lat, lng]).addTo(this.map).bindPopup(popupHtml, { closeButton: false });
           this.markers[p.id] = marker;
         }
       });
     },
     centerOnPoint(p) {
       this.activePointId = p.id;
-      if (this.map && p.lat && p.lng) {
-        this.map.setView([p.lat, p.lng], 16);
+      const lat = Number(p.lat);
+      const lng = Number(p.lng);
+      if (this.map && Number.isFinite(lat) && Number.isFinite(lng)) {
+        this.map.setView([lat, lng], 16);
         if (this.markers[p.id]) this.markers[p.id].openPopup();
       }
     },
@@ -437,25 +496,45 @@ export default {
     },
     async submitPartnerApp() {
       this.isSubmitting = true;
+      this.formError = '';
       try {
-        const res = await fetch('http://127.0.0.1:8090/api/collections/partner_applications/records', {
+        const address = this.form.address || this.addrQuery.trim();
+        const res = await fetch(`${PB}/api/collections/partner_applications/records`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ ...this.form, status: 'new' })
+          body: JSON.stringify({ ...this.form, address, status: 'new' })
         });
-        if (!res.ok) throw new Error('API Error');
+        if (!res.ok) throw new Error('No se pudo registrar la solicitud');
         this.formSuccess = true;
       } catch(e) {
-        this.formError = 'Error al enviar.';
+        this.formError = 'No pudimos enviar la solicitud. Revisa los datos e intenta de nuevo.';
       } finally {
         this.isSubmitting = false;
       }
     },
     async submitB2BApp() {
       this.isSubmitting = true;
+      this.formError = '';
       try {
-        await new Promise(r => setTimeout(r, 1000));
+        const description = [
+          'Tipo: ecommerce',
+          `Email: ${this.form.email}`,
+          `Sitio: ${this.form.website}`,
+          `Volumen: ${this.form.volume}`
+        ].join('\n');
+        const res = await fetch(`${PB}/api/collections/partner_applications/records`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            business_name: this.form.business_name,
+            description,
+            status: 'new'
+          })
+        });
+        if (!res.ok) throw new Error('No se pudo registrar la solicitud B2B');
         this.formSuccess = true;
+      } catch (_) {
+        this.formError = 'No pudimos enviar la solicitud. Revisa los datos e intenta de nuevo.';
       } finally {
         this.isSubmitting = false;
       }
@@ -481,4 +560,14 @@ export default {
   to { opacity: 1; transform: translateY(0); }
 }
 .animate-fade-in-up { animation: fade-in-up 0.4s ease-out forwards; }
+
+.mobile-menu-enter-active,
+.mobile-menu-leave-active {
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+.mobile-menu-enter-from,
+.mobile-menu-leave-to {
+  opacity: 0;
+  transform: translateY(-8px);
+}
 </style>
