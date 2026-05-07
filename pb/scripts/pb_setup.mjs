@@ -1,19 +1,11 @@
-const PB_URL = 'http://127.0.0.1:8090';
+import { adminHeaders, pbApi } from './_shared.mjs';
 
 async function setupPB() {
   console.log('Authenticating as Admin...');
-  const authRes = await fetch(`${PB_URL}/api/admins/auth-with-password`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ identity: 'admin@easypoint.mx', password: 'easypoint123' })
-  });
-  const { token } = await authRes.json();
-  if (!token) throw new Error("Failed to auth");
-
-  const headers = { 'Content-Type': 'application/json', 'Authorization': token };
+  const headers = await adminHeaders({ allowDemoFallback: false });
 
   console.log('Creating points collection...');
-  let pointsRes = await fetch(`${PB_URL}/api/collections`, {
+  let pointsRes = await fetch(pbApi('/api/collections'), {
     method: 'POST', headers,
     body: JSON.stringify({
       name: 'points',
@@ -30,7 +22,7 @@ async function setupPB() {
   // ignore errors if already exists
 
   console.log('Creating shipments collection...');
-  let shipmentsRes = await fetch(`${PB_URL}/api/collections`, {
+  let shipmentsRes = await fetch(pbApi('/api/collections'), {
     method: 'POST', headers,
     body: JSON.stringify({
       name: 'shipments',
@@ -45,7 +37,7 @@ async function setupPB() {
   });
 
   console.log('Creating partner_applications collection...');
-  await fetch(`${PB_URL}/api/collections`, {
+  await fetch(pbApi('/api/collections'), {
     method: 'POST', headers,
     body: JSON.stringify({
       name: 'partner_applications',

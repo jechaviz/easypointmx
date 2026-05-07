@@ -5,7 +5,7 @@
  * Run with: node pb_rich_mock.mjs
  */
 
-const PB = 'http://127.0.0.1:8090';
+import { PB_ADMIN_EMAIL, PB_ADMIN_PASSWORD, adminHeaders, pbApi, pbApiUrl, pbFilterString } from './_shared.mjs';
 
 // Helper for dates
 const daysAgo = (days) => new Date(Date.now() - days * 24 * 60 * 60 * 1000).toISOString();
@@ -15,21 +15,16 @@ const randomEl = (arr) => arr[Math.floor(Math.random() * arr.length)];
 async function run() {
   console.log('--- EASYPOINT RICH MOCK DATA GENERATOR ---');
   console.log('Authenticating as admin...');
-  const { token } = await fetch(`${PB}/api/admins/auth-with-password`, {
-    method: 'POST', headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ identity: 'admin@easypoint.mx', password: 'easypoint123' })
-  }).then(r => r.json());
-
-  const H = { 'Content-Type': 'application/json', 'Authorization': token };
+  const H = await adminHeaders({ allowDemoFallback: false });
   const handleRes = async (r) => {
     const data = await r.json();
     if (!r.ok) throw new Error(JSON.stringify(data));
     return data;
   };
-  const getAPI = async (path) => fetch(`${PB}${path}`, { headers: H }).then(handleRes);
-  const postAPI = async (path, body) => fetch(`${PB}${path}`, { method: 'POST', headers: H, body: JSON.stringify(body) }).then(handleRes);
-  const patchAPI = async (path, body) => fetch(`${PB}${path}`, { method: 'PATCH', headers: H, body: JSON.stringify(body) }).then(handleRes);
-  const delAPI = async (path) => fetch(`${PB}${path}`, { method: 'DELETE', headers: H });
+  const getAPI = async (path) => fetch(pbApi(path), { headers: H }).then(handleRes);
+  const postAPI = async (path, body) => fetch(pbApi(path), { method: 'POST', headers: H, body: JSON.stringify(body) }).then(handleRes);
+  const patchAPI = async (path, body) => fetch(pbApi(path), { method: 'PATCH', headers: H, body: JSON.stringify(body) }).then(handleRes);
+  const delAPI = async (path) => fetch(pbApi(path), { method: 'DELETE', headers: H });
 
   // 1. Setup 'system_settings' collection
   console.log('1. Setting up system_settings...');
@@ -102,14 +97,16 @@ async function run() {
   // 4. Create extra users (Operators) tied to these points
   console.log('4. Generating Users...');
   const usersToCreate = [
-    { email: 'admin@easypoint.mx', full_name: 'Test Admin', role: 'admin', pass: 'easypoint123' },
+    { email: PB_ADMIN_EMAIL, full_name: 'Test Admin', role: 'admin', pass: PB_ADMIN_PASSWORD },
     { email: 'driver@easypoint.mx', full_name: 'Repartidor de Prueba', role: 'driver', pass: 'Punto2024!' },
     { email: 'pepe@yopmail.com', full_name: 'José Martínez', role: 'operator', pass: 'Punto2024!', point_idx: 0 },
     { email: 'maria@yopmail.com', full_name: 'María Gómez', role: 'operator', pass: 'Punto2024!', point_idx: 1 },
     { email: 'carlos@yopmail.com', full_name: 'Carlos Ruiz', role: 'operator', pass: 'Punto2024!', point_idx: 2 }
   ];
   for (const u of usersToCreate) {
-    const existing = await getAPI(`/api/collections/users/records?filter=(email="${u.email}")`);
+    const existing = await getAPI(pbApiUrl('/api/collections/users/records', {
+      filter: `(email=${pbFilterString(u.email)})`
+    }));
     if (existing.items?.length > 0) await delAPI(`/api/collections/users/records/${existing.items[0].id}`);
     
     await postAPI('/api/collections/users/records', {
@@ -121,9 +118,13 @@ async function run() {
   }
 
   // Map original demo operators to points too
-  const op1 = await getAPI('/api/collections/users/records?filter=(email="punto1@yopmail.com")');
+  const op1 = await getAPI(pbApiUrl('/api/collections/users/records', {
+    filter: `(email=${pbFilterString('punto1@yopmail.com')})`
+  }));
   if (op1.items?.[0]) await patchAPI(`/api/collections/users/records/${op1.items[0].id}`, { point_ref: createdPoints[3].id, full_name: 'Operador 1' });
-  const op2 = await getAPI('/api/collections/users/records?filter=(email="punto2@yopmail.com")');
+  const op2 = await getAPI(pbApiUrl('/api/collections/users/records', {
+    filter: `(email=${pbFilterString('punto2@yopmail.com')})`
+  }));
   if (op2.items?.[0]) await patchAPI(`/api/collections/users/records/${op2.items[0].id}`, { point_ref: createdPoints[4].id, full_name: 'Operador 2' });
 
   // 5. Generate Shipments (Lots of them)

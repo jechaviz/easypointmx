@@ -1,18 +1,11 @@
-const PB_URL = 'http://127.0.0.1:8090';
+import { adminHeaders, pbApi, pbApiUrl, pbFilterString } from './_shared.mjs';
 
 async function seed() {
-  // Auth as superadmin
-  const authRes = await fetch(`${PB_URL}/api/admins/auth-with-password`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ identity: 'admin@easypoint.mx', password: 'easypoint123' })
-  });
-  const { token } = await authRes.json();
-  const H = { 'Content-Type': 'application/json', 'Authorization': token };
+  const H = await adminHeaders();
 
   // ── 1. Add 'role' + 'point_id' fields to the users collection ──────────────
   console.log('Patching users collection...');
-  const usersRes = await fetch(`${PB_URL}/api/collections/users`, { headers: H });
+  const usersRes = await fetch(pbApi('/api/collections/users'), { headers: H });
   const usersColl = await usersRes.json();
   const existingNames = usersColl.schema.map(f => f.name);
   if (!existingNames.includes('role'))
@@ -24,7 +17,7 @@ async function seed() {
 
   // Make sure email is verified by default: patch options
   usersColl.options = { ...usersColl.options, requireEmail: true };
-  await fetch(`${PB_URL}/api/collections/${usersColl.id}`, {
+  await fetch(pbApi(`/api/collections/${usersColl.id}`), {
     method: 'PATCH', headers: H, body: JSON.stringify(usersColl)
   });
 
@@ -32,18 +25,20 @@ async function seed() {
   const makeUser = async (email, password, role, full_name) => {
     // Check if user already exists
     const check = await fetch(
-      `${PB_URL}/api/collections/users/records?filter=(email='${email}')`, { headers: H }
+      pbApiUrl('/api/collections/users/records', {
+        filter: `(email=${pbFilterString(email)})`
+      }), { headers: H }
     );
     const checkData = await check.json();
     if (checkData.items?.length > 0) {
       console.log(`  User ${email} already exists, patching role...`);
-      await fetch(`${PB_URL}/api/collections/users/records/${checkData.items[0].id}`, {
+      await fetch(pbApi(`/api/collections/users/records/${checkData.items[0].id}`), {
         method: 'PATCH', headers: H,
         body: JSON.stringify({ role, full_name, emailVisibility: true, verified: true })
       });
       return checkData.items[0];
     }
-    const r = await fetch(`${PB_URL}/api/collections/users/records`, {
+    const r = await fetch(pbApi('/api/collections/users/records'), {
       method: 'POST', headers: H,
       body: JSON.stringify({
         email, password, passwordConfirm: password,
@@ -57,7 +52,7 @@ async function seed() {
   };
 
   // Get first two points to link operators
-  const ptsRes = await fetch(`${PB_URL}/api/collections/points/records?perPage=5`, { headers: H });
+  const ptsRes = await fetch(pbApi('/api/collections/points/records?perPage=5'), { headers: H });
   const pts = (await ptsRes.json()).items || [];
 
   await makeUser('admin@yopmail.com', 'Admin2024!', 'admin', 'Carlos Easypoint');
@@ -66,22 +61,22 @@ async function seed() {
 
   // Link operators to points
   if (pts[0] && op1.id) {
-    await fetch(`${PB_URL}/api/collections/users/records/${op1.id}`, {
+    await fetch(pbApi(`/api/collections/users/records/${op1.id}`), {
       method: 'PATCH', headers: H, body: JSON.stringify({ point_ref: pts[0].id })
     });
-    await fetch(`${PB_URL}/api/collections/points/records/${pts[0].id}`, {
+    await fetch(pbApi(`/api/collections/points/records/${pts[0].id}`), {
       method: 'PATCH', headers: H, body: JSON.stringify({ operator_email: 'punto1@yopmail.com' })
     });
   }
   if (pts[1] && op2.id) {
-    await fetch(`${PB_URL}/api/collections/users/records/${op2.id}`, {
+    await fetch(pbApi(`/api/collections/users/records/${op2.id}`), {
       method: 'PATCH', headers: H, body: JSON.stringify({ point_ref: pts[1].id })
     });
   }
 
   // ── 3. Create commissions collection ──────────────────────────────────────
   console.log('Ensuring commissions collection...');
-  const commRes = await fetch(`${PB_URL}/api/collections`, {
+  const commRes = await fetch(pbApi('/api/collections'), {
     method: 'POST', headers: H,
     body: JSON.stringify({
       name: 'commissions',
@@ -103,7 +98,7 @@ async function seed() {
 
   // ── 4. Create invoices collection ─────────────────────────────────────────
   console.log('Ensuring invoices collection...');
-  await fetch(`${PB_URL}/api/collections`, {
+  await fetch(pbApi('/api/collections'), {
     method: 'POST', headers: H,
     body: JSON.stringify({
       name: 'invoices',
@@ -132,7 +127,7 @@ async function seed() {
       for (const period of months) {
         const packages = Math.floor(Math.random() * 100 + 50);
         const rate = 8.50;
-        await fetch(`${PB_URL}/api/collections/commissions/records`, {
+        await fetch(pbApi('/api/collections/commissions/records'), {
           method: 'POST', headers: H,
           body: JSON.stringify({
             point_id: pt.id, point_name: pt.name,
@@ -146,7 +141,7 @@ async function seed() {
 
   // ── 6. Seed demo invoice ───────────────────────────────────────────────────
   console.log('Seeding demo invoice...');
-  await fetch(`${PB_URL}/api/collections/invoices/records`, {
+  await fetch(pbApi('/api/collections/invoices/records'), {
     method: 'POST', headers: H,
     body: JSON.stringify({
       number: 'EP-2026-001',

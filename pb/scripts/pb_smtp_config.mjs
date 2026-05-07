@@ -8,7 +8,7 @@
  * Usage: node pb_smtp_config.mjs
  */
 
-const PB_URL = 'http://127.0.0.1:8090';
+import { WEB_URL, adminHeaders, pbApi } from './_shared.mjs';
 
 // ── SMTP CONFIGURATION ──────────────────────────────────────────────────────
 // Option A: Mailtrap (dev testing) — sign up free at mailtrap.io
@@ -31,18 +31,15 @@ const FROM_CONFIG = {
   address: "noreply@easypoint.mx"
 };
 
+const APP_URL = process.env.PB_APP_URL || WEB_URL;
+const PB_PANEL_URL = process.env.PB_PANEL_URL || pbApi('/_/');
+
 async function configureSmtp() {
   console.log('Authenticating with PocketBase admin...');
-  const authRes = await fetch(`${PB_URL}/api/admins/auth-with-password`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ identity: 'admin@easypoint.mx', password: 'easypoint123' })
-  });
-  const { token } = await authRes.json();
-  const H = { 'Content-Type': 'application/json', 'Authorization': token };
+  const H = await adminHeaders({ allowDemoFallback: false });
 
   console.log('Fetching current settings...');
-  const settingsRes = await fetch(`${PB_URL}/api/settings`, { headers: H });
+  const settingsRes = await fetch(pbApi('/api/settings'), { headers: H });
   const settings = await settingsRes.json();
 
   const updatedSettings = {
@@ -53,12 +50,12 @@ async function configureSmtp() {
       senderName:    FROM_CONFIG.name,
       senderAddress: FROM_CONFIG.address,
       appName: "Easypoint.mx",
-      appUrl: "http://localhost:3033"
+      appUrl: APP_URL
     }
   };
 
   console.log('Applying SMTP settings...');
-  const res = await fetch(`${PB_URL}/api/settings`, {
+  const res = await fetch(pbApi('/api/settings'), {
     method: 'PATCH',
     headers: H,
     body: JSON.stringify(updatedSettings)
@@ -72,15 +69,18 @@ async function configureSmtp() {
     console.log('You can test by sending a password reset from the login page.');
   } else {
     console.log('\n⚠️  Settings applied – verify SMTP credentials are correct.');
-    console.log('    Check the PocketBase admin panel: http://127.0.0.1:8090/_/');
+    console.log(`    Check the PocketBase admin panel: ${PB_PANEL_URL}`);
   }
 
   // Test: send password reset to admin (requires real SMTP)
-  // await fetch(`${PB_URL}/api/collections/users/request-password-reset`, {
+  // await fetch(pbApi('/api/collections/users/request-password-reset'), {
   //   method: 'POST',
   //   headers: { 'Content-Type': 'application/json' },
   //   body: JSON.stringify({ email: 'admin@yopmail.com' })
   // });
 }
 
-configureSmtp().catch(console.error);
+configureSmtp().catch((error) => {
+  console.error(error.message || error);
+  process.exitCode = 1;
+});

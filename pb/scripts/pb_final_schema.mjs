@@ -1,18 +1,12 @@
-const PB_URL = 'http://127.0.0.1:8090';
+import { adminHeaders, pbApi } from './_shared.mjs';
 
 async function finalSchemaUpgrade() {
   console.log('Authenticating...');
-  const authRes = await fetch(`${PB_URL}/api/admins/auth-with-password`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ identity: 'admin@easypoint.mx', password: 'easypoint123' })
-  });
-  const { token } = await authRes.json();
-  const headers = { 'Content-Type': 'application/json', 'Authorization': token };
+  const headers = await adminHeaders({ allowDemoFallback: false });
 
   // 1. Fix partner_applications
   console.log('Updating partner_applications collection...');
-  const paRes = await fetch(`${PB_URL}/api/collections/partner_applications`, { headers });
+  const paRes = await fetch(pbApi('/api/collections/partner_applications'), { headers });
   const paColl = await paRes.json();
   
   if (paColl && paColl.id) {
@@ -36,7 +30,7 @@ async function finalSchemaUpgrade() {
       }
     }
 
-    await fetch(`${PB_URL}/api/collections/${paColl.id}`, {
+    await fetch(pbApi(`/api/collections/${paColl.id}`), {
       method: 'PATCH',
       headers,
       body: JSON.stringify(paColl)
@@ -45,7 +39,7 @@ async function finalSchemaUpgrade() {
 
   // 2. Add notifications collection
   console.log('Ensuring notifications collection...');
-  await fetch(`${PB_URL}/api/collections`, {
+  await fetch(pbApi('/api/collections'), {
     method: 'POST',
     headers,
     body: JSON.stringify({

@@ -1,17 +1,11 @@
-const PB_URL = 'http://127.0.0.1:8090';
+import { adminHeaders, pbApi } from './_shared.mjs';
 
 async function richDataUpgrade() {
   console.log('Authenticating...');
-  const authRes = await fetch(`${PB_URL}/api/admins/auth-with-password`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ identity: 'admin@easypoint.mx', password: 'easypoint123' })
-  });
-  const { token } = await authRes.json();
-  const headers = { 'Content-Type': 'application/json', 'Authorization': token };
+  const headers = await adminHeaders();
 
   console.log('Fetching points collection...');
-  const collectionsRes = await fetch(`${PB_URL}/api/collections/points`, { headers });
+  const collectionsRes = await fetch(pbApi('/api/collections/points'), { headers });
   const pointsColl = await collectionsRes.json();
   
   if (pointsColl && pointsColl.id) {
@@ -29,7 +23,7 @@ async function richDataUpgrade() {
       }
     }
 
-    await fetch(`${PB_URL}/api/collections/${pointsColl.id}`, {
+    await fetch(pbApi(`/api/collections/${pointsColl.id}`), {
       method: 'PATCH',
       headers,
       body: JSON.stringify(pointsColl)
@@ -38,7 +32,7 @@ async function richDataUpgrade() {
 
   // Seed with rich links
   console.log('Seeding rich links...');
-  const ptsRes = await fetch(`${PB_URL}/api/collections/points/records`, { headers });
+  const ptsRes = await fetch(pbApi('/api/collections/points/records'), { headers });
   const ptsData = await ptsRes.json();
 
   const richLinks = [
@@ -54,7 +48,7 @@ async function richDataUpgrade() {
 
   for(let i=0; i < (ptsData.items || []).length; i++) {
     const p = ptsData.items[i];
-    await fetch(`${PB_URL}/api/collections/points/records/${p.id}`, {
+    await fetch(pbApi(`/api/collections/points/records/${p.id}`), {
       method: 'PATCH',
       headers,
       body: JSON.stringify(richLinks[i % richLinks.length])
