@@ -159,6 +159,67 @@ async function runTests() {
         failures++;
     }
 
+    // Test 9: Catálogo de excursiones es público (list).
+    try {
+        const res = await fetch(`${PB_API}/collections/excursions/records`);
+        const data = await res.json();
+        if (res.ok && Array.isArray(data.items)) {
+            console.log(`✅ [API] List Excursions (público): OK (${data.items.length})`);
+        } else {
+            throw new Error(`Status ${res.status}`);
+        }
+    } catch (e) {
+        console.error('❌ [API] List Excursions: FAILED', e.message);
+        failures++;
+    }
+
+    // Test 10: Reservación pública de excursión (create abierto).
+    try {
+        const res = await fetch(`${PB_API}/collections/excursion_bookings/records`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                excursion_name: 'E2E Tour',
+                destination: 'E2E Destino',
+                customer_name: `E2E Cliente ${Math.floor(Math.random() * 100000)}`,
+                customer_phone: '5500000000',
+                people: 2,
+                excursion_date: '2026-12-01',
+                total: 1000,
+                status: 'new'
+            })
+        });
+        if (res.ok) {
+            const created = await res.json();
+            console.log(`✅ [API] Public Excursion Booking (${created.id}): OK`);
+        } else {
+            const body = await res.text();
+            throw new Error(`Status ${res.status} - ${body}`);
+        }
+    } catch (e) {
+        console.error('❌ [API] Public Excursion Booking: FAILED', e.message);
+        failures++;
+    }
+
+    // Test 11: Guías protegidas — create anónimo rechazado (venta solo staff).
+    try {
+        const res = await fetch(`${PB_API}/collections/shipping_guides/records`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ carrier: 'estafeta', status: 'quoted', recipient_name: 'E2E' })
+        });
+        if (res.ok) {
+            throw new Error('SEGURIDAD: el create anónimo de guías fue permitido.');
+        } else if ([400, 401, 403].includes(res.status)) {
+            console.log(`✅ [API] Shipping guide create protegido (anon rechazado ${res.status}): OK`);
+        } else {
+            throw new Error(`Status inesperado ${res.status}`);
+        }
+    } catch (e) {
+        console.error('❌ [API] Shipping guide create protegido: FAILED', e.message);
+        failures++;
+    }
+
     console.log('\n--- Test Summary ---');
     if (failures === 0) {
         console.log('🎉 ALL TESTS PASSED SUCCESSFULLY');

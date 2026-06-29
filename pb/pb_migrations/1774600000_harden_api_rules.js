@@ -35,32 +35,30 @@ migrate((db) => {
     collection.viewRule = rules.view
     collection.createRule = rules.create
     collection.updateRule = rules.update
-    collection.deleteRule = rules.delete
+    collection.deleteRule = rules.del
     dao.saveCollection(collection)
   }
 
   apply('points', {
     list: '', view: '', // mapa publico
-    create: isAdmin, update: isAdmin, delete: isAdmin
+    create: isAdmin, update: isAdmin, del: isAdmin
   })
 
   apply('partner_applications', {
     list: adminOrSales, view: adminOrSales,
     create: '', // formularios publicos partner / B2B
-    update: adminOrSales, delete: isAdmin
+    update: adminOrSales, del: isAdmin
   })
 
   apply('shipments', {
     list: isStaff, view: isStaff, // rastreo publico via /api/track/:code
-    create: isStaff, update: isStaff, delete: isAdmin
+    create: isStaff, update: isStaff, del: isAdmin
   })
 
   apply('commissions', {
     list: isAdmin, view: isAdmin,
-    create: isAdmin, update: isAdmin, delete: isAdmin
+    create: isAdmin, update: isAdmin, del: isAdmin
   })
-
-  return true
 }, (db) => {
   // Down: restaura el estado permisivo previo para que la migracion sea reversible.
   const dao = new Dao(db)
@@ -82,5 +80,4 @@ migrate((db) => {
   reset('partner_applications')
   reset('shipments')
   reset('commissions')
-  return true
 })

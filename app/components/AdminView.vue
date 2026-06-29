@@ -558,6 +558,16 @@
           </DataView>
         </div>
 
+        <!-- ── GUÍAS (DHL / Estafeta) ── -->
+        <div v-else-if="section === 'guias'">
+          <GuidesManager />
+        </div>
+
+        <!-- ── EXCURSIONES ── -->
+        <div v-else-if="section === 'excursiones'">
+          <ExcursionsManager />
+        </div>
+
         <!-- ── SETTINGS ── -->
         <div v-else-if="section === 'settings'">
           <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 max-w-2xl">
@@ -635,7 +645,9 @@ export default {
   components: {
     DataView: Vue.defineAsyncComponent(() => loadModule('./components/DataView.vue', window.options)),
     ConfigWizard: Vue.defineAsyncComponent(() => loadModule('./components/ConfigWizard.vue', window.options)),
-    AddressInput: Vue.defineAsyncComponent(() => loadModule('./components/AddressInput.vue', window.options))
+    AddressInput: Vue.defineAsyncComponent(() => loadModule('./components/AddressInput.vue', window.options)),
+    GuidesManager: Vue.defineAsyncComponent(() => loadModule('./components/GuidesManager.vue', window.options)),
+    ExcursionsManager: Vue.defineAsyncComponent(() => loadModule('./components/ExcursionsManager.vue', window.options))
   },
   data() {
     return {
@@ -683,6 +695,8 @@ export default {
         { id: 'users',       icon: 'people',          label: 'Usuarios',       desc: 'Gestión de operadores y admins' },
         { id: 'points',      icon: 'shop',            label: 'Mis Puntos',     desc: 'Red de puntos activos' },
         { id: 'shipments',   icon: 'box-seam',        label: 'Envíos',         desc: 'Todos los envíos del sistema' },
+        { id: 'guias',       icon: 'upc-scan',        label: 'Guías',          desc: 'Venta de guías DHL / Estafeta' },
+        { id: 'excursiones', icon: 'compass',         label: 'Excursiones',    desc: 'Reservas y catálogo turístico' },
         { id: 'commissions', icon: 'cash-coin',       label: 'Comisiones',     desc: 'Pago a operadores asociados' },
         { id: 'invoices',    icon: 'receipt',         label: 'Facturas',       desc: 'Facturación a clientes' },
         { id: 'partners',    icon: 'briefcase',       label: 'Solicitudes',    desc: 'Afiliaciones pendientes', badge: 0 },

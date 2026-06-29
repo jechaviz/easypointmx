@@ -21,6 +21,8 @@
           <nav class="hidden lg:flex items-center gap-7">
             <a :href="siteHref('/')" @click.prevent="navigate('/')" class="text-sm font-semibold text-slate-300 hover:text-white transition-colors">Inicio</a>
             <button @click="openModal('map')" class="text-sm font-semibold text-slate-300 hover:text-white transition-colors">Mapa</button>
+            <a :href="siteHref('/guias')" @click.prevent="navigate('/guias')" class="text-sm font-semibold text-slate-300 hover:text-white transition-colors">Guías</a>
+            <a :href="siteHref('/excursiones')" @click.prevent="navigate('/excursiones')" class="text-sm font-semibold text-slate-300 hover:text-white transition-colors">Excursiones</a>
             <a :href="siteHref('/locales')" @click.prevent="navigate('/locales')" class="text-sm font-semibold text-slate-300 hover:text-white transition-colors">Para Locales</a>
             <a :href="siteHref('/ecommerce')" @click.prevent="navigate('/ecommerce')" class="text-sm font-semibold text-slate-300 hover:text-white transition-colors">Para E-commerce</a>
             <a :href="siteHref('/developers')" @click.prevent="navigate('/developers')" class="text-sm font-semibold text-slate-300 hover:text-white transition-colors">Developers</a>
@@ -46,6 +48,8 @@
           <nav v-if="isMobileMenuOpen" class="lg:hidden mt-4 rounded-2xl bg-slate-950/95 border border-white/10 p-3 shadow-2xl backdrop-blur-xl">
             <a :href="siteHref('/')" @click.prevent="navigate('/')" class="block px-4 py-3 rounded-xl text-sm font-bold text-slate-200 hover:bg-white/10">Inicio</a>
             <button @click="openModal('map')" class="w-full text-left px-4 py-3 rounded-xl text-sm font-bold text-slate-200 hover:bg-white/10">Mapa</button>
+            <a :href="siteHref('/guias')" @click.prevent="navigate('/guias')" class="block px-4 py-3 rounded-xl text-sm font-bold text-slate-200 hover:bg-white/10">Guías</a>
+            <a :href="siteHref('/excursiones')" @click.prevent="navigate('/excursiones')" class="block px-4 py-3 rounded-xl text-sm font-bold text-slate-200 hover:bg-white/10">Excursiones</a>
             <a :href="siteHref('/locales')" @click.prevent="navigate('/locales')" class="block px-4 py-3 rounded-xl text-sm font-bold text-slate-200 hover:bg-white/10">Para Locales</a>
             <a :href="siteHref('/ecommerce')" @click.prevent="navigate('/ecommerce')" class="block px-4 py-3 rounded-xl text-sm font-bold text-slate-200 hover:bg-white/10">Para E-commerce</a>
             <a :href="siteHref('/developers')" @click.prevent="navigate('/developers')" class="block px-4 py-3 rounded-xl text-sm font-bold text-slate-200 hover:bg-white/10">Developers</a>
@@ -294,6 +298,8 @@ export default {
     AtraeView: Vue.defineAsyncComponent(() => loadModule('./components/AtraeView.vue', options)),
     CondicionesView: Vue.defineAsyncComponent(() => loadModule('./components/CondicionesView.vue', options)),
     EnviaView: Vue.defineAsyncComponent(() => loadModule('./components/EnviaView.vue', options)),
+    GuiasView: Vue.defineAsyncComponent(() => loadModule('./components/GuiasView.vue', options)),
+    ExcursionesView: Vue.defineAsyncComponent(() => loadModule('./components/ExcursionesView.vue', options)),
     PrivacidadView: Vue.defineAsyncComponent(() => loadModule('./components/PrivacidadView.vue', options)),
     DeveloperView: Vue.defineAsyncComponent(() => loadModule('./components/DeveloperView.vue', options))
   },
@@ -336,6 +342,8 @@ export default {
         '/locales': 'AtraeView',
         '/condiciones': 'CondicionesView',
         '/ecommerce': 'EnviaView',
+        '/guias': 'GuiasView',
+        '/excursiones': 'ExcursionesView',
         '/privacidad': 'PrivacidadView',
         '/developers': 'DeveloperView'
       };
