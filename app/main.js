@@ -135,7 +135,7 @@ const DEMO_USERS = [
 const DEMO_PWDS = ['Punto2024!', 'easypoint123'];
 
 const DEFAULT_DEMO_DATA = {
-    _v: 5, // Version flag to force cache breaks when schema updates
+    _v: 6, // Version flag to force cache breaks when schema updates
     shipments: [
         { id: 'mock1', tracking_id: 'EP-9921-X', recipient_name: 'Alejandro Ruiz',   status: 'at_point',   created: '2026-03-25T10:00:00Z', updated: '2026-03-26T09:00:00Z', expand: { point_id: { name: 'Punto Roma Norte', address: 'Av. Álvaro Obregón 154, Roma Norte' } } },
         { id: 'mock2', tracking_id: 'EP-1045-A', recipient_name: 'Beatriz Solis',    status: 'delivered',  created: '2026-03-24T14:30:00Z', updated: '2026-03-25T11:20:00Z', expand: { point_id: { name: 'Punto Condesa',    address: 'Amsterdam 123, Hipódromo Condesa'   } } },
@@ -168,12 +168,15 @@ const DEFAULT_DEMO_DATA = {
         { id: 'g2', carrier: 'dhl', service: 'express', recipient_name: 'Mario Cano', recipient_phone: '5599887766', dest_cp: '64000', dest_address: 'Padre Mier 200, Monterrey', weight_kg: 1, price: 222, status: 'quoted', point_name: 'Punto Condesa', created: new Date().toISOString(), updated: new Date().toISOString() }
     ],
     excursions: [
-        { id: 'ex1', name: 'Teotihuacán en globo', destination: 'Estado de México', description: 'Vuelo en globo al amanecer sobre las pirámides + desayuno.', price: 2850, duration: 'Día completo', provider_name: 'SkyMex Tours', provider_whatsapp: '5215511112222', image_url: 'https://images.unsplash.com/photo-1507272931001-fc06c17e4f43?auto=format&fit=crop&q=80&w=800', max_capacity: 16, active: true, available_dates: '2026-07-12\n2026-07-19\n2026-08-02\n2026-08-16', created: new Date().toISOString() },
-        { id: 'ex2', name: 'Xochimilco cultural', destination: 'CDMX', description: 'Trajinera privada, comida tradicional y música en vivo.', price: 750, duration: '5 horas', provider_name: 'Raíces MX', provider_whatsapp: '5215533334444', image_url: 'https://images.unsplash.com/photo-1597211833712-5e41faa202ea?auto=format&fit=crop&q=80&w=800', max_capacity: 20, active: true, available_dates: '2026-07-05\n2026-07-12\n2026-07-26', created: new Date().toISOString() }
+        { id: 'ex1', name: 'Teotihuacán en globo', destination: 'Estado de México', description: 'Vuelo en globo al amanecer sobre las pirámides + desayuno.', price: 2850, duration: 'Día completo', provider_name: 'SkyMex Tours', provider_whatsapp: '5215511112222', image_url: 'https://images.unsplash.com/photo-1507272931001-fc06c17e4f43?auto=format&fit=crop&q=80&w=800', max_capacity: 16, active: true, available_dates: '2026-07-12\n2026-07-19\n2026-08-02\n2026-08-16', deposit_amount: 500, policy: 'Sin reembolsos ni cancelaciones; tu pago aplica como crédito para otra experiencia.', created: new Date().toISOString() },
+        { id: 'ex2', name: 'Xochimilco cultural', destination: 'CDMX', description: 'Trajinera privada, comida tradicional y música en vivo.', price: 750, duration: '5 horas', provider_name: 'Raíces MX', provider_whatsapp: '5215533334444', image_url: 'https://images.unsplash.com/photo-1597211833712-5e41faa202ea?auto=format&fit=crop&q=80&w=800', max_capacity: 20, active: true, available_dates: '2026-07-05\n2026-07-12\n2026-07-26', deposit_amount: 200, created: new Date().toISOString() }
     ],
     excursion_bookings: [
-        { id: 'b1', excursion_ref: 'ex1', excursion_name: 'Teotihuacán en globo', destination: 'Estado de México', customer_name: 'Ana Beltrán', customer_phone: '5512345678', customer_email: 'ana@correo.mx', people: 2, excursion_date: '2026-07-12', total: 5700, status: 'new', created: new Date().toISOString(), updated: new Date().toISOString() },
-        { id: 'b2', excursion_ref: 'ex2', excursion_name: 'Xochimilco cultural', destination: 'CDMX', customer_name: 'Pedro Lima', customer_phone: '5587654321', people: 4, excursion_date: '2026-07-05', total: 3000, status: 'confirmed', created: new Date().toISOString(), updated: new Date().toISOString() }
+        { id: 'b1', excursion_ref: 'ex1', excursion_name: 'Teotihuacán en globo', destination: 'Estado de México', customer_name: 'Ana Beltrán', customer_phone: '5512345678', customer_email: 'ana@correo.mx', people: 2, excursion_date: '2026-07-12', total: 5700, amount_paid: 500, balance: 5200, payment_status: 'partial', status: 'new', created: new Date().toISOString(), updated: new Date().toISOString() },
+        { id: 'b2', excursion_ref: 'ex2', excursion_name: 'Xochimilco cultural', destination: 'CDMX', customer_name: 'Pedro Lima', customer_phone: '5587654321', people: 4, excursion_date: '2026-07-05', total: 3000, amount_paid: 3000, balance: 0, payment_status: 'paid', status: 'confirmed', created: new Date().toISOString(), updated: new Date().toISOString() }
+    ],
+    support_tickets: [
+        { id: 't1', kind: 'complaint', subject_ref: 'b1', customer_name: 'Ana Beltrán', customer_phone: '5512345678', message: 'El globo salió tarde y casi perdemos el amanecer.', status: 'open', created: new Date().toISOString() }
     ]
 };
 

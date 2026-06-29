@@ -568,6 +568,11 @@
           <ExcursionsManager />
         </div>
 
+        <!-- ── SOPORTE / QUEJAS ── -->
+        <div v-else-if="section === 'soporte'">
+          <SupportManager />
+        </div>
+
         <!-- ── SETTINGS ── -->
         <div v-else-if="section === 'settings'">
           <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 max-w-2xl">
@@ -647,7 +652,8 @@ export default {
     ConfigWizard: Vue.defineAsyncComponent(() => loadModule('./components/ConfigWizard.vue', window.options)),
     AddressInput: Vue.defineAsyncComponent(() => loadModule('./components/AddressInput.vue', window.options)),
     GuidesManager: Vue.defineAsyncComponent(() => loadModule('./components/GuidesManager.vue', window.options)),
-    ExcursionsManager: Vue.defineAsyncComponent(() => loadModule('./components/ExcursionsManager.vue', window.options))
+    ExcursionsManager: Vue.defineAsyncComponent(() => loadModule('./components/ExcursionsManager.vue', window.options)),
+    SupportManager: Vue.defineAsyncComponent(() => loadModule('./components/SupportManager.vue', window.options))
   },
   data() {
     return {
@@ -700,6 +706,7 @@ export default {
         { id: 'commissions', icon: 'cash-coin',       label: 'Comisiones',     desc: 'Pago a operadores asociados' },
         { id: 'invoices',    icon: 'receipt',         label: 'Facturas',       desc: 'Facturación a clientes' },
         { id: 'partners',    icon: 'briefcase',       label: 'Solicitudes',    desc: 'Afiliaciones pendientes', badge: 0 },
+        { id: 'soporte',     icon: 'life-preserver',  label: 'Soporte',        desc: 'Quejas y tickets de clientes' },
       ],
       showUserMenu: false,
       // Data

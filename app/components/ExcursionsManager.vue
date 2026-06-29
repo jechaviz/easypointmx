@@ -27,20 +27,20 @@
           <td class="px-6 py-4 text-right">
             <div class="flex flex-col items-end">
               <span class="text-white font-black text-xs">{{ formatMoney(item.total) }}</span>
-              <span class="text-[9px] text-slate-500">{{ item.people || 1 }} pers.</span>
+              <span class="text-[9px]" :class="(item.balance || 0) > 0 && item.payment_status !== 'paid' ? 'text-amber-400' : 'text-emerald-400'">{{ (item.balance || 0) > 0 && item.payment_status !== 'paid' ? ('Saldo ' + formatMoney(item.balance)) : 'Liquidado' }}</span>
             </div>
           </td>
           <td class="px-6 py-4">
             <span class="text-[9px] font-black px-2.5 py-1 rounded-lg border uppercase tracking-wider" :class="statusBadge(item.status)">{{ statusLabel(item.status) }}</span>
-            <span class="block mt-1 text-[9px] font-black uppercase tracking-wider" :class="item.payment_status === 'paid' ? 'text-emerald-400' : 'text-slate-500'">{{ item.payment_status === 'paid' ? '● Pagado' : '○ Sin pago' }}</span>
+            <span class="block mt-1 text-[9px] font-black uppercase tracking-wider" :class="payColor(item.payment_status)">{{ payLabel(item.payment_status) }}</span>
           </td>
         </template>
 
         <template #actions="{ item }">
           <a :href="waClient(item)" target="_blank" rel="noopener noreferrer" title="Confirmar al cliente por WhatsApp" class="text-green-400 hover:text-green-300 p-1.5"><i class="bi bi-whatsapp"></i></a>
           <a v-if="providerWaFor(item)" :href="waProvider(item)" target="_blank" rel="noopener noreferrer" title="Avisar al proveedor" class="text-blue-400 hover:text-blue-300 p-1.5"><i class="bi bi-person-badge"></i></a>
-          <a v-if="adminWa" :href="waAdmin(item)" target="_blank" rel="noopener noreferrer" title="Avisar al administrador" class="text-purple-400 hover:text-purple-300 p-1.5"><i class="bi bi-shield-check"></i></a>
-          <button v-if="item.payment_status !== 'paid'" @click="markPaid(item)" title="Marcar pagada (efectivo)" class="text-emerald-400 hover:text-emerald-300 p-1.5"><i class="bi bi-cash-coin"></i></button>
+          <button v-if="item.payment_status !== 'paid' && item.payment_status !== 'credit'" @click="registrarPago(item)" title="Registrar pago / abono" class="text-emerald-400 hover:text-emerald-300 p-1.5"><i class="bi bi-cash-coin"></i></button>
+          <button v-if="item.payment_status !== 'credit'" @click="markCredit(item)" title="Convertir a crédito (sin reembolso)" class="text-purple-400 hover:text-purple-300 p-1.5"><i class="bi bi-wallet2"></i></button>
           <button v-if="item.status !== 'confirmed'" @click="confirm(item)" title="Marcar confirmada" class="text-brand-400 hover:text-brand-300 p-1.5"><i class="bi bi-check-circle"></i></button>
           <button @click="remove('excursion_bookings', item)" title="Eliminar" class="text-slate-600 hover:text-red-400 p-1.5"><i class="bi bi-trash3"></i></button>
         </template>
@@ -275,10 +275,30 @@ export default {
       try { await this.apiPatch('excursions', item.id, { active: item.active === false }); await this.loadAll(); }
       catch (e) { this.showModal({ title: 'Error', message: e.message, type: 'error' }); }
     },
-    async markPaid(item) {
+    payLabel(s) { return ({ paid: '● Pagado', partial: '◐ Abonado', credit: '◆ Crédito', refunded: '↩ Reembolsado', failed: '✕ Falló' })[s] || '○ Sin pago'; },
+    payColor(s) { return ({ paid: 'text-emerald-400', partial: 'text-amber-400', credit: 'text-purple-400', refunded: 'text-blue-400', failed: 'text-red-400' })[s] || 'text-slate-500'; },
+    async registrarPago(item) {
+      const cur = Number(item.amount_paid) || 0;
+      const remaining = Math.max(0, (Number(item.total) || 0) - cur);
+      const input = window.prompt(`Registrar pago de ${item.customer_name}. Saldo: ${this.formatMoney(remaining)}.\nMonto a abonar (efectivo/transferencia):`, String(remaining));
+      if (input == null) return;
+      const add = Number(input);
+      if (!(add > 0)) return;
+      const newPaid = cur + add;
+      const total = Number(item.total) || 0;
+      const balance = Math.max(0, total - newPaid);
+      const payment_status = total > 0 && newPaid >= total ? 'paid' : 'partial';
       try {
-        await this.apiPatch('excursion_bookings', item.id, { payment_status: 'paid', payment_method: 'cash', paid_at: new Date().toISOString() });
-        this.emitBusinessEvent({ audience: ['admin'], severity: 'success', icon: 'cash-coin', title: 'Reserva pagada', message: `${item.customer_name} pagó ${this.formatMoney(item.total)} (${item.excursion_name || item.destination}).` });
+        await this.apiPatch('excursion_bookings', item.id, { amount_paid: newPaid, balance, payment_status, payment_method: 'cash', paid_at: new Date().toISOString() });
+        this.emitBusinessEvent({ audience: ['admin'], severity: 'success', icon: 'cash-coin', title: 'Pago registrado', message: `${item.customer_name} abonó ${this.formatMoney(add)} (${item.excursion_name || item.destination}).` });
+        await this.loadAll();
+      } catch (e) { this.showModal({ title: 'Error', message: e.message, type: 'error' }); }
+    },
+    async markCredit(item) {
+      const ok = await this.showModal({ title: 'Convertir a crédito', message: `Lo pagado por ${item.customer_name} (${this.formatMoney(item.amount_paid || 0)}) quedará como crédito para otra experiencia. Sin reembolso. ¿Confirmar?`, type: 'confirm', confirmText: 'Convertir a crédito' });
+      if (!ok) return;
+      try {
+        await this.apiPatch('excursion_bookings', item.id, { payment_status: 'credit' });
         await this.loadAll();
       } catch (e) { this.showModal({ title: 'Error', message: e.message, type: 'error' }); }
     },

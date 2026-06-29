@@ -103,14 +103,25 @@
               <input v-else v-model="form.excursion_date" required type="date" :min="todayStr" class="w-full bg-slate-50 ring-1 ring-slate-200 rounded-xl px-4 py-3 focus:ring-brand-500 outline-none transition-all">
             </div>
 
-            <div class="bg-slate-900 rounded-2xl p-5 flex items-center justify-between">
-              <span class="text-[10px] text-slate-400 font-black uppercase tracking-widest">Total estimado</span>
-              <span class="text-white text-2xl font-black">{{ formatMoney(total) }}</span>
+            <div class="bg-slate-900 rounded-2xl p-5">
+              <div class="flex items-center justify-between">
+                <span class="text-[10px] text-slate-400 font-black uppercase tracking-widest">Total estimado</span>
+                <span class="text-white text-2xl font-black">{{ formatMoney(total) }}</span>
+              </div>
+              <div v-if="depositAmount > 0" class="flex items-center justify-between mt-3 pt-3 border-t border-white/10">
+                <span class="text-[10px] text-brand-400 font-black uppercase tracking-widest">Aparta con</span>
+                <span class="text-brand-400 text-lg font-black">{{ formatMoney(depositAmount) }}</span>
+              </div>
             </div>
 
-            <button :disabled="isSubmitting" class="w-full bg-brand-500 text-slate-900 font-black py-4 rounded-xl hover:bg-brand-400 transition-all flex items-center justify-center gap-3 disabled:opacity-50">
+            <label class="flex items-start gap-3 text-xs text-slate-600">
+              <input v-model="acceptedPolicy" type="checkbox" class="mt-0.5 w-4 h-4 shrink-0">
+              <span>{{ policyText }}</span>
+            </label>
+
+            <button :disabled="isSubmitting || !acceptedPolicy" class="w-full bg-brand-500 text-slate-900 font-black py-4 rounded-xl hover:bg-brand-400 transition-all flex items-center justify-center gap-3 disabled:opacity-50">
               <i v-if="isSubmitting" class="bi bi-arrow-repeat animate-spin"></i>
-              {{ isSubmitting ? 'Enviando...' : 'Confirmar reserva' }}
+              {{ isSubmitting ? 'Enviando...' : (depositAmount > 0 ? 'Apartar y reservar' : 'Confirmar reserva') }}
             </button>
           </form>
         </template>
@@ -124,7 +135,7 @@
           <div class="space-y-3">
             <button @click="payNow" :disabled="paying" class="w-full bg-slate-900 text-white font-black py-4 rounded-xl hover:bg-slate-800 transition-all flex items-center justify-center gap-3 disabled:opacity-50">
               <i v-if="paying" class="bi bi-arrow-repeat animate-spin"></i><i v-else class="bi bi-credit-card"></i>
-              {{ paying ? 'Abriendo pago...' : 'Pagar en línea' }}
+              {{ paying ? 'Abriendo pago...' : (depositAmount > 0 ? ('Apartar ' + formatMoney(depositAmount)) : 'Pagar en línea') }}
             </button>
             <a v-if="canConfirmWa" :href="confirmWaUrl" target="_blank" rel="noopener noreferrer" class="w-full bg-brand-500 text-slate-900 font-black py-4 rounded-xl hover:bg-brand-400 transition-all flex items-center justify-center gap-3"><i class="bi bi-whatsapp"></i> Confirmar mi reserva</a>
             <a v-if="providerWa && hasContact" :href="waProviderUrl" target="_blank" rel="noopener noreferrer" class="w-full bg-slate-100 text-slate-700 font-black py-3 rounded-xl hover:bg-slate-200 transition-all flex items-center justify-center gap-2 text-sm"><i class="bi bi-person-badge"></i> Escribir al proveedor</a>
@@ -133,6 +144,14 @@
             <p class="text-xs font-black text-slate-700 uppercase tracking-widest mb-1">Pago</p>
             <p class="text-sm text-slate-600">{{ manualPay.instructions }}</p>
             <p v-if="manualPay.reference" class="text-[11px] text-slate-400 font-mono mt-2">Ref: {{ manualPay.reference }}</p>
+          </div>
+          <div class="mt-5 border-t border-slate-100 pt-4 text-left">
+            <button v-if="!showReport && !reportSent" @click="showReport = true" class="text-[11px] text-slate-400 font-bold hover:text-slate-600">¿Algún problema con tu experiencia?</button>
+            <div v-if="showReport && !reportSent" class="space-y-2">
+              <textarea v-model="reportMsg" rows="2" placeholder="Cuéntanos qué pasó y lo resolvemos en privado..." class="w-full bg-slate-50 ring-1 ring-slate-200 rounded-xl px-3 py-2 text-sm focus:ring-brand-500 outline-none"></textarea>
+              <button @click="sendReport" :disabled="reporting" class="w-full bg-slate-900 text-white font-black py-2.5 rounded-xl text-sm hover:bg-slate-800 disabled:opacity-50">{{ reporting ? 'Enviando...' : 'Enviar a Easypoint' }}</button>
+            </div>
+            <p v-if="reportSent" class="text-green-600 text-xs font-bold flex items-center gap-2"><i class="bi bi-check-circle-fill"></i> Recibido. Te contactaremos para resolverlo.</p>
           </div>
           <button @click="closeBooking" class="mt-6 text-slate-400 font-bold text-sm hover:text-slate-600">Cerrar</button>
         </div>
@@ -166,7 +185,12 @@ export default {
       formError: '',
       lastBookingId: '',
       paying: false,
-      manualPay: null
+      manualPay: null,
+      acceptedPolicy: false,
+      showReport: false,
+      reportMsg: '',
+      reportSent: false,
+      reporting: false
     };
   },
   computed: {
@@ -175,6 +199,12 @@ export default {
     },
     selectedDates() {
       return this.datesOf(this.selected);
+    },
+    depositAmount() {
+      return Number(this.selected?.deposit_amount) || 0;
+    },
+    policyText() {
+      return this.selected?.policy || 'Acepto que no hay reembolsos ni cancelaciones; mi pago aplica como crédito para otra experiencia Easypoint.';
     },
     total() {
       return (Number(this.form.people) || 1) * (Number(this.selected?.price) || 0);
@@ -249,6 +279,8 @@ export default {
       this.success = false;
       this.formError = '';
       this.form = { customer_name: '', customer_phone: '', customer_email: '', people: 1, excursion_date: '' };
+      this.acceptedPolicy = false;
+      this.showReport = false; this.reportSent = false; this.reportMsg = '';
       this.availability = {};
       // Disponibilidad por fecha (cupos), sin exponer reservas. Las demo no tienen id real.
       if (exc && exc.id && !String(exc.id).startsWith('ex_demo')) {
@@ -268,6 +300,24 @@ export default {
       this.success = false;
       this.manualPay = null;
       this.lastBookingId = '';
+    },
+    async sendReport() {
+      if (!this.reportMsg.trim()) return;
+      this.reporting = true;
+      try {
+        await fetch(`${PB}/api/collections/support_tickets/records`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            kind: 'complaint', subject_ref: this.lastBookingId,
+            customer_name: this.form.customer_name, customer_phone: this.form.customer_phone,
+            customer_email: this.form.customer_email, message: this.reportMsg.trim(), status: 'open'
+          })
+        });
+      } catch (_) {}
+      this.reportSent = true;
+      this.showReport = false;
+      this.reporting = false;
     },
     async payNow() {
       if (!this.lastBookingId) { this.manualPay = { instructions: 'Confirma tu reserva por WhatsApp para coordinar el pago.' }; return; }
