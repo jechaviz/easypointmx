@@ -110,7 +110,7 @@
             <div class="grid grid-cols-3 gap-4">
               <div class="flex flex-col"><label class="label-sm">Precio /persona</label><input v-model.number="form.price" type="number" min="0" class="input-dark"></div>
               <div class="flex flex-col"><label class="label-sm">Duración</label><input v-model="form.duration" class="input-dark" placeholder="Día completo"></div>
-              <div class="flex flex-col"><label class="label-sm">Cupo máx.</label><input v-model.number="form.max_capacity" type="number" min="0" class="input-dark"></div>
+              <div class="flex flex-col"><label class="label-sm">Cupo/fecha</label><input v-model.number="form.max_capacity" type="number" min="0" class="input-dark" placeholder="0 = sin límite"></div>
             </div>
             <div class="grid grid-cols-2 gap-4">
               <div class="flex flex-col"><label class="label-sm">Proveedor</label><input v-model="form.provider_name" class="input-dark"></div>
