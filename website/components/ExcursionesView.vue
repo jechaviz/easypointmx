@@ -25,9 +25,14 @@
           <div class="p-6 flex flex-col flex-grow">
             <h3 class="text-lg font-black text-slate-900 mb-2 tracking-tight">{{ exc.name }}</h3>
             <p class="text-slate-500 text-sm mb-4 flex-grow">{{ exc.description }}</p>
-            <div class="flex items-center justify-between mb-4 text-xs">
+            <div class="flex items-center justify-between mb-3 text-xs">
               <span class="text-slate-400 font-bold flex items-center gap-1.5"><i class="bi bi-clock"></i> {{ exc.duration || 'Consultar' }}</span>
               <span class="text-slate-900 font-black text-lg">{{ formatMoney(exc.price) }}<span class="text-[10px] text-slate-400 font-bold"> /persona</span></span>
+            </div>
+            <div v-if="datesOf(exc).length" class="mb-4 flex flex-wrap gap-1.5">
+              <span class="text-[9px] font-black text-slate-400 uppercase tracking-widest w-full">Próximas salidas</span>
+              <span v-for="d in datesOf(exc).slice(0, 3)" :key="d" class="bg-brand-50 text-brand-700 text-[10px] font-bold px-2 py-1 rounded-lg">{{ formatDateLong(d) }}</span>
+              <span v-if="datesOf(exc).length > 3" class="text-[10px] text-slate-400 font-bold px-1 py-1">+{{ datesOf(exc).length - 3 }}</span>
             </div>
             <button @click="openBooking(exc)" class="w-full bg-slate-900 text-white font-black py-3 rounded-xl hover:bg-brand-500 hover:text-slate-900 transition-all text-sm">Reservar</button>
           </div>
@@ -76,7 +81,18 @@
             </div>
             <div>
               <label class="block text-xs font-black text-slate-400 uppercase tracking-widest mb-2">Fecha de la excursión</label>
-              <input v-model="form.excursion_date" required type="date" :min="todayStr" class="w-full bg-slate-50 ring-1 ring-slate-200 rounded-xl px-4 py-3 focus:ring-brand-500 outline-none transition-all">
+              <!-- Si el proveedor publicó fechas, el cliente elige una de ellas -->
+              <div v-if="selectedDates.length" class="flex flex-wrap gap-2">
+                <button
+                  v-for="d in selectedDates" :key="d"
+                  type="button"
+                  @click="form.excursion_date = d"
+                  :class="form.excursion_date === d ? 'bg-brand-500 text-slate-900 ring-2 ring-brand-500' : 'bg-slate-50 text-slate-700 ring-1 ring-slate-200 hover:ring-brand-400'"
+                  class="px-4 py-2.5 rounded-xl text-sm font-bold transition-all"
+                >{{ formatDateLong(d) }}</button>
+              </div>
+              <!-- Sin fechas publicadas: fecha libre (compatibilidad) -->
+              <input v-else v-model="form.excursion_date" required type="date" :min="todayStr" class="w-full bg-slate-50 ring-1 ring-slate-200 rounded-xl px-4 py-3 focus:ring-brand-500 outline-none transition-all">
             </div>
 
             <div class="bg-slate-900 rounded-2xl p-5 flex items-center justify-between">
@@ -113,9 +129,9 @@ const PB = window.EASYPOINT_RUNTIME_CONFIG?.pocketBaseUrl || window.location.ori
 const CONTACT_WA = String(window.EASYPOINT_RUNTIME_CONFIG?.contactWhatsapp || '525500000000').replace(/\D/g, '');
 
 const DEMO_EXCURSIONS = [
-  { id: 'ex_demo1', name: 'Teotihuacán en globo', destination: 'Estado de México', description: 'Vuelo en globo al amanecer sobre las pirámides + desayuno en cueva.', price: 2850, duration: 'Día completo', provider_name: 'SkyMex Tours', provider_whatsapp: '5215511112222', image_url: 'https://images.unsplash.com/photo-1507272931001-fc06c17e4f43?auto=format&fit=crop&q=80&w=800' },
-  { id: 'ex_demo2', name: 'Xochimilco cultural', destination: 'CDMX', description: 'Trajinera privada, comida tradicional y música en vivo.', price: 750, duration: '5 horas', provider_name: 'Raíces MX', provider_whatsapp: '5215533334444', image_url: 'https://images.unsplash.com/photo-1597211833712-5e41faa202ea?auto=format&fit=crop&q=80&w=800' },
-  { id: 'ex_demo3', name: 'Grutas de Tolantongo', destination: 'Hidalgo', description: 'Pozas termales, río turquesa y tirolesa. Transporte redondo incluido.', price: 1290, duration: 'Día completo', provider_name: 'Aventura Hidalgo', provider_whatsapp: '5215555556666', image_url: 'https://images.unsplash.com/photo-1559827260-dc66d52bef19?auto=format&fit=crop&q=80&w=800' }
+  { id: 'ex_demo1', name: 'Teotihuacán en globo', destination: 'Estado de México', description: 'Vuelo en globo al amanecer sobre las pirámides + desayuno en cueva.', price: 2850, duration: 'Día completo', provider_name: 'SkyMex Tours', provider_whatsapp: '5215511112222', image_url: 'https://images.unsplash.com/photo-1507272931001-fc06c17e4f43?auto=format&fit=crop&q=80&w=800', available_dates: '2026-07-12\n2026-07-19\n2026-08-02\n2026-08-16' },
+  { id: 'ex_demo2', name: 'Xochimilco cultural', destination: 'CDMX', description: 'Trajinera privada, comida tradicional y música en vivo.', price: 750, duration: '5 horas', provider_name: 'Raíces MX', provider_whatsapp: '5215533334444', image_url: 'https://images.unsplash.com/photo-1597211833712-5e41faa202ea?auto=format&fit=crop&q=80&w=800', available_dates: '2026-07-05\n2026-07-12\n2026-07-26' },
+  { id: 'ex_demo3', name: 'Grutas de Tolantongo', destination: 'Hidalgo', description: 'Pozas termales, río turquesa y tirolesa. Transporte redondo incluido.', price: 1290, duration: 'Día completo', provider_name: 'Aventura Hidalgo', provider_whatsapp: '5215555556666', image_url: 'https://images.unsplash.com/photo-1559827260-dc66d52bef19?auto=format&fit=crop&q=80&w=800', available_dates: '2026-07-20\n2026-08-10' }
 ];
 
 export default {
@@ -134,6 +150,9 @@ export default {
   computed: {
     todayStr() {
       return new Date().toISOString().slice(0, 10);
+    },
+    selectedDates() {
+      return this.datesOf(this.selected);
     },
     total() {
       return (Number(this.form.people) || 1) * (Number(this.selected?.price) || 0);
@@ -165,6 +184,18 @@ export default {
   methods: {
     formatMoney(amount) {
       return new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN', maximumFractionDigits: 0 }).format(Number(amount) || 0);
+    },
+    datesOf(exc) {
+      const today = this.todayStr;
+      return String(exc?.available_dates || '')
+        .split(/[\n,;]+/)
+        .map(s => s.trim())
+        .filter(s => /^\d{4}-\d{2}-\d{2}$/.test(s) && s >= today)
+        .sort();
+    },
+    formatDateLong(d) {
+      const dt = new Date(`${d}T00:00:00`);
+      return Number.isNaN(dt.getTime()) ? d : dt.toLocaleDateString('es-MX', { weekday: 'short', day: '2-digit', month: 'short' });
     },
     async fetchExcursions() {
       this.isLoading = true;

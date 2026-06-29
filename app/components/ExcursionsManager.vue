@@ -117,6 +117,11 @@
               <div class="flex flex-col"><label class="label-sm">WhatsApp proveedor</label><input v-model="form.provider_whatsapp" class="input-dark" placeholder="5215511112222"></div>
             </div>
             <div class="flex flex-col"><label class="label-sm">Imagen (URL)</label><input v-model="form.image_url" class="input-dark" placeholder="https://..."></div>
+            <div class="flex flex-col">
+              <label class="label-sm">Fechas disponibles (una por línea, AAAA-MM-DD)</label>
+              <textarea v-model="form.available_dates" rows="3" class="input-dark" placeholder="2026-07-12&#10;2026-07-19&#10;2026-08-02"></textarea>
+              <span class="text-[10px] text-slate-600 mt-1 px-1">El cliente elegirá una de estas fechas al reservar. Vacío = fecha libre.</span>
+            </div>
             <label class="flex items-center gap-3 text-slate-300 text-xs font-bold"><input v-model="form.active" type="checkbox" class="w-4 h-4"> Visible en el sitio</label>
           </div>
           <div class="flex gap-4 mt-8">
@@ -169,7 +174,7 @@ export default {
   mounted() { this.loadAll(); },
   methods: {
     blankForm() {
-      return { id: null, name: '', destination: '', description: '', price: 0, duration: '', provider_name: '', provider_whatsapp: '', image_url: '', max_capacity: 0, active: true };
+      return { id: null, name: '', destination: '', description: '', price: 0, duration: '', provider_name: '', provider_whatsapp: '', image_url: '', max_capacity: 0, active: true, available_dates: '' };
     },
     token() { return localStorage.getItem('ep_token'); },
     formatMoney(a) { return new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN', maximumFractionDigits: 0 }).format(Number(a) || 0); },
@@ -250,6 +255,11 @@ export default {
       if (!this.form.name || !this.form.destination) return this.showModal({ title: 'Datos faltantes', message: 'Nombre y destino son obligatorios.', type: 'warning' });
       this.saving = true;
       const { id, ...payload } = this.form;
+      // Normaliza las fechas: una por línea, solo AAAA-MM-DD, ordenadas.
+      payload.available_dates = String(payload.available_dates || '')
+        .split(/[\n,;]+/).map(s => s.trim())
+        .filter(s => /^\d{4}-\d{2}-\d{2}$/.test(s))
+        .sort().join('\n');
       try {
         if (id) await this.apiPatch('excursions', id, payload);
         else await this.apiPost('excursions', payload);

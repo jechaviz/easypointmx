@@ -51,8 +51,9 @@ async function run() {
 
   // ===== EXCURSIONES =====
   // 3. Catalogo: solo admin escribe
-  const exc = await req('POST', '/collections/excursions/records', { token: adminToken, body: { name: `Tour E2E ${rnd()}`, destination: 'Oaxaca', description: 'Test', price: 1500, duration: 'Día completo', provider_name: 'Prov E2E', provider_whatsapp: '5215500000000', active: true } });
-  ok('Admin crea excursión (catálogo)', exc.ok, JSON.stringify(exc.data));
+  const providerDates = '2026-12-15\n2026-12-22\n2027-01-05';
+  const exc = await req('POST', '/collections/excursions/records', { token: adminToken, body: { name: `Tour E2E ${rnd()}`, destination: 'Oaxaca', description: 'Test', price: 1500, duration: 'Día completo', provider_name: 'Prov E2E', provider_whatsapp: '5215500000000', active: true, available_dates: providerDates } });
+  ok('Admin crea excursión (catálogo) con fechas del proveedor', exc.ok, JSON.stringify(exc.data));
   const excId = exc.data?.id;
 
   const excByOp = await req('POST', '/collections/excursions/records', { token: opToken, body: { name: 'No debería', destination: 'X', active: true } });
@@ -60,6 +61,8 @@ async function run() {
 
   const excPublic = await req('GET', '/collections/excursions/records');
   ok('Catálogo de excursiones es público', excPublic.ok && Array.isArray(excPublic.data?.items), `status ${excPublic.status}`);
+  const excFound = excPublic.data?.items?.find(e => e.id === excId);
+  ok('Catálogo expone las fechas del proveedor', excFound && String(excFound.available_dates || '').includes('2026-12-15'), `dates ${excFound?.available_dates}`);
 
   // 4. Reserva publica (create abierto)
   const booking = await req('POST', '/collections/excursion_bookings/records', { body: {
@@ -68,6 +71,7 @@ async function run() {
     people: 3, excursion_date: '2026-12-15', total: 4500, status: 'new'
   } });
   ok('Reserva pública creada', booking.ok, JSON.stringify(booking.data));
+  ok('La reserva usa una fecha publicada por el proveedor', providerDates.includes(booking.data?.excursion_date || '___'), `fecha ${booking.data?.excursion_date}`);
   const bookingId = booking.data?.id;
 
   // 5. Anónimo NO puede ver reservas (en PB las reglas de list filtran a 0 items).
