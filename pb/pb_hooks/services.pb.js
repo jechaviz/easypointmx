@@ -75,3 +75,23 @@ onRecordAfterCreateRequest((e) => {
     }
   });
 }, 'shipping_guides');
+
+// Nuevo ticket de soporte/queja -> avisar al admin de inmediato (resolución privada).
+onRecordAfterCreateRequest((e) => {
+  if ($os.getenv('ONESIGNAL_ENABLED') === '0' || !$os.getenv('ONESIGNAL_APP_ID') || !$os.getenv('ONESIGNAL_REST_API_KEY')) return;
+  const helpers = globalThis.EASYPOINT_PUSH_HOOKS;
+  if (!helpers) return;
+
+  const record = e.record;
+  const kind = helpers.asText(record.getString('kind')) || 'mensaje';
+  const customer = helpers.asText(record.getString('customer_name')) || 'Un cliente';
+
+  helpers.sendToRole('admin', {
+    title: kind === 'complaint' ? 'Queja recibida (atender ya)' : 'Nuevo ticket de soporte',
+    message: `${customer} envió un ${kind}. Atiéndelo en privado antes de que escale.`,
+    data: {
+      kind: 'support_ticket_new',
+      ticket_id: helpers.asText(record.id)
+    }
+  });
+}, 'support_tickets');

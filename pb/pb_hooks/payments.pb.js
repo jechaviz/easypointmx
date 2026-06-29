@@ -11,6 +11,19 @@
 //   EASYPOINT_APP_URL=https://tu-dominio/app/   (back_urls / notification_url)
 //   PAYMENT_MANUAL_INSTRUCTIONS=...             (texto para pago manual)
 
+// Al actualizar una reserva, recalcula saldo y estado de pago desde amount_paid.
+// (Estados 'credit'/'refunded'/'failed' se respetan si el admin los fija.)
+onRecordBeforeUpdateRequest((e) => {
+  const rec = e.record;
+  const amt = Number(rec.getFloat('amount_paid')) || 0;
+  const total = Number(rec.getFloat('total')) || 0;
+  rec.set('balance', total > amt ? total - amt : 0);
+  const ps = rec.getString('payment_status');
+  if (ps !== 'credit' && ps !== 'refunded' && ps !== 'failed') {
+    rec.set('payment_status', amt <= 0 ? 'pending' : (total > 0 && amt >= total ? 'paid' : 'partial'));
+  }
+}, 'excursion_bookings');
+
 // Crea un checkout y devuelve la URL de la pasarela (o instrucciones manuales).
 routerAdd('POST', '/api/pay/checkout', (c) => {
   const info = $apis.requestInfo(c);
@@ -27,9 +40,22 @@ routerAdd('POST', '/api/pay/checkout', (c) => {
   try { rec = $app.dao().findRecordById(collection, id); }
   catch (err) { return c.json(404, { error: 'not_found' }); }
 
-  const amount = collection === 'excursion_bookings'
+  // Monto por defecto: total (guía: precio). Para reservas, si el proveedor
+  // definió un apartado (deposit_amount), ese es el monto por defecto.
+  let amount = collection === 'excursion_bookings'
     ? (Number(rec.getFloat('total')) || 0)
     : (Number(rec.getFloat('price')) || 0);
+  if (collection === 'excursion_bookings') {
+    try {
+      const exc = $app.dao().findRecordById('excursions', rec.getString('excursion_ref'));
+      const dep = Number(exc.getFloat('deposit_amount')) || 0;
+      if (dep > 0) amount = dep;
+    } catch (err) {}
+  }
+  // El cliente puede pagar un monto específico (abono).
+  const reqAmount = Number(body.amount || c.queryParam('amount')) || 0;
+  if (reqAmount > 0) amount = reqAmount;
+
   if (amount <= 0) return c.json(400, { error: 'invalid_amount' });
 
   const title = collection === 'excursion_bookings'
@@ -113,11 +139,15 @@ routerAdd('POST', '/api/pay/webhook/mercadopago', (c) => {
         if (parts.length === 2) {
           try {
             const rec = $app.dao().findRecordById(parts[0], parts[1]);
-            rec.set('payment_status', 'paid');
+            const total = parts[0] === 'excursion_bookings' ? (Number(rec.getFloat('total')) || 0) : (Number(rec.getFloat('price')) || 0);
+            const newPaid = (Number(rec.getFloat('amount_paid')) || 0) + (Number(p.transaction_amount) || 0);
+            rec.set('amount_paid', newPaid);
+            rec.set('balance', total > newPaid ? total - newPaid : 0);
+            rec.set('payment_status', total > 0 && newPaid >= total ? 'paid' : 'partial');
             rec.set('payment_method', 'mercadopago');
             rec.set('payment_ref', String(paymentId));
             rec.set('paid_at', new Date().toISOString());
-            if (parts[0] === 'shipping_guides' && rec.getString('status') === 'quoted') rec.set('status', 'paid');
+            if (parts[0] === 'shipping_guides' && newPaid >= total && rec.getString('status') === 'quoted') rec.set('status', 'paid');
             $app.dao().saveRecord(rec);
           } catch (err) {}
         }
@@ -138,11 +168,15 @@ routerAdd('POST', '/api/pay/webhook/stripe', (c) => {
       const parts = String(obj.client_reference_id).split(':');
       if (parts.length === 2) {
         const rec = $app.dao().findRecordById(parts[0], parts[1]);
-        rec.set('payment_status', 'paid');
+        const total = parts[0] === 'excursion_bookings' ? (Number(rec.getFloat('total')) || 0) : (Number(rec.getFloat('price')) || 0);
+        const newPaid = (Number(rec.getFloat('amount_paid')) || 0) + ((Number(obj.amount_total) || 0) / 100);
+        rec.set('amount_paid', newPaid);
+        rec.set('balance', total > newPaid ? total - newPaid : 0);
+        rec.set('payment_status', total > 0 && newPaid >= total ? 'paid' : 'partial');
         rec.set('payment_method', 'stripe');
         rec.set('payment_ref', String(obj.id || ''));
         rec.set('paid_at', new Date().toISOString());
-        if (parts[0] === 'shipping_guides' && rec.getString('status') === 'quoted') rec.set('status', 'paid');
+        if (parts[0] === 'shipping_guides' && newPaid >= total && rec.getString('status') === 'quoted') rec.set('status', 'paid');
         $app.dao().saveRecord(rec);
       }
     }

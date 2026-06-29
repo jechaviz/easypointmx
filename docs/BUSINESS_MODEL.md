@@ -1,0 +1,89 @@
+# Modelo de negocio Easypoint (propuesta)
+
+Easypoint = **punto de recolección de pagos y servicios**. No vende la experiencia
+final (la excursión, el envío): **orquesta y cobra**, y se queda con un margen por
+hacerlo seguro y simple. El valor está en ser la capa de **confianza + dinero**
+entre el cliente y muchos proveedores/puntos.
+
+## 1. Líneas de ingreso
+
+| Línea | Cómo cobra Easypoint | Margen |
+|---|---|---|
+| Excursiones | Fee sobre el total + manejo del apartado/pagos parciales | % del total (sugerido 10–20%) |
+| Guías DHL/Estafeta | Sobreprecio sobre la tarifa de convenio | spread por guía |
+| Afiliación de puntos | Comisión por paquete/servicio operado en el punto | por transacción |
+| Flotación de apartados | Dinero apartado retenido hasta liquidar al proveedor | financiero |
+
+El eje nuevo es el **apartado (pago parcial)**: el cliente aparta con una cantidad
+definida por el proveedor (p.ej. $100) y Easypoint **custodia** ese dinero hasta
+que la reserva se finalice.
+
+## 2. Pagos parciales (apartado)
+
+- El **proveedor define** por excursión: precio total y **monto de apartado**
+  (fijo, p.ej. $100, o un mínimo). 0 = exige pago completo.
+- El cliente puede pagar en **abonos** con **fechas de pago** (calendario) hasta
+  cubrir el total antes de la fecha de la excursión.
+- Easypoint registra `amount_paid` y `balance` por reserva; el estado de pago va
+  `pending → partial → paid`.
+
+**Reglas de dinero (clave para la rentabilidad y la seguridad):**
+
+- **Sin reembolsos en efectivo.** Si la reserva no se finaliza (el cliente no
+  completa el pago o no se presenta), **lo abonado NO se pierde ni se devuelve en
+  efectivo**: se convierte en **crédito Easypoint** (estado `credit`) aplicable a
+  **otra excursión / otro proveedor** dentro de una vigencia (sugerido 12 meses).
+- Esto elimina contracargos por "quiero mi dinero" (no prometemos devolución),
+  retiene el flujo dentro del ecosistema y reduce el riesgo financiero.
+- La política se muestra **antes de pagar** (aceptación explícita) para que sea
+  exigible: "Apartas con $X. Sin reembolsos ni cancelaciones; tu pago aplica como
+  crédito para otra experiencia."
+
+**Liquidación al proveedor:** Easypoint libera al proveedor el total **menos su
+fee** sólo cuando la experiencia se marca como completada. Mientras tanto el
+apartado es flotación de Easypoint.
+
+## 3. Defensa contra el usuario insatisfecho (crecer seguro)
+
+El objetivo es **resolver en privado antes de que la queja se haga pública**:
+
+1. **Embudo de queja interno**: en la reserva/rastreo hay un botón "¿Algún
+   problema?" que abre un **ticket privado** (`support_tickets`) y avisa al admin
+   por push/WhatsApp **al instante**. El cliente siente que lo atienden y no salta
+   a redes/reseñas.
+2. **Política aceptada al pagar**: sin reembolsos/cancelaciones → menos disputas
+   "legales"; las inconformidades se canalizan a **crédito** (compensación dentro
+   del sistema), no a devolución.
+3. **Crédito como compensación**: ante una mala experiencia comprobada, se otorga
+   crédito (cuesta poco, retiene al cliente, evita el contracargo y la reseña).
+4. **Reputación controlada**: las reseñas públicas se piden **sólo a clientes con
+   experiencia marcada como satisfactoria** (no se expone un canal público de
+   quejas; el canal público es de elogio, el privado es de queja).
+5. **Trazabilidad**: cada pago, fecha y cambio de estado queda registrado para
+   defender a Easypoint ante un contracargo o reclamo.
+
+## 4. Afiliación de puntos y proveedores
+
+- **Registro sencillo** (mínimos campos + alta inmediata, verificación posterior)
+  y **recuperación de contraseña** simple por correo — bajar la fricción de alta.
+- El **dueño del punto/proveedor** opera desde la **app** (no sólo web): ver
+  reservas, registrar pagos/apartados, confirmar experiencias, cobrar guías.
+- Incentivo: comisión por servicio operado + acceso a la demanda de la red.
+
+## 5. App (sin pasar por la web)
+
+- **PWA instalable** (Android, iOS "Agregar a inicio", escritorio) como primera
+  entrega: experiencia tipo app, offline parcial, sin tiendas ni firma.
+- **App nativa** (framework V/VApps → `vab` APK/AAB; desktop `v -prod`; iOS vía
+  Xcode) como segunda fase: requiere Android SDK, firma y cuentas de tienda
+  (tareas del dueño). Ver `docs/DEPLOYMENT.md` y `v_projects/domains/product_apps/vapps`.
+
+## 6. Qué falta decidir (parámetros del negocio)
+
+- % de fee por línea (excursiones/guías) y monto/mínimo de apartado por defecto.
+- Vigencia del crédito y si es transferible.
+- Comisión exacta a puntos/proveedores.
+- Si el apartado mínimo lo fija el proveedor o Easypoint pone un piso.
+
+Estos son **parámetros configurables**, no rediseños: el sistema ya soporta
+apartado, calendario, crédito y embudo de quejas; ajustar números es runtime.

@@ -24,6 +24,9 @@ onRecordBeforeCreateRequest((e) => {
   if (people < 1) { people = 1; }
   record.set('people', people);
 
+  // saldo inicial = total enviado (se recalcula abajo si resuelve el catálogo)
+  record.set('balance', Number(record.getFloat('total')) || 0);
+
   const today = new Date().toISOString().slice(0, 10);
   const date = String(record.getString('excursion_date') || '').trim();
 
@@ -54,6 +57,7 @@ onRecordBeforeCreateRequest((e) => {
 
   const price = Number(exc.getFloat('price')) || 0;
   record.set('total', price * people);
+  record.set('balance', (price * people) - (Number(record.getFloat('amount_paid')) || 0));
 
   const cap = Number(exc.getFloat('max_capacity')) || 0;
   if (cap > 0 && date) {

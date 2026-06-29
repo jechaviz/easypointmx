@@ -52,7 +52,7 @@ async function run() {
   // ===== EXCURSIONES =====
   // 3. Catalogo: solo admin escribe
   const providerDates = '2026-12-15\n2026-12-22\n2027-01-05';
-  const exc = await req('POST', '/collections/excursions/records', { token: adminToken, body: { name: `Tour E2E ${rnd()}`, destination: 'Oaxaca', description: 'Test', price: 1500, duration: 'Día completo', provider_name: 'Prov E2E', provider_whatsapp: '5215500000000', active: true, available_dates: providerDates, max_capacity: 4 } });
+  const exc = await req('POST', '/collections/excursions/records', { token: adminToken, body: { name: `Tour E2E ${rnd()}`, destination: 'Oaxaca', description: 'Test', price: 1500, duration: 'Día completo', provider_name: 'Prov E2E', provider_whatsapp: '5215500000000', active: true, available_dates: providerDates, max_capacity: 4, deposit_amount: 500 } });
   ok('Admin crea excursión (catálogo) con fechas del proveedor + cupo', exc.ok, JSON.stringify(exc.data));
   const excId = exc.data?.id;
 
@@ -133,11 +133,15 @@ async function run() {
     ok('Guía -> generada con tracking', gen.ok && gen.data?.status === 'generated' && gen.data?.tracking_number, `status ${gen.status}`);
   }
 
-  // ===== PAGOS (pasarela) =====
-  // Checkout de reserva: sin credenciales de pasarela -> pago manual con monto correcto.
+  // ===== PAGOS (pasarela + apartado) =====
+  // Checkout por defecto = APARTADO definido por el proveedor (deposit_amount 500).
   const payBooking = await req('POST', '/pay/checkout', { body: { collection: 'excursion_bookings', id: bookingId } });
-  ok('Checkout reserva devuelve monto correcto', payBooking.ok && payBooking.data?.amount === 1500 * 3, `amount ${payBooking.data?.amount}`);
+  ok('Checkout usa el apartado del proveedor por defecto', payBooking.ok && payBooking.data?.amount === 500, `amount ${payBooking.data?.amount}`);
   ok('Checkout reserva cae a pago manual sin pasarela', payBooking.data?.provider === 'manual' && Boolean(payBooking.data?.reference), `provider ${payBooking.data?.provider}`);
+
+  // Checkout con monto específico (abono).
+  const payCustom = await req('POST', '/pay/checkout', { body: { collection: 'excursion_bookings', id: bookingId, amount: 1000 } });
+  ok('Checkout acepta monto de abono específico', payCustom.ok && payCustom.data?.amount === 1000, `amount ${payCustom.data?.amount}`);
 
   // Checkout de guía: monto = precio de la guía.
   const payGuide = await req('POST', '/pay/checkout', { body: { collection: 'shipping_guides', id: guideId } });
@@ -147,11 +151,30 @@ async function run() {
   const payBad = await req('POST', '/pay/checkout', { body: { collection: 'users', id: 'x' } });
   ok('Checkout rechaza colección inválida', !payBad.ok && payBad.status === 400, `status ${payBad.status}`);
 
-  // Conciliación: admin marca la reserva como pagada.
   if (bookingId) {
-    const markPaid = await req('PATCH', `/collections/excursion_bookings/records/${bookingId}`, { token: adminToken, body: { payment_status: 'paid', payment_method: 'cash', paid_at: new Date().toISOString() } });
-    ok('Admin marca reserva como pagada', markPaid.ok && markPaid.data?.payment_status === 'paid', `payment_status ${markPaid.data?.payment_status}`);
+    // Abono parcial: amount_paid 500 de 4500 -> partial, balance 4000.
+    const partial = await req('PATCH', `/collections/excursion_bookings/records/${bookingId}`, { token: adminToken, body: { amount_paid: 500 } });
+    ok('Abono parcial -> partial + saldo', partial.ok && partial.data?.payment_status === 'partial' && partial.data?.balance === 4000, `status ${partial.data?.payment_status} balance ${partial.data?.balance}`);
+
+    // Liquidación: amount_paid 4500 -> paid, balance 0.
+    const full = await req('PATCH', `/collections/excursion_bookings/records/${bookingId}`, { token: adminToken, body: { amount_paid: 4500 } });
+    ok('Liquidación -> paid + saldo 0', full.ok && full.data?.payment_status === 'paid' && full.data?.balance === 0, `status ${full.data?.payment_status} balance ${full.data?.balance}`);
+
+    // Crédito (no reembolso): se respeta aunque haya monto pagado.
+    const credit = await req('PATCH', `/collections/excursion_bookings/records/${bookingId}`, { token: adminToken, body: { payment_status: 'credit' } });
+    ok('Estado crédito se respeta (no reembolso)', credit.ok && credit.data?.payment_status === 'credit', `status ${credit.data?.payment_status}`);
   }
+
+  // ===== SOPORTE / QUEJAS (embudo privado) =====
+  const ticket = await req('POST', '/collections/support_tickets/records', { body: {
+    kind: 'complaint', subject_ref: bookingId, customer_name: 'Cliente Molesto', customer_phone: '5500001111',
+    message: 'La experiencia no fue como esperaba.', status: 'open'
+  } });
+  ok('Queja pública creada (embudo privado)', ticket.ok, JSON.stringify(ticket.data));
+  const anonTickets = await req('GET', '/collections/support_tickets/records');
+  ok('Anónimo NO ve tickets (privado)', (anonTickets.data?.items?.length || 0) === 0, `items ${anonTickets.data?.items?.length}`);
+  const adminTickets = await req('GET', '/collections/support_tickets/records', { token: adminToken });
+  ok('Admin ve los tickets', adminTickets.ok && adminTickets.data?.items?.some(t => t.id === ticket.data?.id), `status ${adminTickets.status}`);
 
   // ===== TRACKING PUBLICO (paquetería existente) =====
   const trackCode = `E2E-${rnd()}`;
