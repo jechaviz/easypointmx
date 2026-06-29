@@ -122,8 +122,17 @@
           <p class="text-slate-500 mb-6">Tu lugar para <strong>{{ selected.name }}</strong> el <strong>{{ form.excursion_date }}</strong> quedó registrado. Confirma por WhatsApp para asegurar tu cupo.</p>
 
           <div class="space-y-3">
-            <a :href="waUserUrl" target="_blank" rel="noopener noreferrer" class="w-full bg-brand-500 text-slate-900 font-black py-4 rounded-xl hover:bg-brand-400 transition-all flex items-center justify-center gap-3"><i class="bi bi-whatsapp"></i> Confirmar mi reserva</a>
-            <a v-if="providerWa" :href="waProviderUrl" target="_blank" rel="noopener noreferrer" class="w-full bg-slate-100 text-slate-700 font-black py-3 rounded-xl hover:bg-slate-200 transition-all flex items-center justify-center gap-2 text-sm"><i class="bi bi-person-badge"></i> Escribir al proveedor</a>
+            <button @click="payNow" :disabled="paying" class="w-full bg-slate-900 text-white font-black py-4 rounded-xl hover:bg-slate-800 transition-all flex items-center justify-center gap-3 disabled:opacity-50">
+              <i v-if="paying" class="bi bi-arrow-repeat animate-spin"></i><i v-else class="bi bi-credit-card"></i>
+              {{ paying ? 'Abriendo pago...' : 'Pagar en línea' }}
+            </button>
+            <a v-if="canConfirmWa" :href="confirmWaUrl" target="_blank" rel="noopener noreferrer" class="w-full bg-brand-500 text-slate-900 font-black py-4 rounded-xl hover:bg-brand-400 transition-all flex items-center justify-center gap-3"><i class="bi bi-whatsapp"></i> Confirmar mi reserva</a>
+            <a v-if="providerWa && hasContact" :href="waProviderUrl" target="_blank" rel="noopener noreferrer" class="w-full bg-slate-100 text-slate-700 font-black py-3 rounded-xl hover:bg-slate-200 transition-all flex items-center justify-center gap-2 text-sm"><i class="bi bi-person-badge"></i> Escribir al proveedor</a>
+          </div>
+          <div v-if="manualPay" class="mt-5 bg-slate-50 border border-slate-200 rounded-2xl p-4 text-left">
+            <p class="text-xs font-black text-slate-700 uppercase tracking-widest mb-1">Pago</p>
+            <p class="text-sm text-slate-600">{{ manualPay.instructions }}</p>
+            <p v-if="manualPay.reference" class="text-[11px] text-slate-400 font-mono mt-2">Ref: {{ manualPay.reference }}</p>
           </div>
           <button @click="closeBooking" class="mt-6 text-slate-400 font-bold text-sm hover:text-slate-600">Cerrar</button>
         </div>
@@ -134,7 +143,8 @@
 
 <script>
 const PB = window.EASYPOINT_RUNTIME_CONFIG?.pocketBaseUrl || window.location.origin;
-const CONTACT_WA = String(window.EASYPOINT_RUNTIME_CONFIG?.contactWhatsapp || '525500000000').replace(/\D/g, '');
+const CONTACT_WA = String(window.EASYPOINT_RUNTIME_CONFIG?.contactWhatsapp || '').replace(/\D/g, '');
+const HAS_CONTACT = CONTACT_WA.length >= 10;
 
 const DEMO_EXCURSIONS = [
   { id: 'ex_demo1', name: 'Teotihuacán en globo', destination: 'Estado de México', description: 'Vuelo en globo al amanecer sobre las pirámides + desayuno en cueva.', price: 2850, duration: 'Día completo', provider_name: 'SkyMex Tours', provider_whatsapp: '5215511112222', image_url: 'https://images.unsplash.com/photo-1507272931001-fc06c17e4f43?auto=format&fit=crop&q=80&w=800', available_dates: '2026-07-12\n2026-07-19\n2026-08-02\n2026-08-16' },
@@ -153,7 +163,10 @@ export default {
       form: { customer_name: '', customer_phone: '', customer_email: '', people: 1, excursion_date: '' },
       isSubmitting: false,
       success: false,
-      formError: ''
+      formError: '',
+      lastBookingId: '',
+      paying: false,
+      manualPay: null
     };
   },
   computed: {
@@ -185,7 +198,10 @@ export default {
     },
     waProviderUrl() {
       return `https://wa.me/${this.providerWa}?text=${encodeURIComponent(this.bookingLines.join('\n'))}`;
-    }
+    },
+    hasContact() { return HAS_CONTACT; },
+    canConfirmWa() { return HAS_CONTACT || Boolean(this.providerWa); },
+    confirmWaUrl() { return HAS_CONTACT ? this.waUserUrl : this.waProviderUrl; }
   },
   mounted() {
     this.fetchExcursions();
@@ -250,6 +266,29 @@ export default {
     closeBooking() {
       this.selected = null;
       this.success = false;
+      this.manualPay = null;
+      this.lastBookingId = '';
+    },
+    async payNow() {
+      if (!this.lastBookingId) { this.manualPay = { instructions: 'Confirma tu reserva por WhatsApp para coordinar el pago.' }; return; }
+      this.paying = true;
+      try {
+        const res = await fetch(`${PB}/api/pay/checkout`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ collection: 'excursion_bookings', id: this.lastBookingId })
+        });
+        const data = await res.json();
+        if (data && data.url) {
+          window.location.href = data.url; // redirige a la pasarela
+        } else {
+          this.manualPay = data || { instructions: 'Pago manual disponible en tu punto.' };
+        }
+      } catch (_) {
+        this.manualPay = { instructions: 'No pudimos iniciar el pago en línea. Confirma por WhatsApp.' };
+      } finally {
+        this.paying = false;
+      }
     },
     async submitBooking() {
       if (!this.form.customer_name || !this.form.customer_phone || !this.form.excursion_date) {
@@ -281,6 +320,7 @@ export default {
           body: JSON.stringify(payload)
         });
         if (res.ok) {
+          try { const created = await res.json(); this.lastBookingId = created && created.id ? created.id : ''; } catch (_) {}
           this.success = true;
         } else if (res.status >= 500 || res.status === 404 || res.status === 0) {
           // Backend no disponible (sitio demo): no bloquear, confirmar por WhatsApp.

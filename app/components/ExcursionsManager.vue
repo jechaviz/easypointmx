@@ -32,6 +32,7 @@
           </td>
           <td class="px-6 py-4">
             <span class="text-[9px] font-black px-2.5 py-1 rounded-lg border uppercase tracking-wider" :class="statusBadge(item.status)">{{ statusLabel(item.status) }}</span>
+            <span class="block mt-1 text-[9px] font-black uppercase tracking-wider" :class="item.payment_status === 'paid' ? 'text-emerald-400' : 'text-slate-500'">{{ item.payment_status === 'paid' ? '● Pagado' : '○ Sin pago' }}</span>
           </td>
         </template>
 
@@ -39,6 +40,7 @@
           <a :href="waClient(item)" target="_blank" rel="noopener noreferrer" title="Confirmar al cliente por WhatsApp" class="text-green-400 hover:text-green-300 p-1.5"><i class="bi bi-whatsapp"></i></a>
           <a v-if="providerWaFor(item)" :href="waProvider(item)" target="_blank" rel="noopener noreferrer" title="Avisar al proveedor" class="text-blue-400 hover:text-blue-300 p-1.5"><i class="bi bi-person-badge"></i></a>
           <a v-if="adminWa" :href="waAdmin(item)" target="_blank" rel="noopener noreferrer" title="Avisar al administrador" class="text-purple-400 hover:text-purple-300 p-1.5"><i class="bi bi-shield-check"></i></a>
+          <button v-if="item.payment_status !== 'paid'" @click="markPaid(item)" title="Marcar pagada (efectivo)" class="text-emerald-400 hover:text-emerald-300 p-1.5"><i class="bi bi-cash-coin"></i></button>
           <button v-if="item.status !== 'confirmed'" @click="confirm(item)" title="Marcar confirmada" class="text-brand-400 hover:text-brand-300 p-1.5"><i class="bi bi-check-circle"></i></button>
           <button @click="remove('excursion_bookings', item)" title="Eliminar" class="text-slate-600 hover:text-red-400 p-1.5"><i class="bi bi-trash3"></i></button>
         </template>
@@ -272,6 +274,13 @@ export default {
     async toggleActive(item) {
       try { await this.apiPatch('excursions', item.id, { active: item.active === false }); await this.loadAll(); }
       catch (e) { this.showModal({ title: 'Error', message: e.message, type: 'error' }); }
+    },
+    async markPaid(item) {
+      try {
+        await this.apiPatch('excursion_bookings', item.id, { payment_status: 'paid', payment_method: 'cash', paid_at: new Date().toISOString() });
+        this.emitBusinessEvent({ audience: ['admin'], severity: 'success', icon: 'cash-coin', title: 'Reserva pagada', message: `${item.customer_name} pagó ${this.formatMoney(item.total)} (${item.excursion_name || item.destination}).` });
+        await this.loadAll();
+      } catch (e) { this.showModal({ title: 'Error', message: e.message, type: 'error' }); }
     },
     async confirm(item) {
       try {

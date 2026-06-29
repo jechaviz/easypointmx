@@ -3,6 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- SPA deep-link restore: 404.html redirige aquí con ?redirect=/ruta -->
+    <script>
+      (function () {
+        try {
+          var r = new URLSearchParams(window.location.search).get('redirect');
+          if (r) window.history.replaceState(null, '', window.location.pathname.replace(/\/$/, '') + decodeURIComponent(r));
+        } catch (e) {}
+      })();
+    </script>
     <title>Easypoint | Tus compras online, cerca de ti siempre.</title>
     
     <!-- Meta SEO -->

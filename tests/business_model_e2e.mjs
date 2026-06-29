@@ -119,9 +119,11 @@ async function run() {
   const guide = await req('POST', '/collections/shipping_guides/records', { token: opToken, body: {
     carrier: 'dhl', service: 'express', origin_cp: '06700', dest_cp: '44100',
     recipient_name: 'Receptor E2E', recipient_phone: '5599998888', weight_kg: 2,
+    length_cm: 40, width_cm: 30, height_cm: 20,
     declared_value: 500, price: 222, status: 'quoted', point_name: point.data?.name
   } });
   ok('Operador vende guía (quoted)', guide.ok, JSON.stringify(guide.data));
+  ok('Guía guarda dimensiones del envío', guide.data?.length_cm === 40 && guide.data?.width_cm === 30 && guide.data?.height_cm === 20, `dims ${guide.data?.length_cm}x${guide.data?.width_cm}x${guide.data?.height_cm}`);
   const guideId = guide.data?.id;
 
   if (guideId) {
@@ -129,6 +131,26 @@ async function run() {
     ok('Guía -> pagada', paid.ok && paid.data?.status === 'paid', `status ${paid.status}`);
     const gen = await req('PATCH', `/collections/shipping_guides/records/${guideId}`, { token: opToken, body: { status: 'generated', tracking_number: `DHL${rnd()}` } });
     ok('Guía -> generada con tracking', gen.ok && gen.data?.status === 'generated' && gen.data?.tracking_number, `status ${gen.status}`);
+  }
+
+  // ===== PAGOS (pasarela) =====
+  // Checkout de reserva: sin credenciales de pasarela -> pago manual con monto correcto.
+  const payBooking = await req('POST', '/pay/checkout', { body: { collection: 'excursion_bookings', id: bookingId } });
+  ok('Checkout reserva devuelve monto correcto', payBooking.ok && payBooking.data?.amount === 1500 * 3, `amount ${payBooking.data?.amount}`);
+  ok('Checkout reserva cae a pago manual sin pasarela', payBooking.data?.provider === 'manual' && Boolean(payBooking.data?.reference), `provider ${payBooking.data?.provider}`);
+
+  // Checkout de guía: monto = precio de la guía.
+  const payGuide = await req('POST', '/pay/checkout', { body: { collection: 'shipping_guides', id: guideId } });
+  ok('Checkout guía devuelve precio de la guía', payGuide.ok && payGuide.data?.amount === 222, `amount ${payGuide.data?.amount}`);
+
+  // Checkout con colección inválida -> 400.
+  const payBad = await req('POST', '/pay/checkout', { body: { collection: 'users', id: 'x' } });
+  ok('Checkout rechaza colección inválida', !payBad.ok && payBad.status === 400, `status ${payBad.status}`);
+
+  // Conciliación: admin marca la reserva como pagada.
+  if (bookingId) {
+    const markPaid = await req('PATCH', `/collections/excursion_bookings/records/${bookingId}`, { token: adminToken, body: { payment_status: 'paid', payment_method: 'cash', paid_at: new Date().toISOString() } });
+    ok('Admin marca reserva como pagada', markPaid.ok && markPaid.data?.payment_status === 'paid', `payment_status ${markPaid.data?.payment_status}`);
   }
 
   // ===== TRACKING PUBLICO (paquetería existente) =====

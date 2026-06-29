@@ -58,6 +58,19 @@
                 <input v-model.number="form.weight" min="0.5" step="0.5" type="number" placeholder="1" class="w-full bg-slate-50 ring-1 ring-slate-200 rounded-xl px-4 py-3 focus:ring-brand-500 outline-none transition-all">
               </div>
 
+              <div>
+                <label class="block text-xs font-black text-slate-400 uppercase tracking-widest mb-2">Dimensiones (cm)</label>
+                <div class="grid grid-cols-3 gap-3">
+                  <input v-model.number="form.length" min="0" type="number" placeholder="Largo" class="w-full bg-slate-50 ring-1 ring-slate-200 rounded-xl px-3 py-3 focus:ring-brand-500 outline-none transition-all">
+                  <input v-model.number="form.width" min="0" type="number" placeholder="Ancho" class="w-full bg-slate-50 ring-1 ring-slate-200 rounded-xl px-3 py-3 focus:ring-brand-500 outline-none transition-all">
+                  <input v-model.number="form.height" min="0" type="number" placeholder="Alto" class="w-full bg-slate-50 ring-1 ring-slate-200 rounded-xl px-3 py-3 focus:ring-brand-500 outline-none transition-all">
+                </div>
+                <p v-if="volWeight > 0" class="text-[10px] text-slate-500 font-medium mt-2">
+                  Peso volumétrico: {{ volWeight.toFixed(1) }} kg ·
+                  <span class="font-black text-slate-700">cobrable: {{ chargeableWeight.toFixed(1) }} kg</span>
+                </p>
+              </div>
+
               <!-- Resultado -->
               <div class="bg-slate-900 rounded-2xl p-6 flex items-center justify-between">
                 <div>
@@ -68,10 +81,10 @@
                 <i class="bi bi-box-seam-fill text-brand-500 text-4xl"></i>
               </div>
 
-              <a :href="whatsappQuoteUrl" target="_blank" rel="noopener noreferrer" class="w-full bg-brand-500 text-slate-900 font-black py-4 rounded-xl hover:bg-brand-400 transition-all flex items-center justify-center gap-3">
+              <a v-if="hasContact" :href="whatsappQuoteUrl" target="_blank" rel="noopener noreferrer" class="w-full bg-brand-500 text-slate-900 font-black py-4 rounded-xl hover:bg-brand-400 transition-all flex items-center justify-center gap-3">
                 <i class="bi bi-whatsapp"></i> Comprar guía por WhatsApp
               </a>
-              <button @click="$emit('open-modal', 'map')" class="w-full bg-slate-100 text-slate-700 font-black py-3 rounded-xl hover:bg-slate-200 transition-all text-sm">Ver puntos cercanos</button>
+              <button @click="$emit('open-modal', 'map')" :class="hasContact ? 'bg-slate-100 text-slate-700 hover:bg-slate-200' : 'bg-brand-500 text-slate-900 hover:bg-brand-400'" class="w-full font-black py-3 rounded-xl transition-all text-sm">{{ hasContact ? 'Ver puntos cercanos' : 'Comprar en tu punto Easypoint' }}</button>
               <p class="text-[10px] text-slate-400 text-center font-medium">Tarifas de convenio estimadas. El precio final se confirma en el punto Easypoint.</p>
             </div>
           </div>
@@ -104,8 +117,13 @@
 <script>
 // Tarifas de convenio (estimadas, configurables). El mismo calculo vive en
 // app/components/GuidesManager.vue para la venta en punto.
-function quoteGuide({ carrier, service, weightKg, sameZone }) {
-  const w = Math.max(0.5, Number(weightKg) || 0.5);
+function volumetricWeight(length, width, height) {
+  const v = (Number(length) || 0) * (Number(width) || 0) * (Number(height) || 0);
+  return v > 0 ? v / 5000 : 0; // factor estándar paquetería 5000
+}
+function quoteGuide({ carrier, service, weightKg, sameZone, length, width, height }) {
+  const actual = Math.max(0.5, Number(weightKg) || 0.5);
+  const w = Math.max(actual, volumetricWeight(length, width, height));
   const table = {
     dhl: { base: 139, perKg: 38 },
     estafeta: { base: 109, perKg: 30 }
@@ -117,13 +135,15 @@ function quoteGuide({ carrier, service, weightKg, sameZone }) {
   return Math.round(price);
 }
 
-const CONTACT_WA = String(window.EASYPOINT_RUNTIME_CONFIG?.contactWhatsapp || '525500000000').replace(/\D/g, '');
+const CONTACT_WA = String(window.EASYPOINT_RUNTIME_CONFIG?.contactWhatsapp || '').replace(/\D/g, '');
+const HAS_CONTACT = CONTACT_WA.length >= 10;
 
 export default {
   emits: ['open-modal', 'navigate'],
   data() {
     return {
-      form: { carrier: 'estafeta', service: 'standard', originCp: '', destCp: '', weight: 1 }
+      hasContact: HAS_CONTACT,
+      form: { carrier: 'estafeta', service: 'standard', originCp: '', destCp: '', weight: 1, length: 0, width: 0, height: 0 }
     };
   },
   computed: {
@@ -136,12 +156,21 @@ export default {
       if (!this.form.originCp || !this.form.destCp) return 'Tarifa nacional';
       return this.sameZone ? 'Zona local' : 'Zona nacional';
     },
+    volWeight() {
+      return volumetricWeight(this.form.length, this.form.width, this.form.height);
+    },
+    chargeableWeight() {
+      return Math.max(Math.max(0.5, Number(this.form.weight) || 0.5), this.volWeight);
+    },
     quote() {
       return quoteGuide({
         carrier: this.form.carrier,
         service: this.form.service,
         weightKg: this.form.weight,
-        sameZone: this.sameZone
+        sameZone: this.sameZone,
+        length: this.form.length,
+        width: this.form.width,
+        height: this.form.height
       });
     },
     whatsappQuoteUrl() {
@@ -150,8 +179,9 @@ export default {
         `Paquetería: ${this.form.carrier.toUpperCase()} (${this.form.service === 'express' ? 'Express' : 'Estándar'})`,
         `CP origen: ${this.form.originCp || '-'} | CP destino: ${this.form.destCp || '-'}`,
         `Peso: ${this.form.weight || 1} kg`,
+        (this.volWeight > 0 ? `Dimensiones: ${this.form.length}x${this.form.width}x${this.form.height} cm (cobrable ${this.chargeableWeight.toFixed(1)} kg)` : ''),
         `Cotización estimada: ${this.formatMoney(this.quote)}`
-      ];
+      ].filter(Boolean);
       return `https://wa.me/${CONTACT_WA}?text=${encodeURIComponent(lines.join('\n'))}`;
     }
   },

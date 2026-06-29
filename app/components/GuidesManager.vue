@@ -28,6 +28,7 @@
 
       <template #actions="{ item }">
         <a v-if="recipientWa(item)" :href="waTrackUrl(item)" target="_blank" rel="noopener noreferrer" title="Avisar al destinatario" class="text-green-400 hover:text-green-300 p-1.5"><i class="bi bi-whatsapp"></i></a>
+        <button @click="checkoutGuide(item)" title="Cobro en línea" class="text-emerald-400 hover:text-emerald-300 p-1.5"><i class="bi bi-credit-card"></i></button>
         <button v-if="item.status === 'quoted'" @click="setStatus(item, 'paid')" title="Marcar pagada" class="text-blue-400 hover:text-blue-300 p-1.5"><i class="bi bi-cash-coin"></i></button>
         <button v-if="item.status === 'paid'" @click="generate(item)" title="Generar guía" class="text-brand-400 hover:text-brand-300 p-1.5"><i class="bi bi-upc-scan"></i></button>
         <button v-if="['generated','in_transit'].includes(item.status)" @click="setStatus(item, item.status === 'generated' ? 'in_transit' : 'delivered')" title="Avanzar estado" class="text-amber-400 hover:text-amber-300 p-1.5"><i class="bi bi-arrow-right-circle"></i></button>
@@ -71,6 +72,14 @@
               <div class="flex flex-col"><label class="label-sm">CP Destino</label><input v-model="form.dest_cp" class="input-dark" placeholder="44100"></div>
               <div class="flex flex-col"><label class="label-sm">Peso (kg)</label><input v-model.number="form.weight_kg" type="number" min="0.5" step="0.5" class="input-dark"></div>
             </div>
+            <div>
+              <div class="grid grid-cols-3 gap-4">
+                <div class="flex flex-col"><label class="label-sm">Largo (cm)</label><input v-model.number="form.length_cm" type="number" min="0" class="input-dark"></div>
+                <div class="flex flex-col"><label class="label-sm">Ancho (cm)</label><input v-model.number="form.width_cm" type="number" min="0" class="input-dark"></div>
+                <div class="flex flex-col"><label class="label-sm">Alto (cm)</label><input v-model.number="form.height_cm" type="number" min="0" class="input-dark"></div>
+              </div>
+              <p v-if="volWeight > 0" class="text-[10px] text-slate-500 mt-2 px-1">Peso volumétrico: {{ volWeight.toFixed(1) }} kg · cobrable {{ Math.max(Math.max(0.5, Number(form.weight_kg)||0.5), volWeight).toFixed(1) }} kg</p>
+            </div>
             <div class="grid grid-cols-2 gap-4">
               <div class="flex flex-col"><label class="label-sm">Remitente</label><input v-model="form.sender_name" class="input-dark" placeholder="Nombre"></div>
               <div class="flex flex-col"><label class="label-sm">Destinatario</label><input v-model="form.recipient_name" class="input-dark" placeholder="Nombre"></div>
@@ -108,8 +117,13 @@
 const { loadModule } = window['vue3-sfc-loader'];
 const options = window.options;
 
-function quoteGuide({ carrier, service, weightKg, sameZone }) {
-  const w = Math.max(0.5, Number(weightKg) || 0.5);
+function volumetricWeight(l, w, h) {
+  const v = (Number(l) || 0) * (Number(w) || 0) * (Number(h) || 0);
+  return v > 0 ? v / 5000 : 0;
+}
+function quoteGuide({ carrier, service, weightKg, sameZone, length, width, height }) {
+  const actual = Math.max(0.5, Number(weightKg) || 0.5);
+  const w = Math.max(actual, volumetricWeight(length, width, height));
   const table = { dhl: { base: 139, perKg: 38 }, estafeta: { base: 109, perKg: 30 } };
   const t = table[carrier] || table.estafeta;
   let price = t.base + Math.max(0, Math.ceil(w) - 1) * t.perKg;
@@ -153,8 +167,11 @@ export default {
       if (!this.form.origin_cp || !this.form.dest_cp) return 'Tarifa nacional';
       return this.sameZone ? 'Zona local' : 'Zona nacional';
     },
+    volWeight() {
+      return volumetricWeight(this.form.length_cm, this.form.width_cm, this.form.height_cm);
+    },
     autoQuote() {
-      return quoteGuide({ carrier: this.form.carrier, service: this.form.service, weightKg: this.form.weight_kg, sameZone: this.sameZone });
+      return quoteGuide({ carrier: this.form.carrier, service: this.form.service, weightKg: this.form.weight_kg, sameZone: this.sameZone, length: this.form.length_cm, width: this.form.width_cm, height: this.form.height_cm });
     }
   },
   watch: {
@@ -169,7 +186,7 @@ export default {
   mounted() { this.load(); },
   methods: {
     blankForm() {
-      return { carrier: 'estafeta', service: 'standard', origin_cp: '', dest_cp: '', origin_address: '', dest_address: '', sender_name: '', recipient_name: '', recipient_phone: '', weight_kg: 1, declared_value: 0, price: 0, status: 'quoted', point_name: '', notes: '', tracking_number: '', _priceTouched: false };
+      return { carrier: 'estafeta', service: 'standard', origin_cp: '', dest_cp: '', origin_address: '', dest_address: '', sender_name: '', recipient_name: '', recipient_phone: '', weight_kg: 1, length_cm: 0, width_cm: 0, height_cm: 0, declared_value: 0, price: 0, status: 'quoted', point_name: '', notes: '', tracking_number: '', _priceTouched: false };
     },
     token() { return localStorage.getItem('ep_token'); },
     formatMoney(a) { return new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN', maximumFractionDigits: 0 }).format(Number(a) || 0); },
@@ -254,6 +271,23 @@ export default {
         this.showModal({ title: 'Error', message: e.message || 'No se pudo registrar la guía.', type: 'error' });
       } finally {
         this.saving = false;
+      }
+    },
+    async checkoutGuide(item) {
+      try {
+        const res = await fetch(`${this.pb_url}/api/pay/checkout`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Authorization: this.token() },
+          body: JSON.stringify({ collection: 'shipping_guides', id: item.id })
+        });
+        const data = await res.json();
+        if (data && data.url) {
+          window.open(data.url, '_blank', 'noopener');
+        } else {
+          this.showModal({ title: 'Cobro manual', message: (data && data.instructions) || 'Cobra en efectivo o transferencia y marca la guía como pagada.', type: 'info' });
+        }
+      } catch (e) {
+        this.showModal({ title: 'Error', message: 'No se pudo iniciar el cobro en línea.', type: 'error' });
       }
     },
     async setStatus(item, status) {
