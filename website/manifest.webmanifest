@@ -1,0 +1,15 @@
+{
+  "name": "Easypoint",
+  "short_name": "Easypoint",
+  "description": "Rastrea paquetes, compra guías DHL/Estafeta y reserva excursiones desde tu punto Easypoint.",
+  "start_url": ".",
+  "scope": ".",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0f172a",
+  "theme_color": "#84cc16",
+  "lang": "es-MX",
+  "icons": [
+    { "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
+  ]
+}

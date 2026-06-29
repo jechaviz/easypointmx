@@ -26,6 +26,7 @@
             <a :href="siteHref('/locales')" @click.prevent="navigate('/locales')" class="text-sm font-semibold text-slate-300 hover:text-white transition-colors">Para Locales</a>
             <a :href="siteHref('/ecommerce')" @click.prevent="navigate('/ecommerce')" class="text-sm font-semibold text-slate-300 hover:text-white transition-colors">Para E-commerce</a>
             <a :href="siteHref('/developers')" @click.prevent="navigate('/developers')" class="text-sm font-semibold text-slate-300 hover:text-white transition-colors">Developers</a>
+            <a :href="siteHref('/descargar')" @click.prevent="navigate('/descargar')" class="text-sm font-bold text-brand-400 hover:text-brand-300 transition-colors flex items-center gap-1"><i class="bi bi-download"></i> App</a>
             <!-- Divider -->
             <div class="h-5 w-px bg-slate-700"></div>
             <a :href="repoHref('/app/')" class="text-sm font-semibold text-brand-400 hover:text-brand-300 transition-colors">Acceder <i class="bi bi-box-arrow-in-right ml-1"></i></a>
@@ -53,6 +54,7 @@
             <a :href="siteHref('/locales')" @click.prevent="navigate('/locales')" class="block px-4 py-3 rounded-xl text-sm font-bold text-slate-200 hover:bg-white/10">Para Locales</a>
             <a :href="siteHref('/ecommerce')" @click.prevent="navigate('/ecommerce')" class="block px-4 py-3 rounded-xl text-sm font-bold text-slate-200 hover:bg-white/10">Para E-commerce</a>
             <a :href="siteHref('/developers')" @click.prevent="navigate('/developers')" class="block px-4 py-3 rounded-xl text-sm font-bold text-slate-200 hover:bg-white/10">Developers</a>
+            <a :href="siteHref('/descargar')" @click.prevent="navigate('/descargar')" class="block px-4 py-3 rounded-xl text-sm font-bold text-brand-400 hover:bg-white/10"><i class="bi bi-download"></i> Descargar app</a>
             <div class="h-px bg-white/10 my-2"></div>
             <a :href="repoHref('/app/')" class="block px-4 py-3 rounded-xl text-sm font-bold text-brand-400 hover:bg-white/10">Acceder</a>
             <button @click="openModal('partner')" class="w-full text-left px-4 py-3 rounded-xl text-sm font-black bg-brand-500 text-slate-950 hover:bg-brand-400">Ser Partner</button>
@@ -300,6 +302,7 @@ export default {
     EnviaView: Vue.defineAsyncComponent(() => loadModule('./components/EnviaView.vue', options)),
     GuiasView: Vue.defineAsyncComponent(() => loadModule('./components/GuiasView.vue', options)),
     ExcursionesView: Vue.defineAsyncComponent(() => loadModule('./components/ExcursionesView.vue', options)),
+    DescargarView: Vue.defineAsyncComponent(() => loadModule('./components/DescargarView.vue', options)),
     PrivacidadView: Vue.defineAsyncComponent(() => loadModule('./components/PrivacidadView.vue', options)),
     DeveloperView: Vue.defineAsyncComponent(() => loadModule('./components/DeveloperView.vue', options))
   },
@@ -344,6 +347,7 @@ export default {
         '/ecommerce': 'EnviaView',
         '/guias': 'GuiasView',
         '/excursiones': 'ExcursionesView',
+        '/descargar': 'DescargarView',
         '/privacidad': 'PrivacidadView',
         '/developers': 'DeveloperView'
       };

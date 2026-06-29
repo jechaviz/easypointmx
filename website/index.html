@@ -13,6 +13,24 @@
       })();
     </script>
     <title>Easypoint | Tus compras online, cerca de ti siempre.</title>
+
+    <!-- PWA: app instalable -->
+    <link rel="manifest" href="manifest.webmanifest">
+    <meta name="theme-color" content="#84cc16">
+    <link rel="apple-touch-icon" href="icon.svg">
+    <script>
+      // Captura el prompt de instalación para usarlo desde la vista /descargar.
+      window.addEventListener('beforeinstallprompt', function (e) {
+        e.preventDefault();
+        window.__epInstallPrompt = e;
+        window.dispatchEvent(new Event('ep-installable'));
+      });
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', function () {
+          navigator.serviceWorker.register('sw.js').catch(function () {});
+        });
+      }
+    </script>
     
     <!-- Meta SEO -->
     <meta name="description" content="Rastrea paquetes, consulta puntos Easypoint disponibles y solicita evaluación para operar como punto de entrega.">
