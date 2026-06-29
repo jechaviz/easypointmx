@@ -78,7 +78,7 @@
         <!-- ── DASHBOARD (Premium Redesign) ── -->
         <div v-if="section === 'dashboard'">
           <!-- Premium Stats -->
-          <div class="grid grid-cols-4 gap-6 mb-12 animate-fade-in">
+          <div class="grid grid-cols-2 lg:grid-cols-3 gap-6 mb-12 animate-fade-in">
             <div v-for="stat in kpis" :key="stat.label" class="bg-slate-900 border border-slate-800 p-8 rounded-[2.5rem] shadow-2xl relative overflow-hidden group hover:border-brand-500/30 transition-all">
               <div class="absolute -top-12 -right-12 w-24 h-24 bg-brand-500/5 blur-[40px] rounded-full group-hover:bg-brand-500/10 transition-all"></div>
               <div class="flex items-center gap-4 mb-6">
@@ -706,6 +706,7 @@ export default {
       recentShipments: [], allShipments: [], shipFilter: '',
       users: [], points: [], commissions: [], invoices: [],
       pendingApps: [], allApps: [],
+      guides: [], bookings: [],
       // User form
       showUserForm: false, editingUser: null,
       userForm: { email: '', password: '', full_name: '', role: 'operator', point_ref: '' },
@@ -723,11 +724,15 @@ export default {
     kpis() {
       const pendingTotal = this.commissions.filter(c => c.status === 'pending').reduce((s, c) => s + Number(c.total), 0);
       const activePoints = this.points.filter(p => p.status === 'active').length;
+      const guidesRevenue = this.guides.filter(g => ['paid', 'generated', 'in_transit', 'delivered'].includes(g.status)).reduce((s, g) => s + Number(g.price || 0), 0);
+      const excursionsRevenue = this.bookings.filter(b => ['confirmed', 'completed'].includes(b.status)).reduce((s, b) => s + Number(b.total || 0), 0);
       return [
         { label: 'Envíos en Tránsito', value: this.allShipments.filter(s => s.status === 'in_transit').length, trend: 12, icon: 'truck' },
         { label: 'Puntos Activos', value: activePoints, trend: 5, icon: 'shop' },
         { label: 'Usuarios Registrados', value: this.users.length, trend: 8, icon: 'people' },
-        { label: 'Deuda Comisiones', value: '$' + pendingTotal.toLocaleString(), trend: -2, icon: 'cash' }
+        { label: 'Deuda Comisiones', value: '$' + pendingTotal.toLocaleString(), trend: -2, icon: 'cash' },
+        { label: 'Ingresos Guías', value: '$' + guidesRevenue.toLocaleString(), trend: 0, icon: 'upc-scan' },
+        { label: 'Ingresos Excursiones', value: '$' + excursionsRevenue.toLocaleString(), trend: 0, icon: 'compass' }
       ];
     },
     currentNav() { return this.nav.find(n => n.id === this.section); },
@@ -807,7 +812,9 @@ export default {
           this.points = d.points || [];
           this.commissions = d.commissions || [];
           this.invoices = d.invoices || [];
-          this.allApps = d.partner_applications || []; 
+          this.allApps = d.partner_applications || [];
+          this.guides = d.shipping_guides || [];
+          this.bookings = d.excursion_bookings || [];
           this.pendingApps = this.allApps.filter(a => a.status === 'new');
           this.recentShipments = this.allShipments.slice(0, 8);
           
@@ -823,14 +830,16 @@ export default {
           return;
       }
 
-      const [s, u, p, c, i, apps, sys] = await Promise.all([
+      const [s, u, p, c, i, apps, sys, g, b] = await Promise.all([
         this.get('/api/collections/shipments/records?sort=-created&perPage=50&expand=point_id'),
         this.get('/api/collections/users/records?perPage=100'),
         this.get('/api/collections/points/records?perPage=100'),
         this.get('/api/collections/commissions/records?sort=-period&perPage=100'),
         this.get('/api/collections/invoices/records?sort=-created&perPage=100'),
         this.get('/api/collections/partner_applications/records?sort=-created&perPage=100'),
-        this.get('/api/collections/system_settings/records')
+        this.get('/api/collections/system_settings/records'),
+        this.get('/api/collections/shipping_guides/records?sort=-created&perPage=200'),
+        this.get('/api/collections/excursion_bookings/records?sort=-created&perPage=200')
       ]);
       this.allShipments  = s.items || [];
       this.recentShipments = this.allShipments.slice(0, 8);
@@ -839,6 +848,8 @@ export default {
       this.commissions   = c.items || [];
       this.invoices      = i.items || [];
       this.allApps       = apps.items || [];
+      this.guides        = g.items || [];
+      this.bookings      = b.items || [];
       this.pendingApps   = this.allApps.filter(a => a.status === 'new');
       if (sys.items?.[0]) {
         this.testModeData = { id: sys.items[0].id, enabled: sys.items[0].test_mode };

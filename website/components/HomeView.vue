@@ -178,6 +178,31 @@
       </div>
     </section>
 
+    <!-- Servicios Easypoint -->
+    <section class="py-24 bg-white border-t border-slate-100">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="text-center max-w-3xl mx-auto mb-14">
+          <h2 class="text-base text-brand-600 font-bold uppercase tracking-wider mb-2">Más servicios</h2>
+          <h3 class="text-4xl font-extrabold text-slate-900 tracking-tight">Tu punto Easypoint hace más.</h3>
+          <p class="text-lg text-slate-600 mt-4">Además de recibir paquetes, envía con paqueterías de convenio y reserva experiencias turísticas.</p>
+        </div>
+        <div class="grid md:grid-cols-2 gap-8">
+          <button @click="$emit('navigate', '/guias')" class="text-left bg-slate-50 rounded-[2.5rem] p-10 border border-slate-100 hover:border-brand-500/50 hover:shadow-xl transition-all group">
+            <div class="w-14 h-14 bg-brand-500 text-slate-900 rounded-2xl flex items-center justify-center text-2xl mb-6 group-hover:scale-105 transition-transform"><i class="bi bi-truck"></i></div>
+            <h4 class="text-2xl font-black text-slate-900 mb-3">Guías DHL &amp; Estafeta</h4>
+            <p class="text-slate-600 mb-6">Cotiza al instante con tarifas de convenio y compra tu guía en el punto más cercano.</p>
+            <span class="text-brand-600 font-black text-sm inline-flex items-center gap-2">Cotizar envío <i class="bi bi-arrow-right group-hover:translate-x-1 transition-transform"></i></span>
+          </button>
+          <button @click="$emit('navigate', '/excursiones')" class="text-left bg-slate-50 rounded-[2.5rem] p-10 border border-slate-100 hover:border-brand-500/50 hover:shadow-xl transition-all group">
+            <div class="w-14 h-14 bg-brand-500 text-slate-900 rounded-2xl flex items-center justify-center text-2xl mb-6 group-hover:scale-105 transition-transform"><i class="bi bi-compass"></i></div>
+            <h4 class="text-2xl font-black text-slate-900 mb-3">Excursiones turísticas</h4>
+            <p class="text-slate-600 mb-6">Reserva destinos seleccionados en línea y recibe tu confirmación por WhatsApp.</p>
+            <span class="text-brand-600 font-black text-sm inline-flex items-center gap-2">Ver excursiones <i class="bi bi-arrow-right group-hover:translate-x-1 transition-transform"></i></span>
+          </button>
+        </div>
+      </div>
+    </section>
+
     <!-- B2B section -->
     <section class="py-32 bg-slate-900 border-t border-slate-800 relative overflow-hidden">
        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
@@ -226,7 +251,7 @@ function getRepoBasePath(pathname = window.location.pathname) {
 }
 
 export default {
-    emits: ['open-modal'],
+    emits: ['open-modal', 'navigate'],
     data() {
        return {
           trackingQuery: '',
