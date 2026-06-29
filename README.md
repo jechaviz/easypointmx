@@ -30,7 +30,9 @@ Easypoint es una aplicacion web sin build-step que combina:
 Requisitos:
 
 - Node.js 24+
-- Windows con `pb/pocketbase.exe` disponible en el repo
+- Windows con `pb/pocketbase.exe` disponible. El binario ya no se versiona: descargalo de
+  [pocketbase.io/docs](https://pocketbase.io/docs) y colocalo en `pb/pocketbase.exe`
+  (o exporta `POCKETBASE_BIN` apuntando a tu binario).
 
 Levantar stack local recomendado:
 

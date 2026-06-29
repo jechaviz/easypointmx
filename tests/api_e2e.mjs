@@ -120,10 +120,9 @@ async function runTests() {
         failures++;
     }
 
-    // Test 7: Create & Verify Shipment
+    // Test 7: Shipments protegidos — el create anonimo debe ser rechazado.
     const testTrackingId = `E2E-${Math.floor(Math.random() * 100000)}`;
     try {
-        // Create
         const createRes = await fetch(`${PB_API}/collections/shipments/records`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -132,26 +131,31 @@ async function runTests() {
                 status: 'pending'
             })
         });
-        
+
         if (createRes.ok) {
-            console.log(`✅ [API] Create Shipment (${testTrackingId}): OK`);
-            
-            // Verify
-            const verifyRes = await fetch(pbApiUrl('collections/shipments/records', {
-                filter: `(tracking_id=${pbFilterString(testTrackingId)})`
-            }));
-            const verifyData = await verifyRes.json();
-            if (verifyRes.ok && verifyData.items.length > 0) {
-                console.log(`✅ [API] Verify Shipment Existence: OK`);
-            } else {
-                throw new Error('Created shipment not found in search');
-            }
+            throw new Error('SEGURIDAD: el create anonimo de shipments fue permitido (regla abierta).');
+        } else if ([400, 401, 403].includes(createRes.status)) {
+            console.log(`✅ [API] Shipment create protegido (anon rechazado ${createRes.status}): OK`);
         } else {
             const errBody = await createRes.text();
-            throw new Error(`Status ${createRes.status} - ${errBody}`);
+            throw new Error(`Status inesperado ${createRes.status} - ${errBody}`);
         }
     } catch (e) {
-        console.error('❌ [API] Shipment Lifecycle: FAILED', e.message);
+        console.error('❌ [API] Shipment create protegido: FAILED', e.message);
+        failures++;
+    }
+
+    // Test 8: Endpoint publico de rastreo responde limpio (404 para tracking inexistente).
+    try {
+        const res = await fetch(`${PB_API}/track/E2E-NOEXISTE-${Math.floor(Math.random() * 100000)}`);
+        const data = await res.json().catch(() => ({}));
+        if (res.status === 404 && data && data.error === 'not_found') {
+            console.log('✅ [API] Public Tracking Endpoint: OK (404 limpio)');
+        } else {
+            throw new Error(`Status ${res.status} body=${JSON.stringify(data)}`);
+        }
+    } catch (e) {
+        console.error('❌ [API] Public Tracking Endpoint: FAILED', e.message);
         failures++;
     }
 

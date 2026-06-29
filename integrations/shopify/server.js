@@ -3,8 +3,13 @@ const axios = require('axios');
 const app = express();
 app.use(express.json());
 
-const EASYPOINT_API = "http://localhost:8090/api";
+const EASYPOINT_API = process.env.EASYPOINT_API || "http://127.0.0.1:8090/api";
 const API_KEY = process.env.EASYPOINT_API_KEY;
+const RATE_CENTS = process.env.EASYPOINT_RATE_CENTS || "5900";
+
+if (!API_KEY) {
+    console.warn("[easypoint] EASYPOINT_API_KEY no esta configurado: la creacion de envios fallara (shipments requiere staff autenticado).");
+}
 
 // 1. Shopify Carrier Service Callback
 // Shopify calls this to get shipping rates
@@ -21,7 +26,7 @@ app.post('/shipping/rates', async (req, res) => {
             {
                 service_name: "Recoger en Punto Easypoint",
                 service_code: "easypoint_ooh",
-                total_price: "5900", // In cents ($59.00 MXN)
+                total_price: RATE_CENTS, // In cents (default $59.00 MXN)
                 currency: "MXN",
                 description: "Envía a un local seguro cerca de ti."
             }
@@ -45,7 +50,8 @@ app.post('/webhooks/order_paid', async (req, res) => {
                 point_id: order.note_attributes.find(a => a.name === 'easypoint_id')?.value,
                 external_id: order.id.toString()
             }, {
-                headers: { 'Authorization': `Bearer ${API_KEY}` }
+                // PocketBase espera el token directo en Authorization (sin "Bearer").
+                headers: { 'Authorization': API_KEY }
             });
             console.log(`Shipment created for Order #${order.order_number}`);
         } catch (err) {

@@ -17,6 +17,17 @@ const options = window.options;
 
 const PB_URL = window.EASYPOINT_RUNTIME_CONFIG?.pocketBaseUrl || window.location.origin;
 const APP_BASE_SEGMENT = '/app';
+
+// El login demo (DEMO_USERS + DEMO_PWDS) es un fallback para correr sin backend
+// (GitHub Pages, demos locales). En produccion son credenciales universales, asi
+// que se gatea: respeta runtime-config `allowDemoAuth` si esta definido, y por
+// defecto solo se permite en localhost y *.github.io.
+function demoAuthAllowed() {
+    const cfg = window.EASYPOINT_RUNTIME_CONFIG || {};
+    if (typeof cfg.allowDemoAuth === 'boolean') return cfg.allowDemoAuth;
+    const host = String(window.location.hostname || '').toLowerCase();
+    return host === '' || host === 'localhost' || host === '127.0.0.1' || host.endsWith('.github.io');
+}
 const PUSH_TAG_KEYS = ['role', 'point_ref', 'auth_source'];
 
 function getAppBasePath(pathname = window.location.pathname) {
@@ -572,7 +583,7 @@ const app = Vue.createApp({
                 } catch (_) { /* PocketBase offline */ }
 
                 // 2. Demo fallback — uses inline DEMO_USERS so it works before mounted()
-                if (!loggedIn) {
+                if (!loggedIn && demoAuthAllowed()) {
                     const users = this.demoData?.users || DEMO_USERS;
                     const dUser = users.find(u => u.email === email);
                     if (dUser && DEMO_PWDS.includes(password)) {
@@ -726,6 +737,16 @@ const app = Vue.createApp({
         const user  = localStorage.getItem('ep_user')  || sessionStorage.getItem('ep_user');
 
         if (token && user) {
+            // Un token demo no debe revivir sesion donde el demo esta deshabilitado.
+            if (String(token).startsWith('demo_') && !demoAuthAllowed()) {
+                localStorage.removeItem('ep_token');
+                localStorage.removeItem('ep_user');
+                sessionStorage.removeItem('ep_token');
+                sessionStorage.removeItem('ep_user');
+                this.currentRoute = 'login';
+                this.refreshPushState().catch(() => {});
+                return;
+            }
             try {
                 // Try to refresh real PocketBase session
                 const refreshRes = await fetch(`${PB_URL}/api/collections/users/auth-refresh`, {

@@ -9,3 +9,7 @@ pb/pb_data/logs.db
 pb/pb_data/*.db-shm
 pb/pb_data/*.db-wal
 pb/pb_data/backups/
+
+# Binario de PocketBase (~30 MB): descargalo de https://pocketbase.io/docs y
+# colocalo en pb/pocketbase.exe. No se versiona.
+pb/pocketbase.exe

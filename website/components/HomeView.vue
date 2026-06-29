@@ -275,15 +275,18 @@ export default {
           this.trackingResult = null;
           try {
              const trackingId = this.trackingQuery.trim().toUpperCase();
-             const url = pbUrl('/api/collections/shipments/records', {
-                filter: `(tracking_id=${pbFilterString(trackingId)})`,
-                expand: 'point_id'
-             });
+             // shipments esta cerrada a staff; el rastreo publico usa el endpoint
+             // seguro /api/track/:code que solo expone estado y punto (sin PII).
+             const url = pbUrl(`/api/track/${encodeURIComponent(trackingId)}`);
              const res = await fetch(url);
+             if (res.status === 404) {
+                this.trackingError = 'Envío no encontrado.';
+                return;
+             }
              if (!res.ok) throw new Error('Tracking request failed');
              const data = await res.json();
-             if (data.items && data.items.length > 0) {
-                this.trackingResult = data.items[0];
+             if (data && data.tracking_id) {
+                this.trackingResult = data;
              } else {
                 this.trackingError = 'Envío no encontrado.';
              }
