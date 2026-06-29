@@ -52,8 +52,8 @@ async function run() {
   // ===== EXCURSIONES =====
   // 3. Catalogo: solo admin escribe
   const providerDates = '2026-12-15\n2026-12-22\n2027-01-05';
-  const exc = await req('POST', '/collections/excursions/records', { token: adminToken, body: { name: `Tour E2E ${rnd()}`, destination: 'Oaxaca', description: 'Test', price: 1500, duration: 'Día completo', provider_name: 'Prov E2E', provider_whatsapp: '5215500000000', active: true, available_dates: providerDates } });
-  ok('Admin crea excursión (catálogo) con fechas del proveedor', exc.ok, JSON.stringify(exc.data));
+  const exc = await req('POST', '/collections/excursions/records', { token: adminToken, body: { name: `Tour E2E ${rnd()}`, destination: 'Oaxaca', description: 'Test', price: 1500, duration: 'Día completo', provider_name: 'Prov E2E', provider_whatsapp: '5215500000000', active: true, available_dates: providerDates, max_capacity: 4 } });
+  ok('Admin crea excursión (catálogo) con fechas del proveedor + cupo', exc.ok, JSON.stringify(exc.data));
   const excId = exc.data?.id;
 
   const excByOp = await req('POST', '/collections/excursions/records', { token: opToken, body: { name: 'No debería', destination: 'X', active: true } });
@@ -64,15 +64,36 @@ async function run() {
   const excFound = excPublic.data?.items?.find(e => e.id === excId);
   ok('Catálogo expone las fechas del proveedor', excFound && String(excFound.available_dates || '').includes('2026-12-15'), `dates ${excFound?.available_dates}`);
 
-  // 4. Reserva publica (create abierto)
+  // 4. Reserva publica (create abierto). Enviamos total y status MANIPULADOS
+  // a proposito para verificar que el servidor los corrige.
   const booking = await req('POST', '/collections/excursion_bookings/records', { body: {
-    excursion_ref: excId, excursion_name: exc.data?.name, destination: 'Oaxaca',
+    excursion_ref: excId, excursion_name: 'NOMBRE FALSO', destination: 'DESTINO FALSO',
     customer_name: 'Cliente E2E', customer_phone: '5511112222', customer_email: 'cli@e2e.mx',
-    people: 3, excursion_date: '2026-12-15', total: 4500, status: 'new'
+    people: 3, excursion_date: '2026-12-15', total: 1, status: 'confirmed'
   } });
   ok('Reserva pública creada', booking.ok, JSON.stringify(booking.data));
   ok('La reserva usa una fecha publicada por el proveedor', providerDates.includes(booking.data?.excursion_date || '___'), `fecha ${booking.data?.excursion_date}`);
+  ok('Total recalculado en servidor (anti-manipulación)', booking.data?.total === 1500 * 3, `total ${booking.data?.total}`);
+  ok('Status forzado a new (anti-suplantación)', booking.data?.status === 'new', `status ${booking.data?.status}`);
+  ok('Nombre/destino denormalizados del catálogo', booking.data?.excursion_name === exc.data?.name && booking.data?.destination === 'Oaxaca', `${booking.data?.excursion_name} / ${booking.data?.destination}`);
   const bookingId = booking.data?.id;
+
+  // 4b. Disponibilidad publica por fecha (cupo 4 - 3 ocupados = 1).
+  const avail = await req('GET', `/excursion-availability/${excId}`);
+  const d1 = avail.data?.dates?.find((x) => x.date === '2026-12-15');
+  ok('Endpoint de disponibilidad reporta cupo restante', avail.ok && d1 && d1.remaining === 1, `remaining ${d1 && d1.remaining}`);
+
+  // 4c. Sobrecupo rechazado (3 + 3 > 4).
+  const overbook = await req('POST', '/collections/excursion_bookings/records', { body: {
+    excursion_ref: excId, customer_name: 'Cliente Sobre', customer_phone: '5500000001', people: 3, excursion_date: '2026-12-15'
+  } });
+  ok('Sobrecupo rechazado', !overbook.ok && overbook.status === 400, `status ${overbook.status}`);
+
+  // 4d. Fecha fuera de la lista del proveedor rechazada.
+  const badDate = await req('POST', '/collections/excursion_bookings/records', { body: {
+    excursion_ref: excId, customer_name: 'Cliente Fecha', customer_phone: '5500000002', people: 1, excursion_date: '2030-02-02'
+  } });
+  ok('Fecha no publicada rechazada', !badDate.ok && badDate.status === 400, `status ${badDate.status}`);
 
   // 5. Anónimo NO puede ver reservas (en PB las reglas de list filtran a 0 items).
   const anonBookings = await req('GET', '/collections/excursion_bookings/records');

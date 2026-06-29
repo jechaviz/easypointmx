@@ -86,10 +86,18 @@
                 <button
                   v-for="d in selectedDates" :key="d"
                   type="button"
+                  :disabled="isSoldOut(d)"
                   @click="form.excursion_date = d"
-                  :class="form.excursion_date === d ? 'bg-brand-500 text-slate-900 ring-2 ring-brand-500' : 'bg-slate-50 text-slate-700 ring-1 ring-slate-200 hover:ring-brand-400'"
+                  :class="[
+                    form.excursion_date === d ? 'bg-brand-500 text-slate-900 ring-2 ring-brand-500' : 'bg-slate-50 text-slate-700 ring-1 ring-slate-200 hover:ring-brand-400',
+                    isSoldOut(d) ? 'opacity-40 cursor-not-allowed line-through' : ''
+                  ]"
                   class="px-4 py-2.5 rounded-xl text-sm font-bold transition-all"
-                >{{ formatDateLong(d) }}</button>
+                >
+                  {{ formatDateLong(d) }}
+                  <span v-if="isSoldOut(d)" class="text-[10px] font-black"> · Agotado</span>
+                  <span v-else-if="remainingFor(d) != null" class="text-[10px] opacity-70"> · {{ remainingFor(d) }} lug.</span>
+                </button>
               </div>
               <!-- Sin fechas publicadas: fecha libre (compatibilidad) -->
               <input v-else v-model="form.excursion_date" required type="date" :min="todayStr" class="w-full bg-slate-50 ring-1 ring-slate-200 rounded-xl px-4 py-3 focus:ring-brand-500 outline-none transition-all">
@@ -141,6 +149,7 @@ export default {
       excursions: [],
       isLoading: true,
       selected: null,
+      availability: {},
       form: { customer_name: '', customer_phone: '', customer_email: '', people: 1, excursion_date: '' },
       isSubmitting: false,
       success: false,
@@ -211,11 +220,32 @@ export default {
         this.isLoading = false;
       }
     },
-    openBooking(exc) {
+    remainingFor(d) {
+      const a = this.availability[d];
+      return a && a.remaining != null ? a.remaining : null;
+    },
+    isSoldOut(d) {
+      const a = this.availability[d];
+      return Boolean(a && a.soldOut);
+    },
+    async openBooking(exc) {
       this.selected = exc;
       this.success = false;
       this.formError = '';
       this.form = { customer_name: '', customer_phone: '', customer_email: '', people: 1, excursion_date: '' };
+      this.availability = {};
+      // Disponibilidad por fecha (cupos), sin exponer reservas. Las demo no tienen id real.
+      if (exc && exc.id && !String(exc.id).startsWith('ex_demo')) {
+        try {
+          const res = await fetch(`${PB}/api/excursion-availability/${encodeURIComponent(exc.id)}`);
+          if (res.ok) {
+            const data = await res.json();
+            const map = {};
+            (data.dates || []).forEach((x) => { map[x.date] = { remaining: x.remaining, soldOut: x.soldOut }; });
+            this.availability = map;
+          }
+        } catch (_) {}
+      }
     },
     closeBooking() {
       this.selected = null;
@@ -224,6 +254,10 @@ export default {
     async submitBooking() {
       if (!this.form.customer_name || !this.form.customer_phone || !this.form.excursion_date) {
         this.formError = 'Completa nombre, WhatsApp y fecha.';
+        return;
+      }
+      if (this.isSoldOut(this.form.excursion_date)) {
+        this.formError = 'Esa fecha está agotada, elige otra.';
         return;
       }
       this.isSubmitting = true;
@@ -246,13 +280,17 @@ export default {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(payload)
         });
-        // Aunque el backend no este disponible (sitio demo), mostramos la
-        // confirmacion por WhatsApp para no bloquear al cliente.
-        if (!res.ok) {
-          const offline = res.status === 0 || res.status >= 500 || res.status === 404;
-          if (!offline) throw new Error('No se pudo registrar la reserva.');
+        if (res.ok) {
+          this.success = true;
+        } else if (res.status >= 500 || res.status === 404 || res.status === 0) {
+          // Backend no disponible (sitio demo): no bloquear, confirmar por WhatsApp.
+          this.success = true;
+        } else {
+          // Rechazo de validacion (p.ej. fecha agotada): mostrar el motivo.
+          let msg = 'No pudimos registrar la reserva.';
+          try { const b = await res.json(); if (b && b.message) msg = b.message; } catch (_) {}
+          this.formError = msg;
         }
-        this.success = true;
       } catch (e) {
         // Fallback: si es error de red, igual permitimos confirmar por WhatsApp.
         if (/failed to fetch|networkerror|load failed/i.test(e.message || '')) {
