@@ -32,7 +32,10 @@
         <input v-model.number="form.amount" type="number" min="1" class="input-dark" placeholder="Monto $">
         <button @click="registrarAbono" :disabled="saving" class="bg-brand-500 text-slate-900 font-black rounded-xl py-3 text-xs uppercase tracking-widest hover:bg-brand-400 disabled:opacity-50">{{ saving ? '...' : 'Registrar' }}</button>
       </div>
-      <p class="text-[10px] text-slate-600 mt-2">El cliente abona en efectivo; queda retenido en tu punto hasta que pase el chofer.</p>
+      <div class="flex items-center gap-3 mt-3">
+        <p class="text-[10px] text-slate-600 flex-1">El cliente abona en efectivo; queda retenido en tu punto hasta que pase el chofer.</p>
+        <button @click="aplicarCredito" :disabled="saving" class="shrink-0 bg-purple-600/20 text-purple-300 border border-purple-700/50 font-black rounded-xl px-4 py-2 text-[10px] uppercase tracking-widest hover:bg-purple-600/30 disabled:opacity-50"><i class="bi bi-wallet2"></i> Aplicar crédito</button>
+      </div>
     </div>
 
     <!-- Filtro -->
@@ -179,6 +182,36 @@ export default {
         this.showModal({ title: 'Abono registrado', message: 'Quedó retenido en tu punto hasta la visita del chofer.', type: 'success' });
       } catch (e) { this.showModal({ title: 'Error', message: e.message, type: 'error' }); }
       finally { this.saving = false; }
+    },
+    async aplicarCredito() {
+      const ref = (this.form.ref || '').trim();
+      if (!ref) return this.showModal({ title: 'Falta el código', message: 'Captura el código de reserva para aplicar su crédito.', type: 'warning' });
+      this.saving = true;
+      try {
+        if (this.appState.demoMode) {
+          const bk = (this.appState.demoData.excursion_bookings || []).find(b => b.id === ref);
+          if (!bk) throw new Error('Reserva no encontrada (demo).');
+          const wallet = (this.appState.demoData.wallets || []).find(w => w.customer_phone === bk.customer_phone);
+          const avail = Number(wallet?.balance) || 0;
+          const owed = Math.max(0, (Number(bk.total) || 0) - (Number(bk.amount_paid) || 0));
+          const applied = Math.min(avail, owed);
+          if (applied <= 0) { this.showModal({ title: 'Sin crédito', message: 'Este cliente no tiene crédito disponible o ya está liquidado.', type: 'info' }); return; }
+          bk.amount_paid = (Number(bk.amount_paid) || 0) + applied;
+          bk.balance = Math.max(0, (Number(bk.total) || 0) - bk.amount_paid);
+          bk.payment_status = bk.amount_paid >= bk.total ? 'paid' : 'partial';
+          wallet.balance = avail - applied;
+          this.saveDemoData({ ...this.appState.demoData });
+          this.showModal({ title: 'Crédito aplicado', message: `Se aplicaron ${this.formatMoney(applied)}. Saldo de crédito: ${this.formatMoney(wallet.balance)}.`, type: 'success' });
+        } else {
+          const res = await fetch(`${this.pb_url}/api/wallet/apply`, { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: this.token() }, body: JSON.stringify({ ref }) });
+          const data = await res.json();
+          if (data && data.applied > 0) this.showModal({ title: 'Crédito aplicado', message: `Se aplicaron ${this.formatMoney(data.applied)}. Saldo de crédito: ${this.formatMoney(data.balance)}.`, type: 'success' });
+          else this.showModal({ title: 'Sin crédito', message: 'Este cliente no tiene crédito disponible o ya está liquidado.', type: 'info' });
+        }
+        await this.load();
+      } catch (e) {
+        this.showModal({ title: 'Error', message: e.message || 'No se pudo aplicar el crédito.', type: 'error' });
+      } finally { this.saving = false; }
     },
     async collect(item) {
       // En demo calculamos comisión/neto/redondeo en el cliente (en vivo lo recalcula el hook).

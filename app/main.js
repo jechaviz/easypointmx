@@ -135,7 +135,7 @@ const DEMO_USERS = [
 const DEMO_PWDS = ['Punto2024!', 'easypoint123'];
 
 const DEFAULT_DEMO_DATA = {
-    _v: 7, // Version flag to force cache breaks when schema updates
+    _v: 8, // Version flag to force cache breaks when schema updates
     shipments: [
         { id: 'mock1', tracking_id: 'EP-9921-X', recipient_name: 'Alejandro Ruiz',   status: 'at_point',   created: '2026-03-25T10:00:00Z', updated: '2026-03-26T09:00:00Z', expand: { point_id: { name: 'Punto Roma Norte', address: 'Av. Álvaro Obregón 154, Roma Norte' } } },
         { id: 'mock2', tracking_id: 'EP-1045-A', recipient_name: 'Beatriz Solis',    status: 'delivered',  created: '2026-03-24T14:30:00Z', updated: '2026-03-25T11:20:00Z', expand: { point_id: { name: 'Punto Condesa',    address: 'Amsterdam 123, Hipódromo Condesa'   } } },
@@ -180,7 +180,10 @@ const DEFAULT_DEMO_DATA = {
     ],
     payments: [
         { id: 'pay1', kind: 'excursion', ref: 'b1', label: 'Abono Ana Beltrán', point_id: 'p1', point_name: 'Punto Roma Norte', amount: 500, method: 'cash', status: 'held_at_point', created: new Date().toISOString() },
-        { id: 'pay2', kind: 'excursion', ref: 'b2', label: 'Abono Pedro Lima', point_id: 'p2', point_name: 'Punto Condesa', amount: 1000, commission: 80, net: 920, method: 'cash', status: 'collected', collected_by: 'u4', collected_at: new Date().toISOString(), created: new Date().toISOString() }
+        { id: 'pay2', kind: 'excursion', ref: 'b2', label: 'Abono Pedro Lima', point_id: 'p2', point_name: 'Punto Condesa', amount: 1000, commission: 80, net: 920, collected_amount: 920, rounding: 0, method: 'cash', status: 'collected', collected_by: 'u4', collected_at: new Date().toISOString(), created: new Date().toISOString() }
+    ],
+    wallets: [
+        { id: 'w1', customer_phone: '5512345678', customer_name: 'Ana Beltrán', balance: 1200 }
     ]
 };
 

@@ -199,6 +199,24 @@ async function run() {
   const anonPay = await req('GET', '/collections/payments/records');
   ok('Anónimo NO ve el libro de pagos', (anonPay.data?.items?.length || 0) === 0, `items ${anonPay.data?.items?.length}`);
 
+  // ===== MONEDERO DE CRÉDITO =====
+  // bookingId se convirtió a 'credit' con amount_paid 4500 (tel 5511112222).
+  const wl = await req('GET', `/wallet/lookup?ref=${bookingId}`, { token: opToken });
+  ok('Monedero acreditado al convertir a crédito (4500)', wl.ok && wl.data?.balance === 4500, `balance ${wl.data?.balance}`);
+
+  const wBooking = await req('POST', '/collections/excursion_bookings/records', { body: {
+    excursion_ref: excId, customer_name: 'Cliente E2E', customer_phone: '5511112222', people: 1, excursion_date: '2027-01-05'
+  } });
+  const wbId = wBooking.data?.id; // total 1500
+  const applied = await req('POST', '/wallet/apply', { token: opToken, body: { ref: wbId } });
+  ok('Aplica crédito del monedero a nueva reserva (1500)', applied.ok && applied.data?.applied === 1500 && applied.data?.balance === 3000, `applied ${applied.data?.applied} bal ${applied.data?.balance}`);
+
+  const wbAfter = await req('GET', `/collections/excursion_bookings/records/${wbId}`, { token: adminToken });
+  ok('La reserva queda pagada con crédito', wbAfter.data?.amount_paid === 1500 && wbAfter.data?.payment_status === 'paid', `paid ${wbAfter.data?.amount_paid} ${wbAfter.data?.payment_status}`);
+
+  const wlAnon = await req('GET', `/wallet/lookup?ref=${bookingId}`);
+  ok('Lookup de monedero requiere auth', wlAnon.status === 401, `status ${wlAnon.status}`);
+
   // ===== SOPORTE / QUEJAS (embudo privado) =====
   const ticket = await req('POST', '/collections/support_tickets/records', { body: {
     kind: 'complaint', subject_ref: bookingId, customer_name: 'Cliente Molesto', customer_phone: '5500001111',
