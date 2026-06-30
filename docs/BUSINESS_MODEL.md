@@ -26,6 +26,11 @@ que la reserva se finalice.
   cubrir el total antes de la fecha de la excursión.
 - Easypoint registra `amount_paid` y `balance` por reserva; el estado de pago va
   `pending → partial → paid`.
+- **Plan de abonos + recordatorios:** al reservar se pregunta cómo planea pagar
+  (semanal / quincenal / fechas específicas) y si quiere recordatorios por correo
+  o WhatsApp. Se genera el calendario (`reminder_dates`) y un cron diario
+  (`/api/reminders/run`) envía los avisos pendientes (correo vía PB; WhatsApp vía
+  API si está configurada) y los marca para no repetir.
 
 **Reglas de dinero (clave para la rentabilidad y la seguridad):**
 

@@ -119,6 +119,32 @@
               <span>{{ policyText }}</span>
             </label>
 
+            <!-- Plan de abonos + recordatorios -->
+            <div class="bg-slate-50 rounded-2xl p-4 border border-slate-100">
+              <label class="flex items-start gap-3 text-xs font-bold text-slate-700">
+                <input v-model="form.reminder_optin" type="checkbox" class="mt-0.5 w-4 h-4 shrink-0">
+                <span>¿Deseas que te apoyemos con recordatorios para tus abonos?</span>
+              </label>
+              <div v-if="form.reminder_optin" class="mt-3 space-y-3">
+                <div>
+                  <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5">¿Cada cuándo planeas abonar?</p>
+                  <div class="flex flex-wrap gap-2">
+                    <button type="button" v-for="c in cadences" :key="c.id" @click="form.reminder_cadence = c.id" :class="form.reminder_cadence === c.id ? 'bg-brand-500 text-slate-900' : 'bg-white ring-1 ring-slate-200 text-slate-700'" class="px-3 py-2 rounded-xl text-xs font-bold transition-all">{{ c.label }}</button>
+                  </div>
+                </div>
+                <div v-if="form.reminder_cadence === 'custom'">
+                  <input v-model="form.reminder_dates" placeholder="Fechas AAAA-MM-DD separadas por coma" class="w-full bg-white ring-1 ring-slate-200 rounded-xl px-3 py-2 text-sm focus:ring-brand-500 outline-none">
+                </div>
+                <div>
+                  <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5">¿Por dónde te avisamos?</p>
+                  <div class="flex gap-2">
+                    <button type="button" v-for="ch in channels" :key="ch.id" @click="form.reminder_channel = ch.id" :class="form.reminder_channel === ch.id ? 'bg-brand-500 text-slate-900' : 'bg-white ring-1 ring-slate-200 text-slate-700'" class="px-3 py-2 rounded-xl text-xs font-bold transition-all">{{ ch.label }}</button>
+                  </div>
+                  <p v-if="(form.reminder_channel === 'email' || form.reminder_channel === 'both') && !form.customer_email" class="text-[10px] text-amber-600 mt-1.5">Agrega tu correo arriba para recibir recordatorios por email.</p>
+                </div>
+              </div>
+            </div>
+
             <button :disabled="isSubmitting || !acceptedPolicy" class="w-full bg-brand-500 text-slate-900 font-black py-4 rounded-xl hover:bg-brand-400 transition-all flex items-center justify-center gap-3 disabled:opacity-50">
               <i v-if="isSubmitting" class="bi bi-arrow-repeat animate-spin"></i>
               {{ isSubmitting ? 'Enviando...' : (depositAmount > 0 ? 'Apartar y reservar' : 'Confirmar reserva') }}
@@ -135,6 +161,9 @@
             <p class="text-[10px] text-slate-400 font-black uppercase tracking-widest">Código de reserva</p>
             <p class="text-slate-900 font-mono font-black text-lg">{{ lastBookingId }}</p>
             <p class="text-[11px] text-slate-500 mt-1">Muéstralo en tu punto Easypoint para abonar en efectivo.</p>
+          </div>
+          <div v-if="form.reminder_optin" class="mb-6 bg-brand-50 border border-brand-200 rounded-2xl px-4 py-3 text-left">
+            <p class="text-[11px] text-brand-700 font-bold flex items-center gap-2"><i class="bi bi-bell-fill"></i> Te recordaremos tus abonos {{ cadenceLabel }} por {{ channelLabel }}.</p>
           </div>
 
           <div class="space-y-3">
@@ -184,7 +213,9 @@ export default {
       isLoading: true,
       selected: null,
       availability: {},
-      form: { customer_name: '', customer_phone: '', customer_email: '', people: 1, excursion_date: '' },
+      cadences: [{ id: 'weekly', label: 'Semanal' }, { id: 'biweekly', label: 'Quincenal' }, { id: 'custom', label: 'Fechas específicas' }],
+      channels: [{ id: 'email', label: 'Correo' }, { id: 'whatsapp', label: 'WhatsApp' }, { id: 'both', label: 'Ambos' }],
+      form: { customer_name: '', customer_phone: '', customer_email: '', people: 1, excursion_date: '', reminder_optin: false, reminder_cadence: 'biweekly', reminder_channel: 'email', reminder_dates: '' },
       isSubmitting: false,
       success: false,
       formError: '',
@@ -210,6 +241,12 @@ export default {
     },
     policyText() {
       return this.selected?.policy || 'Acepto que no hay reembolsos ni cancelaciones; mi pago aplica como crédito para otra experiencia Easypoint.';
+    },
+    cadenceLabel() {
+      return ({ weekly: 'cada semana', biweekly: 'cada quincena', custom: 'en tus fechas' })[this.form.reminder_cadence] || 'cada quincena';
+    },
+    channelLabel() {
+      return ({ email: 'correo', whatsapp: 'WhatsApp', both: 'correo y WhatsApp' })[this.form.reminder_channel] || 'correo';
     },
     total() {
       return (Number(this.form.people) || 1) * (Number(this.selected?.price) || 0);
@@ -283,7 +320,7 @@ export default {
       this.selected = exc;
       this.success = false;
       this.formError = '';
-      this.form = { customer_name: '', customer_phone: '', customer_email: '', people: 1, excursion_date: '' };
+      this.form = { customer_name: '', customer_phone: '', customer_email: '', people: 1, excursion_date: '', reminder_optin: false, reminder_cadence: 'biweekly', reminder_channel: 'email', reminder_dates: '' };
       this.acceptedPolicy = false;
       this.showReport = false; this.reportSent = false; this.reportMsg = '';
       this.availability = {};
@@ -366,7 +403,11 @@ export default {
         people: Number(this.form.people) || 1,
         excursion_date: this.form.excursion_date,
         total: this.total,
-        status: 'new'
+        status: 'new',
+        reminder_optin: this.form.reminder_optin,
+        reminder_cadence: this.form.reminder_cadence,
+        reminder_channel: this.form.reminder_channel,
+        reminder_dates: this.form.reminder_dates
       };
       try {
         const res = await fetch(`${PB}/api/collections/excursion_bookings/records`, {

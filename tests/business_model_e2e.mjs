@@ -217,6 +217,26 @@ async function run() {
   const wlAnon = await req('GET', `/wallet/lookup?ref=${bookingId}`);
   ok('Lookup de monedero requiere auth', wlAnon.status === 401, `status ${wlAnon.status}`);
 
+  // ===== RECORDATORIOS DE ABONOS =====
+  const today = new Date().toISOString().slice(0, 10);
+  const rb = await req('POST', '/collections/excursion_bookings/records', { body: {
+    excursion_ref: excId, customer_name: 'Cliente Plan', customer_phone: '5500003333', customer_email: 'plan@e2e.mx',
+    people: 1, excursion_date: '2027-01-05', reminder_optin: true, reminder_cadence: 'weekly', reminder_channel: 'email'
+  } });
+  const rbAdmin = await req('GET', `/collections/excursion_bookings/records/${rb.data?.id}`, { token: adminToken });
+  ok('Plan semanal genera calendario de recordatorios', rb.ok && String(rbAdmin.data?.reminder_dates || '').split('\n').filter(Boolean).length >= 1, `dates ${rbAdmin.data?.reminder_dates}`);
+
+  const rb2 = await req('POST', '/collections/excursion_bookings/records', { body: {
+    excursion_ref: excId, customer_name: 'Cliente Hoy', customer_phone: '5500004444', customer_email: 'hoy@e2e.mx',
+    people: 1, excursion_date: '2027-01-05', reminder_optin: true, reminder_cadence: 'custom', reminder_channel: 'email', reminder_dates: today
+  } });
+  const run = await req('POST', '/reminders/run', { token: opToken });
+  ok('Procesa recordatorios vencidos', run.ok && (run.data?.processed || 0) >= 1, `processed ${run.data?.processed}`);
+  const rb2After = await req('GET', `/collections/excursion_bookings/records/${rb2.data?.id}`, { token: adminToken });
+  ok('Marca el recordatorio como enviado', String(rb2After.data?.reminders_sent || '').includes(today), `sent ${rb2After.data?.reminders_sent}`);
+  const runAnon = await req('POST', '/reminders/run');
+  ok('Run de recordatorios requiere auth', runAnon.status === 401, `status ${runAnon.status}`);
+
   // ===== SOPORTE / QUEJAS (embudo privado) =====
   const ticket = await req('POST', '/collections/support_tickets/records', { body: {
     kind: 'complaint', subject_ref: bookingId, customer_name: 'Cliente Molesto', customer_phone: '5500001111',

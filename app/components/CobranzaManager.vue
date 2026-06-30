@@ -1,5 +1,9 @@
 <template>
   <div>
+    <div v-if="role === 'admin'" class="flex justify-end mb-4">
+      <button @click="enviarRecordatorios" :disabled="saving" class="bg-slate-900 border border-slate-700 text-brand-400 font-black px-5 py-2.5 rounded-xl text-[10px] uppercase tracking-widest hover:border-brand-500/50 disabled:opacity-50"><i class="bi bi-bell"></i> Enviar recordatorios pendientes</button>
+    </div>
+
     <!-- Totales (admin) -->
     <div v-if="role === 'admin'" class="grid grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
       <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5">
@@ -182,6 +186,17 @@ export default {
         this.showModal({ title: 'Abono registrado', message: 'Quedó retenido en tu punto hasta la visita del chofer.', type: 'success' });
       } catch (e) { this.showModal({ title: 'Error', message: e.message, type: 'error' }); }
       finally { this.saving = false; }
+    },
+    async enviarRecordatorios() {
+      if (this.appState.demoMode) return this.showModal({ title: 'Recordatorios', message: 'En modo demo no se envían recordatorios reales.', type: 'info' });
+      this.saving = true;
+      try {
+        const res = await fetch(`${this.pb_url}/api/reminders/run`, { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: this.token() } });
+        const data = await res.json();
+        this.showModal({ title: 'Recordatorios procesados', message: `${data.processed || 0} reserva(s) con abono pendiente, ${data.sent || 0} aviso(s) enviados.`, type: 'success' });
+      } catch (e) {
+        this.showModal({ title: 'Error', message: 'No se pudieron procesar los recordatorios.', type: 'error' });
+      } finally { this.saving = false; }
     },
     async aplicarCredito() {
       const ref = (this.form.ref || '').trim();
