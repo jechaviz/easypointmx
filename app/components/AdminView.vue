@@ -568,6 +568,11 @@
           <ExcursionsManager />
         </div>
 
+        <!-- ── COBRANZA ── -->
+        <div v-else-if="section === 'cobranza'">
+          <CobranzaManager />
+        </div>
+
         <!-- ── SOPORTE / QUEJAS ── -->
         <div v-else-if="section === 'soporte'">
           <SupportManager />
@@ -653,7 +658,8 @@ export default {
     AddressInput: Vue.defineAsyncComponent(() => loadModule('./components/AddressInput.vue', window.options)),
     GuidesManager: Vue.defineAsyncComponent(() => loadModule('./components/GuidesManager.vue', window.options)),
     ExcursionsManager: Vue.defineAsyncComponent(() => loadModule('./components/ExcursionsManager.vue', window.options)),
-    SupportManager: Vue.defineAsyncComponent(() => loadModule('./components/SupportManager.vue', window.options))
+    SupportManager: Vue.defineAsyncComponent(() => loadModule('./components/SupportManager.vue', window.options)),
+    CobranzaManager: Vue.defineAsyncComponent(() => loadModule('./components/CobranzaManager.vue', window.options))
   },
   data() {
     return {
@@ -703,6 +709,7 @@ export default {
         { id: 'shipments',   icon: 'box-seam',        label: 'Envíos',         desc: 'Todos los envíos del sistema' },
         { id: 'guias',       icon: 'upc-scan',        label: 'Guías',          desc: 'Venta de guías DHL / Estafeta' },
         { id: 'excursiones', icon: 'compass',         label: 'Excursiones',    desc: 'Reservas y catálogo turístico' },
+        { id: 'cobranza',    icon: 'cash-stack',      label: 'Cobranza',       desc: 'Abonos en efectivo y liquidación' },
         { id: 'commissions', icon: 'cash-coin',       label: 'Comisiones',     desc: 'Pago a operadores asociados' },
         { id: 'invoices',    icon: 'receipt',         label: 'Facturas',       desc: 'Facturación a clientes' },
         { id: 'partners',    icon: 'briefcase',       label: 'Solicitudes',    desc: 'Afiliaciones pendientes', badge: 0 },

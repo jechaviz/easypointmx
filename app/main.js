@@ -135,15 +135,15 @@ const DEMO_USERS = [
 const DEMO_PWDS = ['Punto2024!', 'easypoint123'];
 
 const DEFAULT_DEMO_DATA = {
-    _v: 6, // Version flag to force cache breaks when schema updates
+    _v: 7, // Version flag to force cache breaks when schema updates
     shipments: [
         { id: 'mock1', tracking_id: 'EP-9921-X', recipient_name: 'Alejandro Ruiz',   status: 'at_point',   created: '2026-03-25T10:00:00Z', updated: '2026-03-26T09:00:00Z', expand: { point_id: { name: 'Punto Roma Norte', address: 'Av. Álvaro Obregón 154, Roma Norte' } } },
         { id: 'mock2', tracking_id: 'EP-1045-A', recipient_name: 'Beatriz Solis',    status: 'delivered',  created: '2026-03-24T14:30:00Z', updated: '2026-03-25T11:20:00Z', expand: { point_id: { name: 'Punto Condesa',    address: 'Amsterdam 123, Hipódromo Condesa'   } } },
         { id: 'mock3', tracking_id: 'EP-5567-B', recipient_name: 'Carlos Mendez',    status: 'in_transit', created: '2026-03-26T08:15:00Z', updated: '2026-03-26T12:00:00Z', expand: { point_id: { name: 'Punto Polanco',    address: 'Leibnitz 20, Polanco'               } } }
     ],
     points: [
-        { id: 'p1', name: 'Punto Roma Norte', address: 'Av. Álvaro Obregón 154, Roma Norte', whatsapp: '5512345678', status: 'active' },
-        { id: 'p2', name: 'Punto Condesa',    address: 'Amsterdam 123, Hipódromo Condesa',   whatsapp: '5587654321', status: 'active' }
+        { id: 'p1', name: 'Punto Roma Norte', address: 'Av. Álvaro Obregón 154, Roma Norte', whatsapp: '5512345678', status: 'active', commission_rate: 10 },
+        { id: 'p2', name: 'Punto Condesa',    address: 'Amsterdam 123, Hipódromo Condesa',   whatsapp: '5587654321', status: 'active', commission_rate: 8 }
     ],
     users: DEMO_USERS,
     prospects: [
@@ -177,6 +177,10 @@ const DEFAULT_DEMO_DATA = {
     ],
     support_tickets: [
         { id: 't1', kind: 'complaint', subject_ref: 'b1', customer_name: 'Ana Beltrán', customer_phone: '5512345678', message: 'El globo salió tarde y casi perdemos el amanecer.', status: 'open', created: new Date().toISOString() }
+    ],
+    payments: [
+        { id: 'pay1', kind: 'excursion', ref: 'b1', label: 'Abono Ana Beltrán', point_id: 'p1', point_name: 'Punto Roma Norte', amount: 500, method: 'cash', status: 'held_at_point', created: new Date().toISOString() },
+        { id: 'pay2', kind: 'excursion', ref: 'b2', label: 'Abono Pedro Lima', point_id: 'p2', point_name: 'Punto Condesa', amount: 1000, commission: 80, net: 920, method: 'cash', status: 'collected', collected_by: 'u4', collected_at: new Date().toISOString(), created: new Date().toISOString() }
     ]
 };
 

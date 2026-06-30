@@ -33,6 +33,12 @@
             <i class="bi bi-upc-scan text-xl"></i>
             <span class="text-xs font-black uppercase tracking-widest">Vender Guía</span>
           </button>
+          <button @click="section = 'abonos'; currentMode = null"
+            class="w-full flex items-center gap-4 px-5 py-3.5 rounded-2xl transition-all"
+            :class="section === 'abonos' ? 'bg-brand-500 text-slate-900 shadow-lg' : 'text-slate-400 hover:bg-slate-800/50 hover:text-white'">
+            <i class="bi bi-cash-coin text-xl"></i>
+            <span class="text-xs font-black uppercase tracking-widest">Abonos</span>
+          </button>
         </nav>
       </div>
 
@@ -64,7 +70,7 @@
       <!-- Slim page title -->
       <div class="px-8 md:px-12 pt-8 pb-4">
         <h2 class="text-white text-2xl md:text-3xl font-black tracking-tight mb-1">
-          {{ section === 'inventory' ? 'Inventario del Local' : section === 'guias' ? 'Vender Guía (DHL / Estafeta)' : (currentMode ? formatMode(currentMode) : 'Dashboard') }}
+          {{ section === 'inventory' ? 'Inventario del Local' : section === 'guias' ? 'Vender Guía (DHL / Estafeta)' : section === 'abonos' ? 'Abonos del cliente' : (currentMode ? formatMode(currentMode) : 'Dashboard') }}
         </h2>
         <p class="text-slate-500 text-[10px] font-medium uppercase tracking-widest">{{ point?.name || 'Panel de Operador' }}</p>
       </div>
@@ -226,6 +232,11 @@
         <div v-if="section === 'guias'" class="animate-fade-in">
           <GuidesManager />
         </div>
+
+        <!-- ABONOS / COBRANZA (operador registra pagos en el punto) -->
+        <div v-if="section === 'abonos'" class="animate-fade-in">
+          <CobranzaManager />
+        </div>
       </div>
     </main>
   </div>
@@ -254,7 +265,8 @@ export default {
   components: {
     DataView: Vue.defineAsyncComponent(() => loadModule('./components/DataView.vue', options)),
     Scanner: Vue.defineAsyncComponent(() => loadModule('./components/Scanner.vue', options)),
-    GuidesManager: Vue.defineAsyncComponent(() => loadModule('./components/GuidesManager.vue', options))
+    GuidesManager: Vue.defineAsyncComponent(() => loadModule('./components/GuidesManager.vue', options)),
+    CobranzaManager: Vue.defineAsyncComponent(() => loadModule('./components/CobranzaManager.vue', options))
   },
   data() {
     return {

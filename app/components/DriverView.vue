@@ -29,6 +29,12 @@
             <span class="text-xs font-black uppercase tracking-widest">En Ruta</span>
             <div class="ml-auto text-[9px] font-black px-2 py-0.5 rounded-full bg-black/20" v-if="transitPackages.length">{{ transitPackages.length }}</div>
           </button>
+          <button @click="activeTab = 'cobranza'"
+            class="w-full flex items-center gap-4 px-5 py-3.5 rounded-2xl transition-all"
+            :class="activeTab === 'cobranza' ? 'bg-brand-500 text-slate-900 shadow-lg' : 'text-slate-400 hover:bg-slate-800/50 hover:text-white'">
+            <i class="bi bi-cash-stack text-xl"></i>
+            <span class="text-xs font-black uppercase tracking-widest">Cobranza</span>
+          </button>
           <button @click="scanning = true"
             class="w-full flex items-center gap-4 px-5 py-3.5 rounded-2xl transition-all text-slate-400 hover:bg-slate-800/50 hover:text-brand-400">
             <i class="bi bi-qr-code-scan text-xl"></i>
@@ -61,7 +67,7 @@
     <!-- MAIN CONTENT -->
     <main class="flex-1 overflow-auto bg-[radial-gradient(circle_at_top_right,rgba(132,204,22,0.03),transparent_40%)] flex flex-col">
       <div class="px-10 pt-10 pb-4">
-        <h2 class="text-white text-3xl font-black tracking-tight mb-1">{{ activeTab === 'pending' ? 'Recolección' : 'En Ruta' }}</h2>
+        <h2 class="text-white text-3xl font-black tracking-tight mb-1">{{ activeTab === 'pending' ? 'Recolección' : activeTab === 'cobranza' ? 'Cobranza' : 'En Ruta' }}</h2>
         <p class="text-slate-500 text-xs font-medium uppercase tracking-widest">{{ packages.length }} paquete{{ packages.length !== 1 ? 's' : '' }} activos</p>
       </div>
 
@@ -187,6 +193,11 @@
           </template>
         </DataView>
       </div>
+
+      <!-- COBRANZA (recolección de abonos en efectivo) -->
+      <div v-else-if="activeTab === 'cobranza'" class="animate-fade-in-up">
+        <CobranzaManager />
+      </div>
     </div>
   </main>
   </div>
@@ -197,7 +208,8 @@ export default {
   inject: ['appState', 'pb_url', 'logout', 'showModal', 'getMapsUrl', 'syncBusinessEvents', 'emitBusinessEvent'],
   components: {
     DataView: Vue.defineAsyncComponent(() => loadModule('./components/DataView.vue', options)),
-    Scanner: Vue.defineAsyncComponent(() => loadModule('./components/Scanner.vue', options))
+    Scanner: Vue.defineAsyncComponent(() => loadModule('./components/Scanner.vue', options)),
+    CobranzaManager: Vue.defineAsyncComponent(() => loadModule('./components/CobranzaManager.vue', options))
   },
   data() {
     return {

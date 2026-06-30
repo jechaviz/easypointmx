@@ -130,7 +130,12 @@
         <div v-else class="text-center py-6">
           <div class="w-20 h-20 bg-green-100 text-green-500 rounded-full flex items-center justify-center text-4xl mx-auto mb-6"><i class="bi bi-check-lg"></i></div>
           <h3 class="text-2xl font-black text-slate-900 mb-2 tracking-tight">¡Reserva recibida!</h3>
-          <p class="text-slate-500 mb-6">Tu lugar para <strong>{{ selected.name }}</strong> el <strong>{{ form.excursion_date }}</strong> quedó registrado. Confirma por WhatsApp para asegurar tu cupo.</p>
+          <p class="text-slate-500 mb-4">Tu lugar para <strong>{{ selected.name }}</strong> el <strong>{{ form.excursion_date }}</strong> quedó registrado. Confirma por WhatsApp para asegurar tu cupo.</p>
+          <div v-if="lastBookingId" class="mb-6 bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3">
+            <p class="text-[10px] text-slate-400 font-black uppercase tracking-widest">Código de reserva</p>
+            <p class="text-slate-900 font-mono font-black text-lg">{{ lastBookingId }}</p>
+            <p class="text-[11px] text-slate-500 mt-1">Muéstralo en tu punto Easypoint para abonar en efectivo.</p>
+          </div>
 
           <div class="space-y-3">
             <button @click="payNow" :disabled="paying" class="w-full bg-slate-900 text-white font-black py-4 rounded-xl hover:bg-slate-800 transition-all flex items-center justify-center gap-3 disabled:opacity-50">
