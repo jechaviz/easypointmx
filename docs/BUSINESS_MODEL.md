@@ -43,6 +43,25 @@ que la reserva se finalice.
 fee** sólo cuando la experiencia se marca como completada. Mientras tanto el
 apartado es flotación de Easypoint.
 
+### Cobranza en efectivo (ruta de choferes)
+
+El cliente abona **en efectivo en el punto**; el dueño del punto retiene el
+dinero y gana una **comisión** (`points.commission_rate`). Los choferes de
+Easypoint —que de todas formas visitan los puntos periódicamente— **recolectan
+el neto** (monto − comisión del punto) y lo marcan **entregado al administrador**.
+
+Flujo (libro `payments`, ciclo `held_at_point → collected → delivered`):
+
+1. Operador del punto **registra el abono** (código de reserva + monto) → queda
+   retenido en su punto y suma al `amount_paid` de la reserva (vía hook, sin que
+   el operador edite la reserva).
+2. Chofer **recolecta**: el sistema calcula comisión del punto + neto desde
+   `commission_rate` (recálculo server-side anti-manipulación) y sella la fecha.
+3. Chofer **entrega al admin** → `delivered`, con fecha.
+
+El admin ve totales: retenido en puntos, recolectado en ruta, entregado, y
+comisión pagada a puntos.
+
 ## 3. Defensa contra el usuario insatisfecho (crecer seguro)
 
 El objetivo es **resolver en privado antes de que la queja se haga pública**:
