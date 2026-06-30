@@ -10,7 +10,7 @@
           <div class="flex flex-col"><span class="text-white font-bold text-xs">{{ item.name }}</span><span v-if="item.email" class="text-[10px] text-slate-500">{{ item.email }}</span></div>
         </td>
         <td class="px-6 py-4 text-[10px] text-slate-400 font-mono">{{ item.whatsapp || '—' }}</td>
-        <td class="px-6 py-4 text-right text-white font-black text-xs">{{ (Number(item.fee_rate) || 0) }}%</td>
+        <td class="px-6 py-4 text-right text-white font-black text-xs">{{ feeLabel(item) }}</td>
         <td class="px-6 py-4">
           <span class="text-[9px] font-black px-2.5 py-1 rounded-lg border uppercase tracking-wider" :class="item.active !== false ? 'bg-green-900/30 text-green-400 border-green-900/50' : 'bg-slate-800 text-slate-500 border-slate-700'">{{ item.active !== false ? 'Activo' : 'Oculto' }}</span>
         </td>
@@ -29,7 +29,7 @@
           </div>
           <p v-if="item.email" class="text-[10px] text-slate-500 mb-1">{{ item.email }}</p>
           <p class="text-[10px] text-slate-500 font-mono mb-3">{{ item.whatsapp || '—' }}</p>
-          <p class="text-white font-black mt-auto">Fee Easypoint: {{ (Number(item.fee_rate) || 0) }}%</p>
+          <p class="text-white font-black mt-auto">Fee Easypoint: {{ feeLabel(item) }}</p>
         </div>
       </template>
     </DataView>
@@ -46,7 +46,17 @@
               <div class="flex flex-col"><label class="label-sm">WhatsApp</label><input v-model="form.whatsapp" class="input-dark" placeholder="5215511112222"></div>
               <div class="flex flex-col"><label class="label-sm">Email</label><input v-model="form.email" type="email" class="input-dark" placeholder="contacto@proveedor.mx"></div>
             </div>
-            <div class="flex flex-col"><label class="label-sm">Fee Easypoint (%)</label><input v-model.number="form.fee_rate" type="number" min="0" max="100" step="0.5" class="input-dark" placeholder="10"></div>
+            <div class="flex flex-col">
+              <label class="label-sm">Fee Easypoint</label>
+              <div class="flex gap-2">
+                <select v-model="form.fee_type" class="input-dark" style="max-width:140px">
+                  <option value="percent">Porcentaje</option>
+                  <option value="fixed">Monto fijo</option>
+                </select>
+                <input v-if="(form.fee_type || 'percent') === 'fixed'" v-model.number="form.fee_amount" type="number" min="0" class="input-dark" placeholder="$ por reserva">
+                <input v-else v-model.number="form.fee_rate" type="number" min="0" max="100" step="0.5" class="input-dark" placeholder="15 %">
+              </div>
+            </div>
             <label class="flex items-center gap-3 text-slate-300 text-xs font-bold"><input v-model="form.active" type="checkbox" class="w-4 h-4"> Activo</label>
           </div>
           <div class="flex gap-4 mt-8">
@@ -84,8 +94,15 @@ export default {
   },
   mounted() { this.load(); },
   methods: {
+    feeLabel(item) {
+      if (item && item.fee_type === 'fixed') {
+        const n = new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN', maximumFractionDigits: 0 }).format(Number(item.fee_amount) || 0);
+        return n + ' /reserva';
+      }
+      return (Number(item && item.fee_rate) || 0) + '%';
+    },
     blankForm() {
-      return { id: null, name: '', whatsapp: '', email: '', fee_rate: 15, active: true };
+      return { id: null, name: '', whatsapp: '', email: '', fee_type: 'percent', fee_rate: 15, fee_amount: 0, active: true };
     },
     token() { return localStorage.getItem('ep_token'); },
     formatMoney(a) { return new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN', maximumFractionDigits: 0 }).format(Number(a) || 0); },

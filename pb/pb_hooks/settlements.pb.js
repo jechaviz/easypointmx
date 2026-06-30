@@ -52,16 +52,22 @@ routerAdd('POST', '/api/settlements/run', (c) => {
     try { excs = $app.dao().findRecordsByFilter('excursions', "provider_id = {:pid}", '', 0, 0, { pid: pvid }); }
     catch (err) { excs = []; }
     if (!excs.length) continue;
-    let gross = 0;
+    let gross = 0, count = 0;
     for (let j = 0; j < excs.length; j++) {
       let bks = [];
       try { bks = $app.dao().findRecordsByFilter('excursion_bookings', "excursion_ref = {:eid} && payment_status = 'paid'", '', 0, 0, { eid: excs[j].id }); }
       catch (err) { bks = []; }
-      for (let k = 0; k < bks.length; k++) gross += Number(bks[k].getFloat('total')) || 0;
+      for (let k = 0; k < bks.length; k++) { gross += Number(bks[k].getFloat('total')) || 0; count++; }
     }
     if (gross <= 0) continue;
-    const rate = Number(pv.getFloat('fee_rate')) || 0;
-    const fee = Math.round(gross * rate) / 100; // rate es porcentaje
+    // Fee Easypoint: porcentaje (fee_rate) o cantidad fija por reserva (fee_amount).
+    let fee;
+    if ((pv.getString('fee_type') || 'percent') === 'fixed') {
+      fee = (Number(pv.getFloat('fee_amount')) || 0) * count;
+    } else {
+      const rate = Number(pv.getFloat('fee_rate')) || 0;
+      fee = Math.round(gross * rate) / 100;
+    }
     const net = gross > fee ? gross - fee : 0;
     const st = new Record(coll, {
       kind: 'provider', ref: pvid, ref_name: pv.getString('name'), period: period,

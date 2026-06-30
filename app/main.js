@@ -135,10 +135,10 @@ const DEMO_USERS = [
 const DEMO_PWDS = ['Punto2024!', 'easypoint123'];
 
 const DEFAULT_DEMO_DATA = {
-    _v: 10, // Version flag to force cache breaks when schema updates
+    _v: 11, // Version flag to force cache breaks when schema updates
     providers: [
-        { id: 'pr1', name: 'SkyMex Tours', whatsapp: '5215511112222', email: 'sky@tours.mx', fee_rate: 15, active: true },
-        { id: 'pr2', name: 'Raíces MX', whatsapp: '5215533334444', email: 'hola@raicesmx.com', fee_rate: 12, active: true }
+        { id: 'pr1', name: 'SkyMex Tours', whatsapp: '5215511112222', email: 'sky@tours.mx', fee_type: 'percent', fee_rate: 15, fee_amount: 0, active: true },
+        { id: 'pr2', name: 'Raíces MX', whatsapp: '5215533334444', email: 'hola@raicesmx.com', fee_type: 'fixed', fee_rate: 0, fee_amount: 50, active: true }
     ],
     settlements: [
         { id: 's1', kind: 'point', ref: 'p1', ref_name: 'Punto Roma Norte', period: '2026-07', gross: 1000, fee: 100, net: 900, folio: 'LIQ-P-p1', status: 'pending', created: '2026-07-01T00:00:00Z' },
@@ -155,8 +155,8 @@ const DEFAULT_DEMO_DATA = {
         { id: 'mock3', tracking_id: 'EP-5567-B', recipient_name: 'Carlos Mendez',    status: 'in_transit', created: '2026-03-26T08:15:00Z', updated: '2026-03-26T12:00:00Z', expand: { point_id: { name: 'Punto Polanco',    address: 'Leibnitz 20, Polanco'               } } }
     ],
     points: [
-        { id: 'p1', name: 'Punto Roma Norte', address: 'Av. Álvaro Obregón 154, Roma Norte', whatsapp: '5512345678', status: 'active', commission_rate: 10 },
-        { id: 'p2', name: 'Punto Condesa',    address: 'Amsterdam 123, Hipódromo Condesa',   whatsapp: '5587654321', status: 'active', commission_rate: 8 }
+        { id: 'p1', name: 'Punto Roma Norte', address: 'Av. Álvaro Obregón 154, Roma Norte', whatsapp: '5512345678', status: 'active', commission_type: 'percent', commission_rate: 10, commission_amount: 0 },
+        { id: 'p2', name: 'Punto Condesa',    address: 'Amsterdam 123, Hipódromo Condesa',   whatsapp: '5587654321', status: 'active', commission_type: 'fixed', commission_rate: 0, commission_amount: 15 }
     ],
     users: DEMO_USERS,
     prospects: [

@@ -254,7 +254,7 @@
         <div v-else-if="section === 'points'">
           <div class="flex items-center justify-between mb-6">
             <p class="text-slate-400 text-sm">{{ points.length }} puntos activos</p>
-            <button @click="showPointForm = true; editingPoint = null; pointForm = { name: '', address: '', whatsapp: '', commission_rate: 10 }" 
+            <button @click="showPointForm = true; editingPoint = null; pointForm = { name: '', address: '', whatsapp: '', commission_type: 'percent', commission_rate: 10, commission_amount: 0 }" 
               class="bg-brand-500 text-slate-900 font-bold px-4 py-2 rounded-xl text-xs hover:bg-brand-400 flex items-center gap-2">
               <i class="bi bi-plus-circle"></i> Nuevo Punto
             </button>
@@ -313,8 +313,16 @@
                   <input v-model="pointForm.whatsapp" class="input-dark" placeholder="521234567890">
                 </div>
                 <div>
-                  <label class="label-sm">Comisión del punto (%)</label>
-                  <input v-model.number="pointForm.commission_rate" type="number" min="0" max="100" class="input-dark" placeholder="10">
+                  <label class="label-sm">Comisión del punto</label>
+                  <div class="flex gap-2">
+                    <select v-model="pointForm.commission_type" class="input-dark" style="max-width:140px">
+                      <option value="percent">Porcentaje</option>
+                      <option value="fixed">Monto fijo</option>
+                    </select>
+                    <input v-if="(pointForm.commission_type || 'percent') === 'fixed'" v-model.number="pointForm.commission_amount" type="number" min="0" class="input-dark" placeholder="$ por producto">
+                    <input v-else v-model.number="pointForm.commission_rate" type="number" min="0" max="100" class="input-dark" placeholder="10 %">
+                  </div>
+                  <p class="text-[10px] text-slate-500 mt-1">Fijo = tarifa por producto (según peso/medidas); porcentaje = sobre lo cobrado.</p>
                 </div>
               </div>
               <div class="flex gap-3 mt-8">

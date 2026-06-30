@@ -234,9 +234,13 @@ export default {
     },
     async collect(item) {
       // En demo calculamos comisión/neto/redondeo en el cliente (en vivo lo recalcula el hook).
-      const rate = this.pointCommissionRateFor(item);
       const amount = Number(item.amount) || 0;
-      const commission = Math.round(amount * rate) / 100;
+      const pts = this.appState.demoData?.points || [];
+      const p = pts.find(x => x.id === item.point_id);
+      let commission;
+      if (p && p.commission_type === 'fixed') commission = Number(p.commission_amount) || 0;
+      else commission = Math.round(amount * (Number(p?.commission_rate) || 0)) / 100;
+      if (commission > amount) commission = amount;
       const net = Math.max(0, amount - commission);
       const suggested = Math.round(net);
       const input = window.prompt(

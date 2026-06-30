@@ -196,6 +196,12 @@ async function run() {
   const big = await req('PATCH', `/collections/payments/records/${pBig}`, { token: opToken, body: { status: 'collected', collected_amount: 470 } });
   ok('Redondeo mayor a $10 rechazado', !big.ok && big.status === 400, `status ${big.status}`);
 
+  // Comisión FIJA por producto (no porcentaje): el punto pasa a tarifa fija $30.
+  await req('PATCH', `/collections/points/records/${pointId}`, { token: adminToken, body: { commission_type: 'fixed', commission_amount: 30 } });
+  const pf = await req('POST', '/collections/payments/records', { token: opToken, body: { kind: 'excursion', ref: cobId, amount: 500, point_id: pointId, point_name: point.data?.name, method: 'cash' } });
+  const pfc = await req('PATCH', `/collections/payments/records/${pf.data?.id}`, { token: opToken, body: { status: 'collected', collected_amount: 470 } });
+  ok('Comisión fija por producto ($30, no %)', pfc.data?.commission === 30 && pfc.data?.net === 470, `comm ${pfc.data?.commission} net ${pfc.data?.net}`);
+
   const anonPay = await req('GET', '/collections/payments/records');
   ok('Anónimo NO ve el libro de pagos', (anonPay.data?.items?.length || 0) === 0, `items ${anonPay.data?.items?.length}`);
 
