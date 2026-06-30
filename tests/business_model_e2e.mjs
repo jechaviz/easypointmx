@@ -124,11 +124,16 @@ async function run() {
   } });
   ok('Operador vende guía (quoted)', guide.ok, JSON.stringify(guide.data));
   ok('Guía guarda dimensiones del envío', guide.data?.length_cm === 40 && guide.data?.width_cm === 30 && guide.data?.height_cm === 20, `dims ${guide.data?.length_cm}x${guide.data?.width_cm}x${guide.data?.height_cm}`);
+  // 40x30x20 -> volumétrico 4.8 kg (>peso real 2) -> tramo <=5kg = $20.
+  ok('Guía calcula comisión por peso/medidas ($20)', guide.data?.commission === 20, `commission ${guide.data?.commission}`);
   const guideId = guide.data?.id;
 
   if (guideId) {
     const paid = await req('PATCH', `/collections/shipping_guides/records/${guideId}`, { token: opToken, body: { status: 'paid' } });
     ok('Guía -> pagada', paid.ok && paid.data?.status === 'paid', `status ${paid.status}`);
+    // Al pagarse, la guía genera un asiento en el libro (cobranza) con su comisión.
+    const gpay = await req('GET', `/collections/payments/records?filter=${encodeURIComponent(`kind="guide" && ref="${guideId}"`)}`, { token: adminToken });
+    ok('Guía pagada genera asiento de cobranza con comisión', (gpay.data?.items?.length || 0) === 1 && gpay.data.items[0].commission === 20 && gpay.data.items[0].status === 'held_at_point', `items ${gpay.data?.items?.length} comm ${gpay.data?.items?.[0]?.commission}`);
     const gen = await req('PATCH', `/collections/shipping_guides/records/${guideId}`, { token: opToken, body: { status: 'generated', tracking_number: `DHL${rnd()}` } });
     ok('Guía -> generada con tracking', gen.ok && gen.data?.status === 'generated' && gen.data?.tracking_number, `status ${gen.status}`);
   }

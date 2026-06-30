@@ -38,20 +38,24 @@ onRecordBeforeUpdateRequest((e) => {
   const amount = Number(rec.getFloat('amount')) || 0;
 
   if (status === 'collected') {
-    // Comisión del punto: porcentaje (commission_rate) o cantidad fija
-    // por producto (commission_amount, p.ej. tarifa por peso/medidas).
+    // Comisión: las guías ya traen su comisión por tramos de peso/medidas
+    // (guides.pb.js); para excursiones se usa la del punto (% o fija).
     let commission = 0;
-    const pid = String(rec.getString('point_id') || '').trim();
-    if (pid) {
-      try {
-        const pt = $app.dao().findRecordById('points', pid);
-        if ((pt.getString('commission_type') || 'percent') === 'fixed') {
-          commission = Number(pt.getFloat('commission_amount')) || 0;
-        } else {
-          const rate = Number(pt.getFloat('commission_rate')) || 0;
-          commission = Math.round(amount * rate) / 100;
-        }
-      } catch (err) { commission = 0; }
+    if (rec.getString('kind') === 'guide') {
+      commission = Number(rec.getFloat('commission')) || 0;
+    } else {
+      const pid = String(rec.getString('point_id') || '').trim();
+      if (pid) {
+        try {
+          const pt = $app.dao().findRecordById('points', pid);
+          if ((pt.getString('commission_type') || 'percent') === 'fixed') {
+            commission = Number(pt.getFloat('commission_amount')) || 0;
+          } else {
+            const rate = Number(pt.getFloat('commission_rate')) || 0;
+            commission = Math.round(amount * rate) / 100;
+          }
+        } catch (err) { commission = 0; }
+      }
     }
     if (commission > amount) commission = amount; // la comisión no excede el monto
     const net = amount > commission ? amount - commission : 0;

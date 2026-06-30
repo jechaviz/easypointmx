@@ -135,7 +135,7 @@ const DEMO_USERS = [
 const DEMO_PWDS = ['Punto2024!', 'easypoint123'];
 
 const DEFAULT_DEMO_DATA = {
-    _v: 11, // Version flag to force cache breaks when schema updates
+    _v: 12, // Version flag to force cache breaks when schema updates
     providers: [
         { id: 'pr1', name: 'SkyMex Tours', whatsapp: '5215511112222', email: 'sky@tours.mx', fee_type: 'percent', fee_rate: 15, fee_amount: 0, active: true },
         { id: 'pr2', name: 'Raíces MX', whatsapp: '5215533334444', email: 'hola@raicesmx.com', fee_type: 'fixed', fee_rate: 0, fee_amount: 50, active: true }
@@ -177,8 +177,8 @@ const DEFAULT_DEMO_DATA = {
         { id: 'pa2', business_name: 'Cafetería Java', whatsapp: '5577889900', address: 'Miguel Angel de Quevedo 44', status: 'new', created: new Date().toISOString() }
     ],
     shipping_guides: [
-        { id: 'g1', carrier: 'estafeta', service: 'standard', tracking_number: 'EST000123456', recipient_name: 'Lucía Ortega', recipient_phone: '5511223344', dest_cp: '44100', dest_address: 'Av. Vallarta 100, Guadalajara', weight_kg: 2, price: 169, status: 'generated', point_name: 'Punto Roma Norte', created: new Date().toISOString(), updated: new Date().toISOString() },
-        { id: 'g2', carrier: 'dhl', service: 'express', recipient_name: 'Mario Cano', recipient_phone: '5599887766', dest_cp: '64000', dest_address: 'Padre Mier 200, Monterrey', weight_kg: 1, price: 222, status: 'quoted', point_name: 'Punto Condesa', created: new Date().toISOString(), updated: new Date().toISOString() }
+        { id: 'g1', carrier: 'estafeta', service: 'standard', tracking_number: 'EST000123456', recipient_name: 'Lucía Ortega', recipient_phone: '5511223344', dest_cp: '44100', dest_address: 'Av. Vallarta 100, Guadalajara', weight_kg: 2, length_cm: 30, width_cm: 20, height_cm: 15, price: 169, commission: 20, status: 'generated', point_id: 'p1', point_name: 'Punto Roma Norte', created: new Date().toISOString(), updated: new Date().toISOString() },
+        { id: 'g2', carrier: 'dhl', service: 'express', recipient_name: 'Mario Cano', recipient_phone: '5599887766', dest_cp: '64000', dest_address: 'Padre Mier 200, Monterrey', weight_kg: 1, length_cm: 20, width_cm: 15, height_cm: 10, price: 222, commission: 10, status: 'quoted', point_id: 'p2', point_name: 'Punto Condesa', created: new Date().toISOString(), updated: new Date().toISOString() }
     ],
     excursions: [
         { id: 'ex1', name: 'Teotihuacán en globo', destination: 'Estado de México', description: 'Vuelo en globo al amanecer sobre las pirámides + desayuno.', price: 2850, duration: 'Día completo', provider_name: 'SkyMex Tours', provider_whatsapp: '5215511112222', image_url: 'https://images.unsplash.com/photo-1507272931001-fc06c17e4f43?auto=format&fit=crop&q=80&w=800', max_capacity: 16, active: true, available_dates: '2026-07-12\n2026-07-19\n2026-08-02\n2026-08-16', deposit_amount: 500, policy: 'Sin reembolsos ni cancelaciones; tu pago aplica como crédito para otra experiencia.', provider_id: 'pr1', created: new Date().toISOString() },

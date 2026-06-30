@@ -79,6 +79,7 @@
                 <div class="flex flex-col"><label class="label-sm">Alto (cm)</label><input v-model.number="form.height_cm" type="number" min="0" class="input-dark"></div>
               </div>
               <p v-if="volWeight > 0" class="text-[10px] text-slate-500 mt-2 px-1">Peso volumétrico: {{ volWeight.toFixed(1) }} kg · cobrable {{ Math.max(Math.max(0.5, Number(form.weight_kg)||0.5), volWeight).toFixed(1) }} kg</p>
+              <p class="text-[10px] text-brand-400 font-bold mt-1 px-1">Comisión del punto (por tramo de peso): {{ formatMoney(commissionPreview) }}</p>
             </div>
             <div class="grid grid-cols-2 gap-4">
               <div class="flex flex-col"><label class="label-sm">Remitente</label><input v-model="form.sender_name" class="input-dark" placeholder="Nombre"></div>
@@ -169,6 +170,13 @@ export default {
     },
     volWeight() {
       return volumetricWeight(this.form.length_cm, this.form.width_cm, this.form.height_cm);
+    },
+    chargeableKg() {
+      return Math.max(Number(this.form.weight_kg) || 0, this.volWeight);
+    },
+    commissionPreview() {
+      const kg = this.chargeableKg;
+      return kg <= 1 ? 10 : (kg <= 5 ? 20 : (kg <= 20 ? 35 : 50));
     },
     autoQuote() {
       return quoteGuide({ carrier: this.form.carrier, service: this.form.service, weightKg: this.form.weight_kg, sameZone: this.sameZone, length: this.form.length_cm, width: this.form.width_cm, height: this.form.height_cm });
@@ -262,6 +270,8 @@ export default {
       this.saving = true;
       try {
         const { _priceTouched, ...payload } = this.form;
+        payload.point_id = this.appState.user?.point_ref || '';
+        payload.commission = this.commissionPreview; // tramo por peso/medidas (lo confirma el hook)
         await this.apiPost('shipping_guides', payload);
         this.emitBusinessEvent({ audience: ['admin'], severity: 'success', icon: 'box-seam-fill', title: 'Guía vendida', message: `${(payload.carrier || '').toUpperCase()} para ${payload.recipient_name} (${this.formatMoney(payload.price)}).` });
         this.showForm = false;
