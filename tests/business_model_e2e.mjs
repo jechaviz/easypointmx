@@ -165,6 +165,28 @@ async function run() {
     ok('Estado crédito se respeta (no reembolso)', credit.ok && credit.data?.payment_status === 'credit', `status ${credit.data?.payment_status}`);
   }
 
+  // ===== COBRANZA (efectivo recolectado por chofer) =====
+  await req('PATCH', `/collections/points/records/${pointId}`, { token: adminToken, body: { commission_rate: 10 } });
+  const cobBooking = await req('POST', '/collections/excursion_bookings/records', { body: {
+    excursion_ref: excId, customer_name: 'Cliente Cobranza', customer_phone: '5500002222', people: 1, excursion_date: '2026-12-22'
+  } });
+  const cobId = cobBooking.data?.id; // total = 1500 * 1
+  const pay = await req('POST', '/collections/payments/records', { token: opToken, body: {
+    kind: 'excursion', ref: cobId, label: 'Cliente Cobranza', amount: 500, point_id: pointId, point_name: point.data?.name, method: 'cash'
+  } });
+  ok('Operador registra abono (retenido en el punto)', pay.ok && pay.data?.status === 'held_at_point', `status ${pay.data?.status}`);
+  const bkAfter = await req('GET', `/collections/excursion_bookings/records/${cobId}`, { token: adminToken });
+  ok('El abono incrementa lo pagado de la reserva', bkAfter.data?.amount_paid === 500 && bkAfter.data?.payment_status === 'partial', `paid ${bkAfter.data?.amount_paid} ${bkAfter.data?.payment_status}`);
+
+  const collected = await req('PATCH', `/collections/payments/records/${pay.data?.id}`, { token: opToken, body: { status: 'collected', collected_by: 'driverX' } });
+  ok('Chofer recolecta: comisión 10% (50) y neto 450', collected.data?.status === 'collected' && collected.data?.commission === 50 && collected.data?.net === 450, `comm ${collected.data?.commission} net ${collected.data?.net}`);
+
+  const delivered = await req('PATCH', `/collections/payments/records/${pay.data?.id}`, { token: opToken, body: { status: 'delivered' } });
+  ok('Chofer entrega al admin (delivered + fecha)', delivered.data?.status === 'delivered' && Boolean(delivered.data?.delivered_at), `status ${delivered.data?.status}`);
+
+  const anonPay = await req('GET', '/collections/payments/records');
+  ok('Anónimo NO ve el libro de pagos', (anonPay.data?.items?.length || 0) === 0, `items ${anonPay.data?.items?.length}`);
+
   // ===== SOPORTE / QUEJAS (embudo privado) =====
   const ticket = await req('POST', '/collections/support_tickets/records', { body: {
     kind: 'complaint', subject_ref: bookingId, customer_name: 'Cliente Molesto', customer_phone: '5500001111',
