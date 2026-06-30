@@ -254,7 +254,7 @@
         <div v-else-if="section === 'points'">
           <div class="flex items-center justify-between mb-6">
             <p class="text-slate-400 text-sm">{{ points.length }} puntos activos</p>
-            <button @click="showPointForm = true; editingPoint = null; pointForm = { name: '', address: '', whatsapp: '' }" 
+            <button @click="showPointForm = true; editingPoint = null; pointForm = { name: '', address: '', whatsapp: '', commission_rate: 10 }" 
               class="bg-brand-500 text-slate-900 font-bold px-4 py-2 rounded-xl text-xs hover:bg-brand-400 flex items-center gap-2">
               <i class="bi bi-plus-circle"></i> Nuevo Punto
             </button>
@@ -311,6 +311,10 @@
                 <div>
                   <label class="label-sm">WhatsApp de contacto</label>
                   <input v-model="pointForm.whatsapp" class="input-dark" placeholder="521234567890">
+                </div>
+                <div>
+                  <label class="label-sm">Comisión del punto (%)</label>
+                  <input v-model.number="pointForm.commission_rate" type="number" min="0" max="100" class="input-dark" placeholder="10">
                 </div>
               </div>
               <div class="flex gap-3 mt-8">

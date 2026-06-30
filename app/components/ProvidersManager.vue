@@ -85,7 +85,7 @@ export default {
   mounted() { this.load(); },
   methods: {
     blankForm() {
-      return { id: null, name: '', whatsapp: '', email: '', fee_rate: 0, active: true };
+      return { id: null, name: '', whatsapp: '', email: '', fee_rate: 15, active: true };
     },
     token() { return localStorage.getItem('ep_token'); },
     formatMoney(a) { return new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN', maximumFractionDigits: 0 }).format(Number(a) || 0); },

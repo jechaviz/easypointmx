@@ -135,12 +135,15 @@ const DEMO_USERS = [
 const DEMO_PWDS = ['Punto2024!', 'easypoint123'];
 
 const DEFAULT_DEMO_DATA = {
-    _v: 9, // Version flag to force cache breaks when schema updates
+    _v: 10, // Version flag to force cache breaks when schema updates
     providers: [
-        { id: 'pr1', name: 'SkyMex Tours', whatsapp: '5215511112222', email: 'sky@tours.mx', fee_rate: 15, active: true }
+        { id: 'pr1', name: 'SkyMex Tours', whatsapp: '5215511112222', email: 'sky@tours.mx', fee_rate: 15, active: true },
+        { id: 'pr2', name: 'Raíces MX', whatsapp: '5215533334444', email: 'hola@raicesmx.com', fee_rate: 12, active: true }
     ],
     settlements: [
-        { id: 's1', kind: 'point', ref: 'p1', ref_name: 'Punto Roma Norte', period: '2026-07', gross: 1000, fee: 100, net: 900, folio: 'LIQ-P-p1', status: 'pending', created: '2026-07-01T00:00:00Z' }
+        { id: 's1', kind: 'point', ref: 'p1', ref_name: 'Punto Roma Norte', period: '2026-07', gross: 1000, fee: 100, net: 900, folio: 'LIQ-P-p1', status: 'pending', created: '2026-07-01T00:00:00Z' },
+        { id: 's2', kind: 'provider', ref: 'pr1', ref_name: 'SkyMex Tours', period: '2026-07', gross: 5700, fee: 855, net: 4845, folio: 'LIQ-PR-pr1', status: 'pending', created: '2026-07-01T00:00:00Z' },
+        { id: 's3', kind: 'driver_corte', ref: 'u4', ref_name: 'Juan Driver', period: '2026-07', gross: 1500, fee: 0, net: 1500, folio: 'CORTE-2026-07-01', status: 'paid', created: '2026-07-01T00:00:00Z' }
     ],
     wallet_entries: [
         { id: 'we1', customer_phone: '5512345678', amount: 1200, reason: 'credit_from_booking', ref: 'b1', balance_after: 1200, created: '2026-07-01T00:00:00Z' }
@@ -178,8 +181,8 @@ const DEFAULT_DEMO_DATA = {
         { id: 'g2', carrier: 'dhl', service: 'express', recipient_name: 'Mario Cano', recipient_phone: '5599887766', dest_cp: '64000', dest_address: 'Padre Mier 200, Monterrey', weight_kg: 1, price: 222, status: 'quoted', point_name: 'Punto Condesa', created: new Date().toISOString(), updated: new Date().toISOString() }
     ],
     excursions: [
-        { id: 'ex1', name: 'Teotihuacán en globo', destination: 'Estado de México', description: 'Vuelo en globo al amanecer sobre las pirámides + desayuno.', price: 2850, duration: 'Día completo', provider_name: 'SkyMex Tours', provider_whatsapp: '5215511112222', image_url: 'https://images.unsplash.com/photo-1507272931001-fc06c17e4f43?auto=format&fit=crop&q=80&w=800', max_capacity: 16, active: true, available_dates: '2026-07-12\n2026-07-19\n2026-08-02\n2026-08-16', deposit_amount: 500, policy: 'Sin reembolsos ni cancelaciones; tu pago aplica como crédito para otra experiencia.', created: new Date().toISOString() },
-        { id: 'ex2', name: 'Xochimilco cultural', destination: 'CDMX', description: 'Trajinera privada, comida tradicional y música en vivo.', price: 750, duration: '5 horas', provider_name: 'Raíces MX', provider_whatsapp: '5215533334444', image_url: 'https://images.unsplash.com/photo-1597211833712-5e41faa202ea?auto=format&fit=crop&q=80&w=800', max_capacity: 20, active: true, available_dates: '2026-07-05\n2026-07-12\n2026-07-26', deposit_amount: 200, created: new Date().toISOString() }
+        { id: 'ex1', name: 'Teotihuacán en globo', destination: 'Estado de México', description: 'Vuelo en globo al amanecer sobre las pirámides + desayuno.', price: 2850, duration: 'Día completo', provider_name: 'SkyMex Tours', provider_whatsapp: '5215511112222', image_url: 'https://images.unsplash.com/photo-1507272931001-fc06c17e4f43?auto=format&fit=crop&q=80&w=800', max_capacity: 16, active: true, available_dates: '2026-07-12\n2026-07-19\n2026-08-02\n2026-08-16', deposit_amount: 500, policy: 'Sin reembolsos ni cancelaciones; tu pago aplica como crédito para otra experiencia.', provider_id: 'pr1', created: new Date().toISOString() },
+        { id: 'ex2', name: 'Xochimilco cultural', destination: 'CDMX', description: 'Trajinera privada, comida tradicional y música en vivo.', price: 750, duration: '5 horas', provider_name: 'Raíces MX', provider_whatsapp: '5215533334444', image_url: 'https://images.unsplash.com/photo-1597211833712-5e41faa202ea?auto=format&fit=crop&q=80&w=800', max_capacity: 20, active: true, available_dates: '2026-07-05\n2026-07-12\n2026-07-26', deposit_amount: 200, provider_id: 'pr2', created: new Date().toISOString() }
     ],
     excursion_bookings: [
         { id: 'b1', excursion_ref: 'ex1', excursion_name: 'Teotihuacán en globo', destination: 'Estado de México', customer_name: 'Ana Beltrán', customer_phone: '5512345678', customer_email: 'ana@correo.mx', people: 2, excursion_date: '2026-07-12', total: 5700, amount_paid: 500, balance: 5200, payment_status: 'partial', status: 'new', created: new Date().toISOString(), updated: new Date().toISOString() },
