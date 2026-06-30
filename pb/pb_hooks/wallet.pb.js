@@ -21,9 +21,18 @@ onRecordAfterUpdateRequest((e) => {
     try { wallet = $app.dao().findFirstRecordByFilter('wallets', 'customer_phone = {:p}', { p: phone }); }
     catch (err) { wallet = null; }
     if (wallet) {
-      wallet.set('balance', (Number(wallet.getFloat('balance')) || 0) + amount);
+      const newBal = (Number(wallet.getFloat('balance')) || 0) + amount;
+      wallet.set('balance', newBal);
       if (!wallet.getString('customer_name')) wallet.set('customer_name', rec.getString('customer_name'));
       $app.dao().saveRecord(wallet);
+      try {
+        const wec = $app.dao().findCollectionByNameOrId('wallet_entries');
+        const we = new Record(wec, {
+          customer_phone: phone, amount: amount, reason: 'credit_from_booking',
+          ref: rec.id, balance_after: newBal
+        });
+        $app.dao().saveRecord(we);
+      } catch (err) {}
     } else {
       const coll = $app.dao().findCollectionByNameOrId('wallets');
       const w = new Record(coll, {
@@ -32,6 +41,14 @@ onRecordAfterUpdateRequest((e) => {
         balance: amount
       });
       $app.dao().saveRecord(w);
+      try {
+        const wec = $app.dao().findCollectionByNameOrId('wallet_entries');
+        const we = new Record(wec, {
+          customer_phone: phone, amount: amount, reason: 'credit_from_booking',
+          ref: rec.id, balance_after: amount
+        });
+        $app.dao().saveRecord(we);
+      } catch (err) {}
     }
   } catch (err) {}
 }, 'excursion_bookings');
@@ -67,6 +84,15 @@ onRecordAfterCreateRequest((e) => {
 
   wallet.set('balance', available - applied);
   $app.dao().saveRecord(wallet);
+
+  try {
+    const wec = $app.dao().findCollectionByNameOrId('wallet_entries');
+    const we = new Record(wec, {
+      customer_phone: phone, amount: -applied, reason: 'auto_applied',
+      ref: bk.id, balance_after: available - applied
+    });
+    $app.dao().saveRecord(we);
+  } catch (err) {}
 
   try {
     const coll = $app.dao().findCollectionByNameOrId('payments');
@@ -145,6 +171,15 @@ routerAdd('POST', '/api/wallet/apply', (c) => {
   // Descuenta del monedero.
   wallet.set('balance', available - applied);
   $app.dao().saveRecord(wallet);
+
+  try {
+    const wec = $app.dao().findCollectionByNameOrId('wallet_entries');
+    const we = new Record(wec, {
+      customer_phone: phone, amount: -applied, reason: 'manual_applied',
+      ref: ref, balance_after: available - applied
+    });
+    $app.dao().saveRecord(we);
+  } catch (err) {}
 
   // Asiento de auditoría en el libro de pagos.
   try {

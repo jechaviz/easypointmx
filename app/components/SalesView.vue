@@ -175,19 +175,26 @@ export default {
       ],
       showNewApp: false,
       form: { biz: '', contact: '', addr: '', wa: '' },
-      stats: [
-        { label: 'Puntos Activos', value: '12', icon: 'shop', trend: 15 },
-        { label: 'Prospectos / Mes', value: '45', icon: 'person-plus', trend: 8 },
-        { label: 'Conversión', value: '26%', icon: 'pie-chart-fill', trend: 2 },
-        { label: 'Bonos $', value: '$8,400', icon: 'stars', trend: 12 },
-      ],
       prospects: []
     }
   },
   computed: {
     currentNav() { return this.nav.find(n => n.id === this.section); },
     myProspects() { return this.prospects.slice(0, 5); },
-    allProspects() { return this.prospects; }
+    allProspects() { return this.prospects; },
+    stats() {
+      const list = this.prospects || [];
+      const total = list.length;
+      const approved = list.filter(p => p.status === 'approved').length;
+      const nuevos = list.filter(p => p.status === 'new').length;
+      const conv = total > 0 ? Math.round((approved / total) * 100) : 0;
+      return [
+        { label: 'Total Prospectos', value: String(total), icon: 'shop', trend: 0 },
+        { label: 'Aprobados', value: String(approved), icon: 'person-plus', trend: 0 },
+        { label: 'Conversión', value: conv + '%', icon: 'pie-chart-fill', trend: 0 },
+        { label: 'Nuevos', value: String(nuevos), icon: 'stars', trend: 0 },
+      ];
+    }
   },
   mounted() {
     this.refresh();

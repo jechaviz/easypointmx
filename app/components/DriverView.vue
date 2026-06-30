@@ -196,6 +196,17 @@
 
       <!-- COBRANZA (recolección de abonos en efectivo) -->
       <div v-else-if="activeTab === 'cobranza'" class="animate-fade-in-up">
+        <!-- Resumen del efectivo que trae el chofer -->
+        <div class="bg-slate-900 border border-slate-800 rounded-[2rem] p-6 mb-6 flex flex-col sm:flex-row sm:items-center gap-5">
+          <div class="flex-1">
+            <p class="text-[9px] text-slate-500 font-black uppercase tracking-widest mb-1">Efectivo que traes</p>
+            <p class="text-emerald-400 text-3xl font-black">{{ formatMoney(efectivoQueTraes) }}</p>
+            <p class="text-[10px] text-slate-600 mt-1">{{ cobrosPendientes }} cobro{{ cobrosPendientes !== 1 ? 's' : '' }} recolectado{{ cobrosPendientes !== 1 ? 's' : '' }} sin entregar al admin.</p>
+          </div>
+          <button @click="cerrarCorte" :disabled="corteSaving || efectivoQueTraes <= 0" class="shrink-0 bg-brand-500 text-slate-900 font-black rounded-2xl px-6 py-4 text-xs uppercase tracking-widest hover:bg-brand-400 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2">
+            <i class="bi bi-box-arrow-up"></i> {{ corteSaving ? 'Cerrando...' : 'Cerrar corte y entregar al admin' }}
+          </button>
+        </div>
         <CobranzaManager />
       </div>
     </div>
@@ -221,15 +232,24 @@ export default {
          { key: 'action', label: 'Acción', align: 'right' }
       ],
       loading: false,
-      scanning: false
+      scanning: false,
+      driverPayments: [],
+      corteSaving: false
     }
   },
   computed: {
     pendingPackages() { return this.packages.filter(p => p.status === 'pending'); },
-    transitPackages() { return this.packages.filter(p => p.status === 'in_transit'); }
+    transitPackages() { return this.packages.filter(p => p.status === 'in_transit'); },
+    myCollectedPayments() {
+      const uid = this.appState.user?.id;
+      return (this.driverPayments || []).filter(p => p.collected_by === uid && p.status === 'collected');
+    },
+    cobrosPendientes() { return this.myCollectedPayments.length; },
+    efectivoQueTraes() { return this.myCollectedPayments.reduce((s, p) => s + (Number(p.net) || 0), 0); }
   },
   mounted() {
     this.fetchRoute();
+    this.fetchDriverPayments();
   },
   methods: {
     async fetchRoute() {
@@ -316,6 +336,53 @@ export default {
         this.showModal({ title: 'Error', message: 'No se pudo actualizar el estado de la ruta.', type: 'error' });
       }
     },
+    async fetchDriverPayments() {
+      try {
+        if (this.appState.demoMode) {
+          this.driverPayments = (this.appState.demoData?.payments) || [];
+          return;
+        }
+        const res = await fetch(`${this.pb_url}/api/collections/payments/records?perPage=300&sort=-created`, {
+          headers: { 'Authorization': this.appState.token }
+        });
+        const data = await res.json();
+        this.driverPayments = data.items || [];
+      } catch (e) {
+        console.error('Fetch payments error:', e);
+        this.driverPayments = [];
+      }
+    },
+    async cerrarCorte() {
+      if (this.efectivoQueTraes <= 0) return;
+      const ok = await this.showModal({
+        title: 'Cerrar corte',
+        message: `Vas a entregar ${this.formatMoney(this.efectivoQueTraes)} (${this.cobrosPendientes} cobro${this.cobrosPendientes !== 1 ? 's' : ''}) al administrador. ¿Continuar?`,
+        type: 'confirm',
+        confirmText: 'Cerrar corte'
+      });
+      if (!ok) return;
+      this.corteSaving = true;
+      try {
+        const res = await fetch(`${this.pb_url}/api/cortes/driver`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': this.appState.token },
+          body: JSON.stringify({})
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data?.error || data?.message || 'No se pudo cerrar el corte.');
+        await this.fetchDriverPayments();
+        this.showModal({
+          title: 'Corte entregado',
+          message: `Folio ${data.folio || '—'}: entregaste ${this.formatMoney(data.total || 0)} en ${data.count || 0} cobro${(data.count || 0) !== 1 ? 's' : ''}.`,
+          type: 'success'
+        });
+      } catch (e) {
+        this.showModal({ title: 'Error', message: e.message || 'No se pudo cerrar el corte.', type: 'error' });
+      } finally {
+        this.corteSaving = false;
+      }
+    },
+    formatMoney(a) { return new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN', maximumFractionDigits: 0 }).format(Number(a) || 0); },
     async handleScan(code) {
       const pkg = this.packages.find(p => p.tracking_id === code);
       if(!pkg) return this.showModal({ title: 'No Encontrado', message: 'Paquete no encontrado en tu ruta actual.', type: 'warning' });

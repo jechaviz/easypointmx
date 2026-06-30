@@ -258,6 +258,30 @@ async function run() {
   const trackNone = await req('GET', `/track/NOEXISTE-${rnd()}`);
   ok('Rastreo público 404 limpio', trackNone.status === 404 && trackNone.data?.error === 'not_found', `status ${trackNone.status}`);
 
+  // ===== FINANZAS / PROVEEDORES / LIQUIDACIONES / CORTES / AUDITORÍA =====
+  const fin = await req('GET', '/finance/summary', { token: adminToken });
+  ok('Resumen financiero (admin)', fin.ok
+    && typeof fin.data?.receivable !== 'undefined'
+    && typeof fin.data?.cash_held !== 'undefined'
+    && typeof fin.data?.credit_circulation !== 'undefined'
+    && fin.data?.pending && typeof fin.data.pending === 'object',
+    `status ${fin.status} ${JSON.stringify(fin.data)}`);
+
+  const prov = await req('POST', '/collections/providers/records', { token: adminToken, body: { name: 'Prov E2E', fee_rate: 15, active: true } });
+  ok('Admin crea proveedor', prov.ok, JSON.stringify(prov.data));
+
+  const settleRun = await req('POST', '/settlements/run', { token: adminToken, body: { period: '2026-07' } });
+  ok('Corrida de liquidaciones (admin)', settleRun.ok && typeof settleRun.data?.created === 'number', `status ${settleRun.status} ${JSON.stringify(settleRun.data)}`);
+
+  const corte = await req('POST', '/cortes/driver', { token: opToken, body: {} });
+  ok('Corte de chofer (staff)', corte.ok, `status ${corte.status} ${JSON.stringify(corte.data)}`);
+
+  const anonAudit = await req('GET', '/collections/audit_log/records');
+  ok('Anónimo NO ve la bitácora (admin-only)', (anonAudit.data?.items?.length || 0) === 0, `items ${anonAudit.data?.items?.length}`);
+
+  const finAnon = await req('GET', '/finance/summary');
+  ok('Resumen financiero requiere auth', finAnon.status === 401, `status ${finAnon.status}`);
+
   summary();
 }
 

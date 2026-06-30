@@ -102,6 +102,23 @@ El objetivo es **resolver en privado antes de que la queja se haga pública**:
   Xcode) como segunda fase: requiere Android SDK, firma y cuentas de tienda
   (tareas del dueño). Ver `docs/DEPLOYMENT.md` y `v_projects/domains/product_apps/vapps`.
 
+## 5b. Gestión y control (dashboards completos)
+
+- **Finanzas (admin):** cuentas por cobrar (saldos de reservas), efectivo retenido en
+  puntos / en ruta, crédito en circulación (monederos), ingresos por línea, y **cola
+  de pendientes** (tickets abiertos, reservas sin confirmar, guías por generar, abonos
+  retenidos). Endpoint `GET /api/finance/summary`.
+- **Liquidaciones:** `POST /api/settlements/run` calcula pagos a **puntos** (comisión)
+  y a **proveedores** (fee Easypoint) por periodo; el chofer cierra su **corte** con
+  folio (`POST /api/cortes/driver`) al entregar el efectivo al admin.
+- **Proveedores:** entidad gestionable (`providers`, con `fee_rate`); excursiones
+  enlazadas por `provider_id`.
+- **Monederos:** historial de movimientos (`wallet_entries`).
+- **Reportes:** exportación CSV por colección y rango de fechas.
+- **Bitácora:** `audit_log` registra cambios clave (solo admin).
+- **KPIs reales** por rol (operador: comisión/abonos; chofer: efectivo que trae;
+  ventas: prospectos/conversión) reemplazan los valores de muestra.
+
 ## 6. Qué falta decidir (parámetros del negocio)
 
 - % de fee por línea (excursiones/guías) y monto/mínimo de apartado por defecto.

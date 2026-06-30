@@ -3,6 +3,9 @@
     <div v-if="role === 'admin'" class="flex justify-end mb-4">
       <button @click="enviarRecordatorios" :disabled="saving" class="bg-slate-900 border border-slate-700 text-brand-400 font-black px-5 py-2.5 rounded-xl text-[10px] uppercase tracking-widest hover:border-brand-500/50 disabled:opacity-50"><i class="bi bi-bell"></i> Enviar recordatorios pendientes</button>
     </div>
+    <div v-if="role === 'driver'" class="flex justify-end mb-4">
+      <button @click="cerrarCorte" :disabled="saving" class="bg-slate-900 border border-slate-700 text-emerald-400 font-black px-5 py-2.5 rounded-xl text-[10px] uppercase tracking-widest hover:border-emerald-500/50 disabled:opacity-50"><i class="bi bi-box-arrow-up"></i> Cerrar corte (entregar al admin)</button>
+    </div>
 
     <!-- Totales (admin) -->
     <div v-if="role === 'admin'" class="grid grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
@@ -259,6 +262,18 @@ export default {
     async deliver(item) {
       await this.apiPatch(item.id, { status: 'delivered', delivered_at: new Date().toISOString() });
       await this.load();
+    },
+    async cerrarCorte() {
+      this.saving = true;
+      try {
+        const res = await fetch(`${this.pb_url}/api/cortes/driver`, { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: this.token() }, body: JSON.stringify({}) });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data?.error || data?.message || 'No se pudo cerrar el corte.');
+        await this.showModal({ title: 'Corte cerrado', message: `Folio ${data.folio}: ${data.count || 0} pago(s) entregados por ${this.formatMoney(data.total)}.`, type: 'success' });
+        await this.load();
+      } catch (e) {
+        this.showModal({ title: 'Error', message: e.message || 'No se pudo cerrar el corte.', type: 'error' });
+      } finally { this.saving = false; }
     },
     async remove(item) {
       const ok = await this.showModal({ title: 'Eliminar abono', message: '¿Eliminar este registro?', type: 'confirm', confirmText: 'Eliminar' });

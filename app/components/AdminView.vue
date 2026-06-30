@@ -578,6 +578,26 @@
           <WalletsManager />
         </div>
 
+        <!-- ── FINANZAS ── -->
+        <div v-else-if="section === 'finanzas'">
+          <FinanceDashboard />
+        </div>
+
+        <!-- ── LIQUIDACIONES ── -->
+        <div v-else-if="section === 'liquidaciones'">
+          <SettlementsManager />
+        </div>
+
+        <!-- ── PROVEEDORES ── -->
+        <div v-else-if="section === 'proveedores'">
+          <ProvidersManager />
+        </div>
+
+        <!-- ── REPORTES ── -->
+        <div v-else-if="section === 'reportes'">
+          <ReportsManager />
+        </div>
+
         <!-- ── SOPORTE / QUEJAS ── -->
         <div v-else-if="section === 'soporte'">
           <SupportManager />
@@ -665,7 +685,11 @@ export default {
     ExcursionsManager: Vue.defineAsyncComponent(() => loadModule('./components/ExcursionsManager.vue', window.options)),
     SupportManager: Vue.defineAsyncComponent(() => loadModule('./components/SupportManager.vue', window.options)),
     CobranzaManager: Vue.defineAsyncComponent(() => loadModule('./components/CobranzaManager.vue', window.options)),
-    WalletsManager: Vue.defineAsyncComponent(() => loadModule('./components/WalletsManager.vue', window.options))
+    WalletsManager: Vue.defineAsyncComponent(() => loadModule('./components/WalletsManager.vue', window.options)),
+    FinanceDashboard: Vue.defineAsyncComponent(() => loadModule('./components/FinanceDashboard.vue', window.options)),
+    SettlementsManager: Vue.defineAsyncComponent(() => loadModule('./components/SettlementsManager.vue', window.options)),
+    ProvidersManager: Vue.defineAsyncComponent(() => loadModule('./components/ProvidersManager.vue', window.options)),
+    ReportsManager: Vue.defineAsyncComponent(() => loadModule('./components/ReportsManager.vue', window.options))
   },
   data() {
     return {
@@ -717,6 +741,10 @@ export default {
         { id: 'excursiones', icon: 'compass',         label: 'Excursiones',    desc: 'Reservas y catálogo turístico' },
         { id: 'cobranza',    icon: 'cash-stack',      label: 'Cobranza',       desc: 'Abonos en efectivo y liquidación' },
         { id: 'monederos',   icon: 'wallet2',         label: 'Monederos',      desc: 'Crédito de clientes' },
+        { id: 'finanzas',    icon: 'graph-up-arrow',  label: 'Finanzas',       desc: 'Estado financiero y pendientes' },
+        { id: 'liquidaciones', icon: 'cash-coin',     label: 'Liquidaciones',  desc: 'Pagos a proveedores y puntos' },
+        { id: 'proveedores', icon: 'people-fill',     label: 'Proveedores',    desc: 'Proveedores de excursiones' },
+        { id: 'reportes',    icon: 'file-earmark-spreadsheet', label: 'Reportes', desc: 'Exportar datos' },
         { id: 'commissions', icon: 'cash-coin',       label: 'Comisiones',     desc: 'Pago a operadores asociados' },
         { id: 'invoices',    icon: 'receipt',         label: 'Facturas',       desc: 'Facturación a clientes' },
         { id: 'partners',    icon: 'briefcase',       label: 'Solicitudes',    desc: 'Afiliaciones pendientes', badge: 0 },

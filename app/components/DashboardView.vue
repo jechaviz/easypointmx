@@ -99,7 +99,7 @@
               </div>
               
               <!-- Unified KPI Stats -->
-              <div class="grid grid-cols-2 md:grid-cols-4 gap-4 flex-1 max-w-3xl relative z-10">
+              <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 flex-1 max-w-4xl relative z-10">
                 <div class="bg-slate-950/50 rounded-2xl px-5 py-4 border border-slate-800 hover:border-brand-500/30 transition-all">
                   <span class="text-[9px] font-black text-slate-600 uppercase tracking-widest block mb-2">Por Recibir</span>
                   <span class="text-2xl font-black text-white">{{ inTransitCount }}</span>
@@ -112,9 +112,13 @@
                   <span class="text-[9px] font-black text-slate-600 uppercase tracking-widest block mb-2">Entregados</span>
                   <span class="text-2xl font-black text-white">{{ deliveredCount }}</span>
                 </div>
+                <div class="bg-slate-950/50 rounded-2xl px-5 py-4 border border-slate-800 hover:border-brand-500/30 transition-all">
+                  <span class="text-[9px] font-black text-slate-600 uppercase tracking-widest block mb-1">Abonos Retenidos</span>
+                  <span class="text-2xl font-black text-amber-400 font-mono tracking-tighter">{{ formatMoney(heldAmount) }}</span>
+                </div>
                 <div class="bg-slate-950/50 rounded-2xl px-5 py-4 border border-slate-800 text-right hover:border-brand-500/30 transition-all">
-                  <span class="text-[9px] font-black text-slate-600 uppercase tracking-widest block mb-1">Ganancia</span>
-                  <span class="text-2xl font-black text-green-400 font-mono tracking-tighter">${{ (deliveredCount * 8.5).toFixed(1) }}</span>
+                  <span class="text-[9px] font-black text-slate-600 uppercase tracking-widest block mb-1">Mi Comisión</span>
+                  <span class="text-2xl font-black text-green-400 font-mono tracking-tighter">{{ formatMoney(myCommission) }}</span>
                 </div>
               </div>
             </div>
@@ -280,6 +284,7 @@ export default {
       ],
       point: null,
       shipments: [],
+      payments: [],
       isLoading: true
     }
   },
@@ -291,9 +296,28 @@ export default {
     inTransitCount() { return this.shipments.filter(s => s.status === 'in_transit').length; },
     atPointCount() { return this.shipments.filter(s => s.status === 'at_point').length; },
     deliveredCount() { return this.shipments.filter(s => s.status === 'delivered').length; },
-    atPointShipments() { return this.shipments.filter(s => s.status === 'at_point'); }
+    atPointShipments() { return this.shipments.filter(s => s.status === 'at_point'); },
+    pointPayments() {
+      const all = this.appState.demoMode ? (this.appState.demoData?.payments || []) : this.payments;
+      const ref = this.user?.point_ref;
+      if (!ref) return [];
+      return all.filter(p => (p.point_id === ref) || (p.expand?.point_id?.id === ref));
+    },
+    myCommission() {
+      return this.pointPayments
+        .filter(p => p.status === 'collected' || p.status === 'delivered')
+        .reduce((sum, p) => sum + (Number(p.commission) || 0), 0);
+    },
+    heldAmount() {
+      return this.pointPayments
+        .filter(p => p.status === 'held_at_point')
+        .reduce((sum, p) => sum + (Number(p.amount) || 0), 0);
+    }
   },
   methods: {
+    formatMoney(a) {
+      return new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN', maximumFractionDigits: 0 }).format(Number(a) || 0);
+    },
     formatMode(m) {
       if(m === 'receive') return 'Recibir Paquetes';
       if(m === 'deliver') return 'Entregar Paquetes';
@@ -341,6 +365,20 @@ export default {
         }), { headers: h });
         const sData = await sRes.json();
         this.shipments = sData.items || [];
+
+        // Fetch payments collected at this point (for real commission KPIs)
+        try {
+          const payRes = await fetch(pbUrl('/api/collections/payments/records', {
+            filter: `(point_id=${pbFilterString(this.user.point_ref)})`,
+            perPage: 500,
+            sort: '-created'
+          }), { headers: h });
+          const payData = await payRes.json();
+          this.payments = payData.items || [];
+        } catch (pe) {
+          this.payments = [];
+        }
+
         this.syncBusinessEvents({ point: this.point, shipments: this.shipments });
       } catch (e) {
         console.error(e);

@@ -135,7 +135,17 @@ const DEMO_USERS = [
 const DEMO_PWDS = ['Punto2024!', 'easypoint123'];
 
 const DEFAULT_DEMO_DATA = {
-    _v: 8, // Version flag to force cache breaks when schema updates
+    _v: 9, // Version flag to force cache breaks when schema updates
+    providers: [
+        { id: 'pr1', name: 'SkyMex Tours', whatsapp: '5215511112222', email: 'sky@tours.mx', fee_rate: 15, active: true }
+    ],
+    settlements: [
+        { id: 's1', kind: 'point', ref: 'p1', ref_name: 'Punto Roma Norte', period: '2026-07', gross: 1000, fee: 100, net: 900, folio: 'LIQ-P-p1', status: 'pending', created: '2026-07-01T00:00:00Z' }
+    ],
+    wallet_entries: [
+        { id: 'we1', customer_phone: '5512345678', amount: 1200, reason: 'credit_from_booking', ref: 'b1', balance_after: 1200, created: '2026-07-01T00:00:00Z' }
+    ],
+    audit_log: [],
     shipments: [
         { id: 'mock1', tracking_id: 'EP-9921-X', recipient_name: 'Alejandro Ruiz',   status: 'at_point',   created: '2026-03-25T10:00:00Z', updated: '2026-03-26T09:00:00Z', expand: { point_id: { name: 'Punto Roma Norte', address: 'Av. Álvaro Obregón 154, Roma Norte' } } },
         { id: 'mock2', tracking_id: 'EP-1045-A', recipient_name: 'Beatriz Solis',    status: 'delivered',  created: '2026-03-24T14:30:00Z', updated: '2026-03-25T11:20:00Z', expand: { point_id: { name: 'Punto Condesa',    address: 'Amsterdam 123, Hipódromo Condesa'   } } },
