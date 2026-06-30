@@ -1,7 +1,7 @@
 <template>
   <div>
     <!-- Totales (admin) -->
-    <div v-if="role === 'admin'" class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+    <div v-if="role === 'admin'" class="grid grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
       <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5">
         <p class="text-[9px] text-slate-500 font-black uppercase tracking-widest mb-1">Retenido en puntos</p>
         <p class="text-white text-xl font-black">{{ formatMoney(totals.held) }}</p>
@@ -17,6 +17,10 @@
       <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5">
         <p class="text-[9px] text-slate-500 font-black uppercase tracking-widest mb-1">Comisión a puntos</p>
         <p class="text-purple-400 text-xl font-black">{{ formatMoney(totals.commission) }}</p>
+      </div>
+      <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5">
+        <p class="text-[9px] text-slate-500 font-black uppercase tracking-widest mb-1">Redondeo neto (déb/créd)</p>
+        <p class="text-xl font-black" :class="totals.rounding >= 0 ? 'text-blue-400' : 'text-amber-400'">{{ formatMoney(totals.rounding) }}</p>
       </div>
     </div>
 
@@ -47,6 +51,8 @@
           <div class="flex flex-col items-end">
             <span class="text-[10px] text-purple-400">com {{ formatMoney(item.commission) }}</span>
             <span class="text-[10px] text-emerald-400">neto {{ formatMoney(item.net || (item.status === 'held_at_point' ? 0 : item.amount)) }}</span>
+            <span v-if="item.collected_amount" class="text-[10px] text-white">cobró {{ formatMoney(item.collected_amount) }}</span>
+            <span v-if="item.rounding" class="text-[9px] font-black" :class="item.rounding > 0 ? 'text-blue-400' : 'text-amber-400'">{{ item.rounding > 0 ? 'débito' : 'crédito' }} {{ formatMoney(Math.abs(item.rounding)) }}</span>
           </div>
         </td>
         <td class="px-6 py-4"><span class="text-[9px] font-black px-2.5 py-1 rounded-lg border uppercase tracking-wider" :class="statusBadge(item.status)">{{ statusLabel(item.status) }}</span></td>
@@ -106,12 +112,12 @@ export default {
       return list;
     },
     totals() {
-      const t = { held: 0, collectedNet: 0, deliveredNet: 0, commission: 0 };
+      const t = { held: 0, collectedNet: 0, deliveredNet: 0, commission: 0, rounding: 0 };
       for (const p of this.payments) {
-        const amt = Number(p.amount) || 0, net = Number(p.net) || 0, com = Number(p.commission) || 0;
+        const amt = Number(p.amount) || 0, net = Number(p.net) || 0, com = Number(p.commission) || 0, rnd = Number(p.rounding) || 0;
         if (p.status === 'held_at_point') t.held += amt;
-        else if (p.status === 'collected') { t.collectedNet += net; t.commission += com; }
-        else if (p.status === 'delivered') { t.deliveredNet += net; t.commission += com; }
+        else if (p.status === 'collected') { t.collectedNet += net; t.commission += com; t.rounding += rnd; }
+        else if (p.status === 'delivered') { t.deliveredNet += net; t.commission += com; t.rounding += rnd; }
       }
       return t;
     }
@@ -175,11 +181,25 @@ export default {
       finally { this.saving = false; }
     },
     async collect(item) {
-      // En demo calculamos comisión/neto en el cliente (en vivo lo recalcula el hook).
+      // En demo calculamos comisión/neto/redondeo en el cliente (en vivo lo recalcula el hook).
       const rate = this.pointCommissionRateFor(item);
-      const commission = Math.round((Number(item.amount) || 0) * rate) / 100;
-      const net = Math.max(0, (Number(item.amount) || 0) - commission);
-      await this.apiPatch(item.id, { status: 'collected', collected_by: this.appState.user?.id || '', commission, net, collected_at: new Date().toISOString() });
+      const amount = Number(item.amount) || 0;
+      const commission = Math.round(amount * rate) / 100;
+      const net = Math.max(0, amount - commission);
+      const suggested = Math.round(net);
+      const input = window.prompt(
+        `Neto a recolectar: ${this.formatMoney(net)} (comisión punto ${this.formatMoney(commission)}).\n` +
+        `Sin cambio: puedes redondear ±$10 (arriba = débito, abajo = crédito).\n¿Cuánto recolectaste en efectivo?`,
+        String(suggested)
+      );
+      if (input == null) return;
+      const collected = Number(input);
+      if (!(collected > 0)) return;
+      const rounding = Math.round((collected - net) * 100) / 100;
+      if (Math.abs(rounding) > 10) {
+        return this.showModal({ title: 'Redondeo excedido', message: 'El redondeo no puede pasar de $10 (una decena).', type: 'warning' });
+      }
+      await this.apiPatch(item.id, { status: 'collected', collected_by: this.appState.user?.id || '', commission, net, collected_amount: collected, rounding, collected_at: new Date().toISOString() });
       await this.load();
     },
     pointCommissionRateFor(item) {

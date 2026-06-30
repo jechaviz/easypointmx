@@ -184,6 +184,18 @@ async function run() {
   const delivered = await req('PATCH', `/collections/payments/records/${pay.data?.id}`, { token: opToken, body: { status: 'delivered' } });
   ok('Chofer entrega al admin (delivered + fecha)', delivered.data?.status === 'delivered' && Boolean(delivered.data?.delivered_at), `status ${delivered.data?.status}`);
 
+  // Redondeo sin cambio (±$10): arriba = débito, abajo = crédito, >$10 rechazado.
+  const mkPay = async () => (await req('POST', '/collections/payments/records', { token: opToken, body: { kind: 'excursion', ref: cobId, amount: 500, point_id: pointId, point_name: point.data?.name, method: 'cash' } })).data?.id;
+  const pUp = await mkPay();
+  const up = await req('PATCH', `/collections/payments/records/${pUp}`, { token: opToken, body: { status: 'collected', collected_amount: 453 } });
+  ok('Redondeo arriba = débito (+3)', up.data?.rounding === 3 && up.data?.collected_amount === 453, `rounding ${up.data?.rounding}`);
+  const pDown = await mkPay();
+  const down = await req('PATCH', `/collections/payments/records/${pDown}`, { token: opToken, body: { status: 'collected', collected_amount: 448 } });
+  ok('Redondeo abajo = crédito (-2)', down.data?.rounding === -2, `rounding ${down.data?.rounding}`);
+  const pBig = await mkPay();
+  const big = await req('PATCH', `/collections/payments/records/${pBig}`, { token: opToken, body: { status: 'collected', collected_amount: 470 } });
+  ok('Redondeo mayor a $10 rechazado', !big.ok && big.status === 400, `status ${big.status}`);
+
   const anonPay = await req('GET', '/collections/payments/records');
   ok('Anónimo NO ve el libro de pagos', (anonPay.data?.items?.length || 0) === 0, `items ${anonPay.data?.items?.length}`);
 

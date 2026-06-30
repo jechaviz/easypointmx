@@ -45,8 +45,20 @@ onRecordBeforeUpdateRequest((e) => {
       catch (err) { rate = 0; }
     }
     const commission = Math.round(amount * rate) / 100; // rate es porcentaje
+    const net = amount > commission ? amount - commission : 0;
     rec.set('commission', commission);
-    rec.set('net', amount > commission ? amount - commission : 0);
+    rec.set('net', net);
+
+    // Redondeo sin cambio: el chofer puede recolectar un monto redondeado ±$10.
+    let collected = Number(rec.getFloat('collected_amount')) || 0;
+    if (collected <= 0) { collected = net; }
+    const rounding = Math.round((collected - net) * 100) / 100;
+    if (Math.abs(rounding) > 10) {
+      throw new BadRequestError('El redondeo no puede exceder $10 (una decena).');
+    }
+    rec.set('collected_amount', collected);
+    rec.set('rounding', rounding); // + débito (cobró de más), − crédito (cobró de menos)
+
     if (!rec.getString('collected_at')) rec.set('collected_at', new Date().toISOString());
   }
 
