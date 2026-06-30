@@ -204,15 +204,16 @@ async function run() {
   const wl = await req('GET', `/wallet/lookup?ref=${bookingId}`, { token: opToken });
   ok('Monedero acreditado al convertir a crédito (4500)', wl.ok && wl.data?.balance === 4500, `balance ${wl.data?.balance}`);
 
+  // Auto-aplicado: al crear la nueva reserva del mismo cliente, el crédito se aplica solo.
   const wBooking = await req('POST', '/collections/excursion_bookings/records', { body: {
     excursion_ref: excId, customer_name: 'Cliente E2E', customer_phone: '5511112222', people: 1, excursion_date: '2027-01-05'
   } });
   const wbId = wBooking.data?.id; // total 1500
-  const applied = await req('POST', '/wallet/apply', { token: opToken, body: { ref: wbId } });
-  ok('Aplica crédito del monedero a nueva reserva (1500)', applied.ok && applied.data?.applied === 1500 && applied.data?.balance === 3000, `applied ${applied.data?.applied} bal ${applied.data?.balance}`);
-
   const wbAfter = await req('GET', `/collections/excursion_bookings/records/${wbId}`, { token: adminToken });
-  ok('La reserva queda pagada con crédito', wbAfter.data?.amount_paid === 1500 && wbAfter.data?.payment_status === 'paid', `paid ${wbAfter.data?.amount_paid} ${wbAfter.data?.payment_status}`);
+  ok('Crédito se auto-aplica a la nueva reserva (1500)', wbAfter.data?.amount_paid === 1500 && wbAfter.data?.payment_status === 'paid', `paid ${wbAfter.data?.amount_paid} ${wbAfter.data?.payment_status}`);
+
+  const wl2 = await req('GET', `/wallet/lookup?ref=${bookingId}`, { token: opToken });
+  ok('Monedero descontado tras auto-aplicar (3000)', wl2.data?.balance === 3000, `balance ${wl2.data?.balance}`);
 
   const wlAnon = await req('GET', `/wallet/lookup?ref=${bookingId}`);
   ok('Lookup de monedero requiere auth', wlAnon.status === 401, `status ${wlAnon.status}`);

@@ -36,6 +36,49 @@ onRecordAfterUpdateRequest((e) => {
   } catch (err) {}
 }, 'excursion_bookings');
 
+// Auto-aplicar crédito: al crear una reserva, si el cliente tiene saldo en su
+// monedero se aplica automáticamente al siguiente abono (reduce el saldo a pagar).
+onRecordAfterCreateRequest((e) => {
+  const bk = e.record;
+  const phone = String(bk.getString('customer_phone') || '').trim();
+  if (!phone) return;
+
+  let wallet;
+  try { wallet = $app.dao().findFirstRecordByFilter('wallets', 'customer_phone = {:p}', { p: phone }); }
+  catch (err) { return; }
+
+  const available = Number(wallet.getFloat('balance')) || 0;
+  if (available <= 0) return;
+  const total = Number(bk.getFloat('total')) || 0;
+  const owed = total - (Number(bk.getFloat('amount_paid')) || 0);
+  if (owed <= 0) return;
+
+  const applied = Math.min(available, owed);
+  if (applied <= 0) return;
+
+  const paid = (Number(bk.getFloat('amount_paid')) || 0) + applied;
+  bk.set('amount_paid', paid);
+  bk.set('balance', total > paid ? total - paid : 0);
+  const ps = bk.getString('payment_status');
+  if (ps !== 'credit' && ps !== 'refunded' && ps !== 'failed') {
+    bk.set('payment_status', paid <= 0 ? 'pending' : (total > 0 && paid >= total ? 'paid' : 'partial'));
+  }
+  $app.dao().saveRecord(bk);
+
+  wallet.set('balance', available - applied);
+  $app.dao().saveRecord(wallet);
+
+  try {
+    const coll = $app.dao().findCollectionByNameOrId('payments');
+    const p = new Record(coll, {
+      kind: 'excursion', ref: bk.id, label: 'Crédito aplicado (auto)',
+      amount: applied, net: applied, commission: 0,
+      method: 'credit', status: 'delivered', delivered_at: new Date().toISOString()
+    });
+    $app.dao().saveRecord(p);
+  } catch (err) {}
+}, 'excursion_bookings');
+
 // Consulta de saldo por reserva o por teléfono (staff).
 routerAdd('GET', '/api/wallet/lookup', (c) => {
   const info = $apis.requestInfo(c);

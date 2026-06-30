@@ -133,7 +133,17 @@
                   </div>
                 </div>
                 <div v-if="form.reminder_cadence === 'custom'">
-                  <input v-model="form.reminder_dates" placeholder="Fechas AAAA-MM-DD separadas por coma" class="w-full bg-white ring-1 ring-slate-200 rounded-xl px-3 py-2 text-sm focus:ring-brand-500 outline-none">
+                  <div class="flex gap-2">
+                    <input v-model="dateToAdd" type="date" :min="todayStr" class="flex-1 bg-white ring-1 ring-slate-200 rounded-xl px-3 py-2 text-sm focus:ring-brand-500 outline-none">
+                    <button type="button" @click="addCustomDate" class="shrink-0 bg-slate-900 text-white font-bold px-4 py-2 rounded-xl text-xs hover:bg-slate-800">Agregar</button>
+                  </div>
+                  <div v-if="customDates.length" class="flex flex-wrap gap-2 mt-2">
+                    <span v-for="(d, i) in customDates" :key="d" class="inline-flex items-center gap-1.5 bg-brand-100 text-brand-700 text-xs font-bold pl-3 pr-1.5 py-1.5 rounded-full">
+                      {{ formatDateLong(d) }}
+                      <button type="button" @click="removeCustomDate(i)" class="w-4 h-4 rounded-full bg-brand-200 hover:bg-brand-300 text-brand-800 flex items-center justify-center text-[10px] leading-none">×</button>
+                    </span>
+                  </div>
+                  <p v-else class="text-[10px] text-slate-400 mt-1.5">Agrega las fechas en que planeas abonar.</p>
                 </div>
                 <div>
                   <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5">¿Por dónde te avisamos?</p>
@@ -215,6 +225,8 @@ export default {
       availability: {},
       cadences: [{ id: 'weekly', label: 'Semanal' }, { id: 'biweekly', label: 'Quincenal' }, { id: 'custom', label: 'Fechas específicas' }],
       channels: [{ id: 'email', label: 'Correo' }, { id: 'whatsapp', label: 'WhatsApp' }, { id: 'both', label: 'Ambos' }],
+      customDates: [],
+      dateToAdd: '',
       form: { customer_name: '', customer_phone: '', customer_email: '', people: 1, excursion_date: '', reminder_optin: false, reminder_cadence: 'biweekly', reminder_channel: 'email', reminder_dates: '' },
       isSubmitting: false,
       success: false,
@@ -294,6 +306,19 @@ export default {
       const dt = new Date(`${d}T00:00:00`);
       return Number.isNaN(dt.getTime()) ? d : dt.toLocaleDateString('es-MX', { weekday: 'short', day: '2-digit', month: 'short' });
     },
+    addCustomDate() {
+      const d = this.dateToAdd;
+      if (!d || !/^\d{4}-\d{2}-\d{2}$/.test(d)) return;
+      if (!this.customDates.includes(d)) {
+        this.customDates = [...this.customDates, d].sort();
+        this.form.reminder_dates = this.customDates.join('\n');
+      }
+      this.dateToAdd = '';
+    },
+    removeCustomDate(i) {
+      this.customDates.splice(i, 1);
+      this.form.reminder_dates = this.customDates.join('\n');
+    },
     async fetchExcursions() {
       this.isLoading = true;
       try {
@@ -322,6 +347,7 @@ export default {
       this.formError = '';
       this.form = { customer_name: '', customer_phone: '', customer_email: '', people: 1, excursion_date: '', reminder_optin: false, reminder_cadence: 'biweekly', reminder_channel: 'email', reminder_dates: '' };
       this.acceptedPolicy = false;
+      this.customDates = []; this.dateToAdd = '';
       this.showReport = false; this.reportSent = false; this.reportMsg = '';
       this.availability = {};
       // Disponibilidad por fecha (cupos), sin exponer reservas. Las demo no tienen id real.

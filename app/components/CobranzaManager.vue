@@ -121,6 +121,7 @@ export default {
     totals() {
       const t = { held: 0, collectedNet: 0, deliveredNet: 0, commission: 0, rounding: 0 };
       for (const p of this.payments) {
+        if (p.method === 'credit') continue; // los asientos de crédito no son efectivo
         const amt = Number(p.amount) || 0, net = Number(p.net) || 0, com = Number(p.commission) || 0, rnd = Number(p.rounding) || 0;
         if (p.status === 'held_at_point') t.held += amt;
         else if (p.status === 'collected') { t.collectedNet += net; t.commission += com; t.rounding += rnd; }
