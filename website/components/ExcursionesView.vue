@@ -252,7 +252,7 @@ export default {
       return Number(this.selected?.deposit_amount) || 0;
     },
     policyText() {
-      return this.selected?.policy || 'Acepto que no hay reembolsos ni cancelaciones; mi pago aplica como crédito para otra experiencia Easypoint.';
+      return this.selected?.policy || 'Estoy de acuerdo en que mis pagos son acumulables para experiencias Easypoint (en caso de que no termine de pagar la experiencia elegida a tiempo), ya que no hay reembolsos ni cancelaciones.';
     },
     cadenceLabel() {
       return ({ weekly: 'cada semana', biweekly: 'cada quincena', custom: 'en tus fechas' })[this.form.reminder_cadence] || 'cada quincena';
