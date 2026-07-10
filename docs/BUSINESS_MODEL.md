@@ -119,6 +119,25 @@ El objetivo es **resolver en privado antes de que la queja se haga pública**:
 - **KPIs reales** por rol (operador: comisión/abonos; chofer: efectivo que trae;
   ventas: prospectos/conversión) reemplazan los valores de muestra.
 
+## 5c. Red de microcentros de servicios
+
+Cada punto afiliado es un **hub de servicios**, no solo de paquetería. Un
+catálogo genérico (`services`) permite ofrecer, con comisión al punto:
+pagos de servicios, recargas, seguros, boletos, impresión, SIM, devoluciones
+e-commerce, remesas, certificados digitales, publicidad local, marketplace de
+insumos, farmacia bajo pedido, locker, reciclaje, productos locales y servicios
+B2B (facturación, TPV, sitios web…). Cada servicio define su comisión (% o fija).
+
+Las **ventas** (`service_orders`) las registra el operador en su punto y
+**fluyen al mismo libro de cobranza** (`payments`, kind='service'): el chofer
+recolecta el neto en su ruta diaria y lo entrega al admin → liquidación. Así
+cada nuevo servicio incrementa el valor de la misma ruta e infraestructura.
+
+Visión a mediano plazo: **red regional / franquicia ligera** en Querétaro y luego
+otras regiones, con una plataforma central que ya gestiona comisiones, cobranza,
+cortes, liquidaciones, crédito y soporte. La página pública `/servicios` anuncia
+el catálogo y capta afiliados.
+
 ## 6. Qué falta decidir (parámetros del negocio)
 
 - % de fee por línea (excursiones/guías) y monto/mínimo de apartado por defecto.

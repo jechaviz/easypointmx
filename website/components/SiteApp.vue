@@ -23,6 +23,7 @@
             <button @click="openModal('map')" class="text-sm font-semibold text-slate-300 hover:text-white transition-colors">Mapa</button>
             <a :href="siteHref('/guias')" @click.prevent="navigate('/guias')" class="text-sm font-semibold text-slate-300 hover:text-white transition-colors">Guías</a>
             <a :href="siteHref('/excursiones')" @click.prevent="navigate('/excursiones')" class="text-sm font-semibold text-slate-300 hover:text-white transition-colors">Excursiones</a>
+            <a :href="siteHref('/servicios')" @click.prevent="navigate('/servicios')" class="text-sm font-semibold text-slate-300 hover:text-white transition-colors">Servicios</a>
             <a :href="siteHref('/locales')" @click.prevent="navigate('/locales')" class="text-sm font-semibold text-slate-300 hover:text-white transition-colors">Para Locales</a>
             <a :href="siteHref('/ecommerce')" @click.prevent="navigate('/ecommerce')" class="text-sm font-semibold text-slate-300 hover:text-white transition-colors">Para E-commerce</a>
             <a :href="siteHref('/developers')" @click.prevent="navigate('/developers')" class="text-sm font-semibold text-slate-300 hover:text-white transition-colors">Developers</a>
@@ -51,6 +52,7 @@
             <button @click="openModal('map')" class="w-full text-left px-4 py-3 rounded-xl text-sm font-bold text-slate-200 hover:bg-white/10">Mapa</button>
             <a :href="siteHref('/guias')" @click.prevent="navigate('/guias')" class="block px-4 py-3 rounded-xl text-sm font-bold text-slate-200 hover:bg-white/10">Guías</a>
             <a :href="siteHref('/excursiones')" @click.prevent="navigate('/excursiones')" class="block px-4 py-3 rounded-xl text-sm font-bold text-slate-200 hover:bg-white/10">Excursiones</a>
+            <a :href="siteHref('/servicios')" @click.prevent="navigate('/servicios')" class="block px-4 py-3 rounded-xl text-sm font-bold text-slate-200 hover:bg-white/10">Servicios</a>
             <a :href="siteHref('/locales')" @click.prevent="navigate('/locales')" class="block px-4 py-3 rounded-xl text-sm font-bold text-slate-200 hover:bg-white/10">Para Locales</a>
             <a :href="siteHref('/ecommerce')" @click.prevent="navigate('/ecommerce')" class="block px-4 py-3 rounded-xl text-sm font-bold text-slate-200 hover:bg-white/10">Para E-commerce</a>
             <a :href="siteHref('/developers')" @click.prevent="navigate('/developers')" class="block px-4 py-3 rounded-xl text-sm font-bold text-slate-200 hover:bg-white/10">Developers</a>
@@ -302,6 +304,7 @@ export default {
     EnviaView: Vue.defineAsyncComponent(() => loadModule('./components/EnviaView.vue', options)),
     GuiasView: Vue.defineAsyncComponent(() => loadModule('./components/GuiasView.vue', options)),
     ExcursionesView: Vue.defineAsyncComponent(() => loadModule('./components/ExcursionesView.vue', options)),
+    ServiciosView: Vue.defineAsyncComponent(() => loadModule('./components/ServiciosView.vue', options)),
     DescargarView: Vue.defineAsyncComponent(() => loadModule('./components/DescargarView.vue', options)),
     PrivacidadView: Vue.defineAsyncComponent(() => loadModule('./components/PrivacidadView.vue', options)),
     DeveloperView: Vue.defineAsyncComponent(() => loadModule('./components/DeveloperView.vue', options))
@@ -347,6 +350,7 @@ export default {
         '/ecommerce': 'EnviaView',
         '/guias': 'GuiasView',
         '/excursiones': 'ExcursionesView',
+        '/servicios': 'ServiciosView',
         '/descargar': 'DescargarView',
         '/privacidad': 'PrivacidadView',
         '/developers': 'DeveloperView'

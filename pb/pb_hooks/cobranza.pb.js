@@ -38,10 +38,10 @@ onRecordBeforeUpdateRequest((e) => {
   const amount = Number(rec.getFloat('amount')) || 0;
 
   if (status === 'collected') {
-    // Comisión: las guías ya traen su comisión por tramos de peso/medidas
-    // (guides.pb.js); para excursiones se usa la del punto (% o fija).
+    // Comisión: guías (por peso) y servicios (del catálogo) ya traen su comisión;
+    // para excursiones se usa la del punto (% o fija).
     let commission = 0;
-    if (rec.getString('kind') === 'guide') {
+    if (rec.getString('kind') !== 'excursion') {
       commission = Number(rec.getFloat('commission')) || 0;
     } else {
       const pid = String(rec.getString('point_id') || '').trim();

@@ -135,7 +135,7 @@ const DEMO_USERS = [
 const DEMO_PWDS = ['Punto2024!', 'easypoint123'];
 
 const DEFAULT_DEMO_DATA = {
-    _v: 12, // Version flag to force cache breaks when schema updates
+    _v: 13, // Version flag to force cache breaks when schema updates
     providers: [
         { id: 'pr1', name: 'SkyMex Tours', whatsapp: '5215511112222', email: 'sky@tours.mx', fee_type: 'percent', fee_rate: 15, fee_amount: 0, active: true },
         { id: 'pr2', name: 'Raíces MX', whatsapp: '5215533334444', email: 'hola@raicesmx.com', fee_type: 'fixed', fee_rate: 0, fee_amount: 50, active: true }
@@ -149,6 +149,18 @@ const DEFAULT_DEMO_DATA = {
         { id: 'we1', customer_phone: '5512345678', amount: 1200, reason: 'credit_from_booking', ref: 'b1', balance_after: 1200, created: '2026-07-01T00:00:00Z' }
     ],
     audit_log: [],
+    services: [
+        { id: 'sv1', name: 'Pago de servicios (CFE, Telmex)', category: 'pagos', description: 'Luz, agua, teléfono e internet.', commission_type: 'percent', commission_rate: 3, commission_amount: 0, unit: 'por cobro', icon: 'receipt', active: true },
+        { id: 'sv2', name: 'Recargas telefónicas', category: 'recargas', description: 'Tiempo aire de todas las compañías.', commission_type: 'percent', commission_rate: 5, commission_amount: 0, unit: 'por recarga', icon: 'phone', active: true },
+        { id: 'sv3', name: 'Seguros económicos', category: 'seguros', description: 'Moto, celular, mascota, accidentes.', commission_type: 'percent', commission_rate: 15, commission_amount: 0, unit: 'por póliza', icon: 'shield-check', active: true },
+        { id: 'sv4', name: 'Impresión de etiquetas', category: 'impresion', description: 'Recibe por WhatsApp, entrega al día siguiente.', commission_type: 'fixed', commission_rate: 0, commission_amount: 5, unit: 'por trabajo', icon: 'printer', active: true },
+        { id: 'sv5', name: 'Venta de tarjetas SIM', category: 'sim', description: 'Distribución y activación.', commission_type: 'fixed', commission_rate: 0, commission_amount: 30, unit: 'por activación', icon: 'sim', active: true },
+        { id: 'sv6', name: 'Terminal bancaria / TPV (B2B)', category: 'b2b', description: 'Alta de terminal de cobro.', commission_type: 'fixed', commission_rate: 0, commission_amount: 150, unit: 'por alta', icon: 'credit-card-2-back', active: true }
+    ],
+    service_orders: [
+        { id: 'so1', service_ref: 'sv1', service_name: 'Pago de servicios (CFE, Telmex)', category: 'pagos', point_id: 'p1', point_name: 'Punto Roma Norte', customer_name: 'Laura M.', customer_phone: '5512340000', amount: 480, commission: 14, status: 'completed', created: new Date().toISOString() },
+        { id: 'so2', service_ref: 'sv2', service_name: 'Recargas telefónicas', category: 'recargas', point_id: 'p2', point_name: 'Punto Condesa', amount: 100, commission: 5, status: 'completed', created: new Date().toISOString() }
+    ],
     shipments: [
         { id: 'mock1', tracking_id: 'EP-9921-X', recipient_name: 'Alejandro Ruiz',   status: 'at_point',   created: '2026-03-25T10:00:00Z', updated: '2026-03-26T09:00:00Z', expand: { point_id: { name: 'Punto Roma Norte', address: 'Av. Álvaro Obregón 154, Roma Norte' } } },
         { id: 'mock2', tracking_id: 'EP-1045-A', recipient_name: 'Beatriz Solis',    status: 'delivered',  created: '2026-03-24T14:30:00Z', updated: '2026-03-25T11:20:00Z', expand: { point_id: { name: 'Punto Condesa',    address: 'Amsterdam 123, Hipódromo Condesa'   } } },

@@ -39,6 +39,12 @@
             <i class="bi bi-cash-coin text-xl"></i>
             <span class="text-xs font-black uppercase tracking-widest">Abonos</span>
           </button>
+          <button @click="section = 'servicios'; currentMode = null"
+            class="w-full flex items-center gap-4 px-5 py-3.5 rounded-2xl transition-all"
+            :class="section === 'servicios' ? 'bg-brand-500 text-slate-900 shadow-lg' : 'text-slate-400 hover:bg-slate-800/50 hover:text-white'">
+            <i class="bi bi-grid-3x3-gap text-xl"></i>
+            <span class="text-xs font-black uppercase tracking-widest">Servicios</span>
+          </button>
         </nav>
       </div>
 
@@ -70,7 +76,7 @@
       <!-- Slim page title -->
       <div class="px-8 md:px-12 pt-8 pb-4">
         <h2 class="text-white text-2xl md:text-3xl font-black tracking-tight mb-1">
-          {{ section === 'inventory' ? 'Inventario del Local' : section === 'guias' ? 'Vender Guía (DHL / Estafeta)' : section === 'abonos' ? 'Abonos del cliente' : (currentMode ? formatMode(currentMode) : 'Dashboard') }}
+          {{ section === 'inventory' ? 'Inventario del Local' : section === 'guias' ? 'Vender Guía (DHL / Estafeta)' : section === 'abonos' ? 'Abonos del cliente' : section === 'servicios' ? 'Servicios de la red' : (currentMode ? formatMode(currentMode) : 'Dashboard') }}
         </h2>
         <p class="text-slate-500 text-[10px] font-medium uppercase tracking-widest">{{ point?.name || 'Panel de Operador' }}</p>
       </div>
@@ -241,6 +247,11 @@
         <div v-if="section === 'abonos'" class="animate-fade-in">
           <CobranzaManager />
         </div>
+
+        <!-- SERVICIOS (operador vende servicios de la red) -->
+        <div v-if="section === 'servicios'" class="animate-fade-in">
+          <ServiceOrdersManager />
+        </div>
       </div>
     </main>
   </div>
@@ -270,7 +281,8 @@ export default {
     DataView: Vue.defineAsyncComponent(() => loadModule('./components/DataView.vue', options)),
     Scanner: Vue.defineAsyncComponent(() => loadModule('./components/Scanner.vue', options)),
     GuidesManager: Vue.defineAsyncComponent(() => loadModule('./components/GuidesManager.vue', options)),
-    CobranzaManager: Vue.defineAsyncComponent(() => loadModule('./components/CobranzaManager.vue', options))
+    CobranzaManager: Vue.defineAsyncComponent(() => loadModule('./components/CobranzaManager.vue', options)),
+    ServiceOrdersManager: Vue.defineAsyncComponent(() => loadModule('./components/ServiceOrdersManager.vue', options))
   },
   data() {
     return {

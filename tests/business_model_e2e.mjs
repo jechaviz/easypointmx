@@ -249,6 +249,21 @@ async function run() {
   const runAnon = await req('POST', '/reminders/run');
   ok('Run de recordatorios requiere auth', runAnon.status === 401, `status ${runAnon.status}`);
 
+  // ===== RED DE SERVICIOS =====
+  const svCat = await req('GET', '/collections/services/records?perPage=200');
+  ok('Catálogo de servicios es público y sembrado', svCat.ok && (svCat.data?.items?.length || 0) >= 5, `count ${svCat.data?.items?.length}`);
+  const svOpCreate = await req('POST', '/collections/services/records', { token: opToken, body: { name: 'X', commission_type: 'percent' } });
+  ok('Operador NO edita catálogo (admin-only)', !svOpCreate.ok && [400, 401, 403].includes(svOpCreate.status), `status ${svOpCreate.status}`);
+
+  const svc = (svCat.data?.items || []).find(s => s.commission_type === 'percent') || svCat.data?.items?.[0];
+  const expected = svc && svc.commission_type === 'fixed' ? (svc.commission_amount || 0) : Math.round(100 * (svc?.commission_rate || 0)) / 100;
+  const order = await req('POST', '/collections/service_orders/records', { token: opToken, body: { service_ref: svc?.id, amount: 100, point_id: pointId, point_name: point.data?.name } });
+  ok('Venta de servicio calcula comisión del catálogo', order.ok && order.data?.commission === expected, `comm ${order.data?.commission} exp ${expected}`);
+  const spay = await req('GET', `/collections/payments/records?filter=${encodeURIComponent(`kind="service" && ref="${order.data?.id}"`)}`, { token: adminToken });
+  ok('Venta de servicio genera asiento de cobranza', (spay.data?.items?.length || 0) === 1 && spay.data.items[0].status === 'held_at_point', `items ${spay.data?.items?.length}`);
+  const anonOrders = await req('GET', '/collections/service_orders/records');
+  ok('Anónimo NO ve ventas de servicios', (anonOrders.data?.items?.length || 0) === 0, `items ${anonOrders.data?.items?.length}`);
+
   // ===== SOPORTE / QUEJAS (embudo privado) =====
   const ticket = await req('POST', '/collections/support_tickets/records', { body: {
     kind: 'complaint', subject_ref: bookingId, customer_name: 'Cliente Molesto', customer_phone: '5500001111',

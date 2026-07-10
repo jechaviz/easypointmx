@@ -580,6 +580,16 @@
           <ExcursionsManager />
         </div>
 
+        <!-- ── SERVICIOS (catálogo) ── -->
+        <div v-else-if="section === 'servicios'">
+          <ServicesManager />
+        </div>
+
+        <!-- ── VENTAS DE SERVICIOS ── -->
+        <div v-else-if="section === 'ventas_serv'">
+          <ServiceOrdersManager />
+        </div>
+
         <!-- ── COBRANZA ── -->
         <div v-else-if="section === 'cobranza'">
           <CobranzaManager />
@@ -701,7 +711,9 @@ export default {
     FinanceDashboard: Vue.defineAsyncComponent(() => loadModule('./components/FinanceDashboard.vue', window.options)),
     SettlementsManager: Vue.defineAsyncComponent(() => loadModule('./components/SettlementsManager.vue', window.options)),
     ProvidersManager: Vue.defineAsyncComponent(() => loadModule('./components/ProvidersManager.vue', window.options)),
-    ReportsManager: Vue.defineAsyncComponent(() => loadModule('./components/ReportsManager.vue', window.options))
+    ReportsManager: Vue.defineAsyncComponent(() => loadModule('./components/ReportsManager.vue', window.options)),
+    ServicesManager: Vue.defineAsyncComponent(() => loadModule('./components/ServicesManager.vue', window.options)),
+    ServiceOrdersManager: Vue.defineAsyncComponent(() => loadModule('./components/ServiceOrdersManager.vue', window.options))
   },
   data() {
     return {
@@ -751,6 +763,8 @@ export default {
         { id: 'shipments',   icon: 'box-seam',        label: 'Envíos',         desc: 'Todos los envíos del sistema' },
         { id: 'guias',       icon: 'upc-scan',        label: 'Guías',          desc: 'Venta de guías DHL / Estafeta' },
         { id: 'excursiones', icon: 'compass',         label: 'Excursiones',    desc: 'Reservas y catálogo turístico' },
+        { id: 'servicios',   icon: 'grid-3x3-gap',    label: 'Servicios',      desc: 'Catálogo de servicios de la red' },
+        { id: 'ventas_serv', icon: 'bag-check',       label: 'Ventas servicios', desc: 'Ventas de servicios en puntos' },
         { id: 'cobranza',    icon: 'cash-stack',      label: 'Cobranza',       desc: 'Abonos en efectivo y liquidación' },
         { id: 'monederos',   icon: 'wallet2',         label: 'Monederos',      desc: 'Crédito de clientes' },
         { id: 'finanzas',    icon: 'graph-up-arrow',  label: 'Finanzas',       desc: 'Estado financiero y pendientes' },
