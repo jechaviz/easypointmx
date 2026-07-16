@@ -10,7 +10,7 @@
         <div class="flex items-center justify-between">
           
           <!-- Logo -->
-          <a :href="siteHref('/')" @click.prevent="navigate('/')" class="flex items-center gap-3 group">
+          <a :href="siteHref('/')" @click.prevent="navigate('/')" class="flex shrink-0 items-center gap-3 group">
             <div class="w-10 h-10 rounded-xl bg-brand-500 flex items-center justify-center shadow-lg shadow-brand-500/30 group-hover:scale-105 transition-transform">
               <i class="bi bi-box-seam text-slate-900 text-xl"></i>
             </div>
@@ -18,7 +18,7 @@
           </a>
 
           <!-- Desktop Nav -->
-          <nav class="hidden lg:flex items-center gap-7">
+          <nav class="hidden 2xl:flex items-center gap-5">
             <a :href="siteHref('/')" @click.prevent="navigate('/')" class="text-sm font-semibold text-slate-300 hover:text-white transition-colors">Inicio</a>
             <button @click="openModal('map')" class="text-sm font-semibold text-slate-300 hover:text-white transition-colors">Mapa</button>
             <a :href="siteHref('/guias')" @click.prevent="navigate('/guias')" class="text-sm font-semibold text-slate-300 hover:text-white transition-colors">Guías</a>
@@ -37,7 +37,7 @@
           <!-- Mobile Nav Toggle -->
           <button
             @click="isMobileMenuOpen = !isMobileMenuOpen"
-            class="lg:hidden w-11 h-11 rounded-full bg-white/10 border border-white/10 text-white text-2xl flex items-center justify-center"
+            class="2xl:hidden w-11 h-11 rounded-full bg-white/10 border border-white/10 text-white text-2xl flex items-center justify-center"
             type="button"
             aria-label="Abrir menu"
             :aria-expanded="isMobileMenuOpen ? 'true' : 'false'"
@@ -47,7 +47,7 @@
         </div>
 
         <Transition name="mobile-menu">
-          <nav v-if="isMobileMenuOpen" class="lg:hidden mt-4 rounded-2xl bg-slate-950/95 border border-white/10 p-3 shadow-2xl backdrop-blur-xl">
+          <nav v-if="isMobileMenuOpen" class="2xl:hidden mt-4 max-h-[calc(100vh-6rem)] overflow-y-auto rounded-2xl bg-slate-950/95 border border-white/10 p-3 shadow-2xl backdrop-blur-xl">
             <a :href="siteHref('/')" @click.prevent="navigate('/')" class="block px-4 py-3 rounded-xl text-sm font-bold text-slate-200 hover:bg-white/10">Inicio</a>
             <button @click="openModal('map')" class="w-full text-left px-4 py-3 rounded-xl text-sm font-bold text-slate-200 hover:bg-white/10">Mapa</button>
             <a :href="siteHref('/guias')" @click.prevent="navigate('/guias')" class="block px-4 py-3 rounded-xl text-sm font-bold text-slate-200 hover:bg-white/10">Guías</a>
@@ -95,21 +95,21 @@
     </footer>
 
     <!-- Global Modals Wrapper -->
-    <div v-if="activeModal" class="fixed inset-0 z-[100] flex items-center justify-center p-0 md:p-4 transition-all duration-500 overflow-hidden">
+    <div v-if="activeModal" class="fixed inset-0 z-[100] flex items-center justify-center p-0 md:p-4 transition-all duration-500 overflow-y-auto">
        <!-- Backdrop -->
        <div class="absolute inset-0 bg-slate-900/90 backdrop-blur-md cursor-pointer" @click="closeModal"></div>
        
        <!-- MAP EXPLORER MODAL -->
        <div v-if="activeModal === 'map'" role="dialog" aria-modal="true" aria-labelledby="map-modal-title" class="relative bg-slate-50 w-full h-full md:max-w-7xl md:h-[85vh] md:rounded-[2.5rem] shadow-2xl animate-fade-in-up flex flex-col overflow-hidden border border-white/10">
-          <div class="p-6 bg-white border-b border-slate-200 flex items-center justify-between shrink-0">
-             <div class="flex items-center gap-4">
-                <div class="w-12 h-12 bg-brand-500 rounded-xl flex items-center justify-center text-slate-900 text-xl shadow-lg shadow-brand-500/20"><i class="bi bi-geo-alt-fill"></i></div>
+          <div class="p-4 md:p-6 bg-white border-b border-slate-200 flex items-center justify-between shrink-0">
+             <div class="flex min-w-0 items-center gap-3 md:gap-4">
+                <div class="w-10 h-10 md:w-12 md:h-12 shrink-0 bg-brand-500 rounded-xl flex items-center justify-center text-slate-900 text-lg md:text-xl shadow-lg shadow-brand-500/20"><i class="bi bi-geo-alt-fill"></i></div>
                 <div>
-                   <h2 id="map-modal-title" class="text-2xl font-black text-slate-900 tracking-tight">Red de Puntos Easypoint</h2>
-                   <p class="text-slate-500 font-medium text-xs uppercase tracking-widest">Encuentra tu centro de recolección</p>
+                   <h2 id="map-modal-title" class="truncate text-lg md:text-2xl font-black text-slate-900 tracking-tight">Red de Puntos Easypoint</h2>
+                   <p class="hidden sm:block text-slate-500 font-medium text-xs uppercase tracking-widest">Encuentra tu centro de recolección</p>
                 </div>
              </div>
-             <button @click="closeModal" aria-label="Cerrar mapa" class="w-12 h-12 bg-slate-100 rounded-full flex items-center justify-center text-slate-500 hover:bg-slate-200 transition-colors">
+             <button @click="closeModal" aria-label="Cerrar mapa" class="w-10 h-10 md:w-12 md:h-12 shrink-0 bg-slate-100 rounded-full flex items-center justify-center text-slate-500 hover:bg-slate-200 transition-colors">
                <i class="bi bi-x-lg"></i>
              </button>
           </div>
@@ -136,7 +136,7 @@
        </div>
 
        <!-- B2B CONTACT MODAL -->
-       <div v-if="activeModal === 'b2b'" role="dialog" aria-modal="true" aria-labelledby="b2b-modal-title" class="relative bg-slate-900 text-white rounded-[2.5rem] w-full max-w-lg p-10 shadow-2xl animate-fade-in-up border border-slate-800">
+       <div v-if="activeModal === 'b2b'" role="dialog" aria-modal="true" aria-labelledby="b2b-modal-title" class="relative min-h-full md:min-h-0 md:max-h-[calc(100vh-2rem)] overflow-y-auto bg-slate-900 text-white rounded-none md:rounded-[2.5rem] w-full max-w-lg p-6 md:p-10 shadow-2xl animate-fade-in-up border border-slate-800">
           <button @click="closeModal" aria-label="Cerrar formulario B2B" class="absolute top-8 right-8 w-12 h-12 bg-slate-800 rounded-full flex items-center justify-center text-slate-400 hover:text-white transition-all hover:rotate-90">
             <i class="bi bi-x-lg"></i>
           </button>
@@ -184,7 +184,7 @@
        </div>
 
        <!-- PARTNER MODAL -->
-       <div v-if="activeModal === 'partner'" role="dialog" aria-modal="true" aria-labelledby="partner-modal-title" class="relative bg-white rounded-[2.5rem] w-full max-w-lg p-10 shadow-2xl animate-fade-in-up">
+       <div v-if="activeModal === 'partner'" role="dialog" aria-modal="true" aria-labelledby="partner-modal-title" class="relative min-h-full md:min-h-0 md:max-h-[calc(100vh-2rem)] overflow-y-auto bg-white rounded-none md:rounded-[2.5rem] w-full max-w-lg p-6 md:p-10 shadow-2xl animate-fade-in-up">
           <button @click="closeModal" aria-label="Cerrar formulario de afiliación" class="absolute top-8 right-8 w-12 h-12 bg-slate-100 rounded-full flex items-center justify-center text-slate-500 hover:bg-slate-200 transition-all">
             <i class="bi bi-x-lg"></i>
           </button>

@@ -1,30 +1,30 @@
 <template>
-  <div class="fixed inset-0 bg-slate-950/80 backdrop-blur-2xl z-[100] flex items-center justify-center p-6 overflow-y-auto">
+  <div class="fixed inset-0 bg-slate-950/80 backdrop-blur-2xl z-[100] flex items-center justify-center p-3 md:p-6 overflow-y-auto">
     <!-- Main Modal -->
-    <div class="bg-slate-900/90 border border-slate-700/50 rounded-[3rem] w-full max-w-2xl shadow-[0_0_80px_rgba(0,0,0,0.5)] overflow-hidden relative animate-scale-in">
+    <div class="bg-slate-900/90 border border-slate-700/50 rounded-[2rem] md:rounded-[3rem] w-full max-w-2xl max-h-[calc(100vh-1.5rem)] shadow-[0_0_80px_rgba(0,0,0,0.5)] overflow-y-auto relative animate-scale-in">
       
       <!-- Decorative Background Glow -->
       <div class="absolute -top-24 -right-24 w-64 h-64 bg-brand-500/10 blur-[100px] rounded-full"></div>
       <div class="absolute -bottom-24 -left-24 w-64 h-64 bg-purple-500/10 blur-[100px] rounded-full"></div>
 
       <!-- Header / Progress -->
-      <div class="p-10 pb-0 relative">
-        <button @click="$emit('close')" class="absolute top-8 right-8 w-10 h-10 rounded-full bg-slate-800/50 hover:bg-slate-700 text-slate-400 hover:text-white flex items-center justify-center transition-all z-10 border border-slate-700/30">
+      <div class="p-5 md:p-10 pb-0 relative">
+        <button @click="$emit('close')" aria-label="Cerrar configuracion" class="absolute top-5 right-5 md:top-8 md:right-8 w-10 h-10 rounded-full bg-slate-800/50 hover:bg-slate-700 text-slate-400 hover:text-white flex items-center justify-center transition-all z-10 border border-slate-700/30">
           <i class="bi bi-x-lg text-lg"></i>
         </button>
-        <div class="flex items-center justify-between mb-8">
+        <div class="flex items-center justify-between mb-8 pr-12">
            <div class="flex items-center gap-3">
               <div class="w-8 h-8 rounded-xl bg-brand-500 flex items-center justify-center text-slate-900 font-black">E</div>
               <span class="text-white font-black tracking-tight text-sm uppercase">Configuración de Red</span>
            </div>
-           <div class="flex gap-1.5 pr-12">
+           <div class="hidden sm:flex gap-1.5">
               <div v-for="i in 4" :key="i" class="w-8 h-1 rounded-full transition-all duration-500"
                 :class="i < step ? 'bg-brand-500' : i === step ? 'bg-slate-500' : 'bg-slate-800'"></div>
            </div>
         </div>
       </div>
 
-      <div class="p-10 pt-4 relative">
+      <div class="p-5 md:p-10 pt-4 relative">
         <!-- Step 1: Welcome -->
         <div v-if="step === 1" class="text-center py-6 animate-fade-in">
           <div class="relative inline-block mb-10">
@@ -35,7 +35,7 @@
                <i class="bi bi-stars"></i>
             </div>
           </div>
-          <h1 class="text-4xl font-black text-white mb-4 tracking-tight">Potencia tu Logística</h1>
+          <h1 class="text-3xl md:text-4xl font-black text-white mb-4 tracking-tight">Potencia tu Logística</h1>
           <p class="text-slate-400 text-lg mb-12 max-w-sm mx-auto leading-relaxed">Estás a pocos pasos de activar una red de puntos de entrega premium.</p>
           <button @click="step++" class="w-full sm:w-auto bg-brand-500 text-slate-900 font-black px-16 py-5 rounded-[1.5rem] hover:bg-brand-400 transition-all shadow-xl shadow-brand-500/20 active:scale-95 text-lg">
             Empezar <i class="bi bi-chevron-right ml-2 font-black"></i>

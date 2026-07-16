@@ -1,9 +1,19 @@
 <template>
   <div class="min-h-screen bg-slate-950 flex text-sm">
+    <button
+      v-if="sidebarOpen"
+      type="button"
+      class="fixed inset-0 z-40 bg-slate-950/75 backdrop-blur-sm md:hidden"
+      aria-label="Cerrar menu de administracion"
+      @click="sidebarOpen = false"
+    ></button>
     
     <!-- SIDEBAR (Premium Glass Design) -->
-    <aside class="w-72 border-r border-slate-800 bg-slate-900/50 backdrop-blur-xl flex flex-col sticky top-0 h-screen z-50">
-      <div class="p-8">
+    <aside
+      class="fixed inset-y-0 left-0 w-72 border-r border-slate-800 bg-slate-900/95 backdrop-blur-xl flex flex-col h-screen z-50 shrink-0 transition-transform duration-300 md:sticky md:top-0 md:translate-x-0 md:bg-slate-900/50"
+      :class="sidebarOpen ? 'translate-x-0' : '-translate-x-full'"
+    >
+      <div class="flex-1 min-h-0 overflow-y-auto p-5 md:p-8">
         <div class="flex items-center gap-3 mb-10 group overflow-hidden">
            <div class="w-10 h-10 rounded-2xl bg-brand-500 flex items-center justify-center shadow-lg shadow-brand-500/20 group-hover:scale-110 transition-transform">
               <i class="bi bi-shield-lock-fill text-slate-900 text-xl"></i>
@@ -12,10 +22,13 @@
               <h1 class="text-white font-black text-lg tracking-tighter leading-none">Admin<span class="text-brand-400">Hub</span></h1>
               <p class="text-[9px] text-slate-500 font-bold uppercase tracking-[0.2em] mt-1">Easypoint Ops</p>
            </div>
-        </div>
+           <button type="button" class="ml-auto w-10 h-10 rounded-xl border border-slate-800 text-slate-400 md:hidden" aria-label="Cerrar menu" @click="sidebarOpen = false">
+             <i class="bi bi-x-lg"></i>
+           </button>
+         </div>
 
         <nav class="space-y-1">
-          <button v-for="n in nav" :key="n.id" @click="section = n.id" 
+          <button v-for="n in nav" :key="n.id" @click="section = n.id; sidebarOpen = false"
             class="w-full flex items-center gap-4 px-5 py-3.5 rounded-2xl transition-all group relative overflow-hidden"
             :class="section === n.id ? 'bg-brand-500 text-slate-900 shadow-lg shadow-brand-500/10' : 'text-slate-400 hover:bg-slate-800/50 hover:text-white'">
             <div class="absolute inset-0 bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity" v-if="section === n.id"></div>
@@ -56,7 +69,7 @@
                   <p class="text-[11px] font-black text-white truncate">{{ appState.user?.full_name || 'Admin' }}</p>
                   <p class="text-[9px] text-slate-500 font-bold uppercase tracking-widest">Administrador</p>
                </div>
-               <button @click="showUserMenu = !showUserMenu" class="text-slate-500 hover:text-brand-400 transition-colors p-1 flex-shrink-0">
+               <button @click="showUserMenu = !showUserMenu" type="button" aria-label="Abrir menu de usuario" class="text-slate-500 hover:text-brand-400 transition-colors p-1 flex-shrink-0">
                   <i class="bi transition-transform" :class="showUserMenu ? 'bi-caret-up-fill text-brand-400' : 'bi-caret-down-fill'"></i>
                </button>
             </div>
@@ -65,21 +78,30 @@
     </aside>
 
     <!-- MAIN CONTENT -->
-    <main class="flex-1 overflow-auto bg-[radial-gradient(circle_at_top_right,rgba(132,204,22,0.03),transparent_40%)]">
+    <main class="flex-1 min-w-0 overflow-auto bg-[radial-gradient(circle_at_top_right,rgba(132,204,22,0.03),transparent_40%)]">
+      <div class="sticky top-0 z-30 flex items-center gap-3 border-b border-slate-800 bg-slate-950/90 pl-4 pr-16 py-3 backdrop-blur-xl md:hidden">
+        <button type="button" class="w-11 h-11 rounded-xl bg-slate-900 border border-slate-800 text-brand-400" aria-label="Abrir menu de administracion" @click="sidebarOpen = true">
+          <i class="bi bi-list text-2xl"></i>
+        </button>
+        <div class="min-w-0">
+          <p class="truncate text-sm font-black text-white">{{ currentNav?.label }}</p>
+          <p class="truncate text-[9px] font-bold uppercase tracking-widest text-slate-500">Administracion Easypoint</p>
+        </div>
+      </div>
       
       <!-- Slim page title row (no sticky bar) -->
-      <div class="px-10 pt-10 pb-4">
-        <h2 class="text-white text-3xl font-black tracking-tight mb-1">{{ currentNav?.label }}</h2>
+      <div class="px-4 md:px-10 pt-6 md:pt-10 pb-4">
+        <h2 class="text-white text-2xl md:text-3xl font-black tracking-tight mb-1">{{ currentNav?.label }}</h2>
         <p class="text-slate-500 text-xs font-medium">{{ currentNav?.desc }}</p>
       </div>
 
-      <div class="p-8 pt-4">
+      <div class="p-4 md:p-8 pt-4">
 
         <!-- ── DASHBOARD (Premium Redesign) ── -->
         <div v-if="section === 'dashboard'">
           <!-- Premium Stats -->
-          <div class="grid grid-cols-2 lg:grid-cols-3 gap-6 mb-12 animate-fade-in">
-            <div v-for="stat in kpis" :key="stat.label" class="bg-slate-900 border border-slate-800 p-8 rounded-[2.5rem] shadow-2xl relative overflow-hidden group hover:border-brand-500/30 transition-all">
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6 mb-8 md:mb-12 animate-fade-in">
+            <div v-for="stat in kpis" :key="stat.label" class="bg-slate-900 border border-slate-800 p-5 md:p-8 rounded-[2rem] md:rounded-[2.5rem] shadow-2xl relative overflow-hidden group hover:border-brand-500/30 transition-all">
               <div class="absolute -top-12 -right-12 w-24 h-24 bg-brand-500/5 blur-[40px] rounded-full group-hover:bg-brand-500/10 transition-all"></div>
               <div class="flex items-center gap-4 mb-6">
                 <div class="w-12 h-12 rounded-2xl bg-slate-950 flex items-center justify-center text-brand-400 border border-slate-800 shadow-inner group-hover:scale-110 transition-transform">
@@ -192,8 +214,8 @@
           </DataView>
 
           <!-- User Form Modal -->
-          <div v-if="showUserForm" class="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
-            <div class="bg-slate-900 border border-slate-700 rounded-2xl p-8 w-full max-w-md">
+          <div v-if="showUserForm" class="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-3 md:p-4">
+            <div class="bg-slate-900 border border-slate-700 rounded-2xl p-5 md:p-8 w-full max-w-md max-h-[calc(100vh-1.5rem)] overflow-y-auto">
               <h3 class="text-white font-black text-lg mb-6">{{ editingUser ? 'Editar Usuario' : 'Nuevo Usuario' }}</h3>
               <div class="space-y-4">
                 <div>
@@ -296,8 +318,8 @@
           </DataView>
 
           <!-- Point Form Modal -->
-          <div v-if="showPointForm" class="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4 backdrop-blur-sm animate-fade-in">
-            <div class="bg-slate-900 border border-slate-700 rounded-2xl p-8 w-full max-w-md shadow-2xl">
+          <div v-if="showPointForm" class="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-3 md:p-4 backdrop-blur-sm animate-fade-in">
+            <div class="bg-slate-900 border border-slate-700 rounded-2xl p-5 md:p-8 w-full max-w-md max-h-[calc(100vh-1.5rem)] overflow-y-auto shadow-2xl">
               <h3 class="text-white font-black text-lg mb-6">{{ editingPoint ? 'Editar Punto' : 'Nuevo Punto de Entrega' }}</h3>
               <div class="space-y-4">
                 <div>
@@ -718,6 +740,7 @@ export default {
   data() {
     return {
       section: 'dashboard',
+      sidebarOpen: false,
       demoMode: localStorage.getItem('ep_demo_mode') === 'true',
       showWizard: false,
       userCols: [
