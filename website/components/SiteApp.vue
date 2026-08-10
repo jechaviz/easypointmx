@@ -17,29 +17,28 @@
             <span class="font-bold text-2xl tracking-tight text-white">Easy<span class="text-brand-400">point</span></span>
           </a>
 
-          <!-- Desktop Nav -->
-          <nav class="hidden 2xl:flex items-center gap-5">
-            <a :href="siteHref('/')" @click.prevent="navigate('/')" class="text-sm font-semibold text-slate-300 hover:text-white transition-colors">Inicio</a>
-            <button @click="openModal('map')" class="text-sm font-semibold text-slate-300 hover:text-white transition-colors">Mapa</button>
-            <a :href="siteHref('/guias')" @click.prevent="navigate('/guias')" class="text-sm font-semibold text-slate-300 hover:text-white transition-colors">Guías</a>
-            <a :href="siteHref('/excursiones')" @click.prevent="navigate('/excursiones')" class="text-sm font-semibold text-slate-300 hover:text-white transition-colors">Excursiones</a>
-            <a :href="siteHref('/servicios')" @click.prevent="navigate('/servicios')" class="text-sm font-semibold text-slate-300 hover:text-white transition-colors">Servicios</a>
-            <a :href="siteHref('/locales')" @click.prevent="navigate('/locales')" class="text-sm font-semibold text-slate-300 hover:text-white transition-colors">Para Locales</a>
-            <a :href="siteHref('/ecommerce')" @click.prevent="navigate('/ecommerce')" class="text-sm font-semibold text-slate-300 hover:text-white transition-colors">Para E-commerce</a>
-            <a :href="siteHref('/developers')" @click.prevent="navigate('/developers')" class="text-sm font-semibold text-slate-300 hover:text-white transition-colors">Developers</a>
-            <a :href="siteHref('/descargar')" @click.prevent="navigate('/descargar')" class="text-sm font-bold text-brand-400 hover:text-brand-300 transition-colors flex items-center gap-1"><i class="bi bi-download"></i> App</a>
-            <!-- Divider -->
-            <div class="h-5 w-px bg-slate-700"></div>
-            <a :href="repoHref('/app/')" class="text-sm font-semibold text-brand-400 hover:text-brand-300 transition-colors">Acceder <i class="bi bi-box-arrow-in-right ml-1"></i></a>
-            <button @click="openModal('partner')" class="bg-brand-500 text-slate-900 hover:bg-brand-400 px-6 py-2.5 rounded-full text-sm font-bold transition-all hover:shadow-lg hover:shadow-brand-500/20 hover:-translate-y-0.5">Ser Partner</button>
+          <!-- Desktop Nav: tareas primero, CTA principal al final -->
+          <nav class="hidden xl:flex items-center gap-2" aria-label="Navegación principal">
+            <a :href="siteHref('/') + '#tracking'" @click.prevent="goToTracking" class="px-3 py-2 text-sm font-semibold text-slate-300 hover:text-white transition-colors">Rastrear envío</a>
+            <a :href="siteHref('/guias')" @click.prevent="navigate('/guias')" class="px-3 py-2 text-sm font-semibold text-slate-300 hover:text-white transition-colors">Enviar paquete</a>
+            <a :href="siteHref('/excursiones')" @click.prevent="navigate('/excursiones')" class="px-3 py-2 text-sm font-semibold text-slate-300 hover:text-white transition-colors">Reservar excursión</a>
+            <a :href="siteHref('/servicios')" @click.prevent="navigate('/servicios')" class="px-3 py-2 text-sm font-semibold text-slate-300 hover:text-white transition-colors">Servicios</a>
+            <div class="mx-1 h-7 w-px bg-slate-700"></div>
+            <button type="button" @click="openModal('map')" class="inline-flex items-center gap-2 rounded-full border border-white/15 px-4 py-2.5 text-sm font-bold text-white hover:border-brand-500/60 hover:bg-white/5 transition-all">
+              <i class="bi bi-geo-alt"></i> Encontrar punto
+            </button>
+            <a :href="repoHref('/app/')" class="inline-flex items-center gap-2 px-3 py-2.5 text-sm font-bold text-brand-400 hover:text-brand-300 transition-colors">
+              Acceder <i class="bi bi-box-arrow-in-right"></i>
+            </a>
+            <button type="button" @click="openModal('partner')" class="bg-brand-500 text-slate-900 hover:bg-brand-400 px-5 py-2.5 rounded-full text-sm font-black transition-all hover:shadow-lg hover:shadow-brand-500/20 hover:-translate-y-0.5">Afiliar mi negocio</button>
           </nav>
 
           <!-- Mobile Nav Toggle -->
           <button
             @click="isMobileMenuOpen = !isMobileMenuOpen"
-            class="2xl:hidden w-11 h-11 rounded-full bg-white/10 border border-white/10 text-white text-2xl flex items-center justify-center"
+            class="xl:hidden w-11 h-11 rounded-full bg-white/10 border border-white/10 text-white text-2xl flex items-center justify-center"
             type="button"
-            aria-label="Abrir menu"
+            :aria-label="isMobileMenuOpen ? 'Cerrar menu' : 'Abrir menu'"
             :aria-expanded="isMobileMenuOpen ? 'true' : 'false'"
           >
             <i :class="isMobileMenuOpen ? 'bi bi-x-lg text-lg' : 'bi bi-list'"></i>
@@ -47,23 +46,52 @@
         </div>
 
         <Transition name="mobile-menu">
-          <nav v-if="isMobileMenuOpen" class="2xl:hidden mt-4 max-h-[calc(100vh-6rem)] overflow-y-auto rounded-2xl bg-slate-950/95 border border-white/10 p-3 shadow-2xl backdrop-blur-xl">
-            <a :href="siteHref('/')" @click.prevent="navigate('/')" class="block px-4 py-3 rounded-xl text-sm font-bold text-slate-200 hover:bg-white/10">Inicio</a>
-            <button @click="openModal('map')" class="w-full text-left px-4 py-3 rounded-xl text-sm font-bold text-slate-200 hover:bg-white/10">Mapa</button>
-            <a :href="siteHref('/guias')" @click.prevent="navigate('/guias')" class="block px-4 py-3 rounded-xl text-sm font-bold text-slate-200 hover:bg-white/10">Guías</a>
-            <a :href="siteHref('/excursiones')" @click.prevent="navigate('/excursiones')" class="block px-4 py-3 rounded-xl text-sm font-bold text-slate-200 hover:bg-white/10">Excursiones</a>
-            <a :href="siteHref('/servicios')" @click.prevent="navigate('/servicios')" class="block px-4 py-3 rounded-xl text-sm font-bold text-slate-200 hover:bg-white/10">Servicios</a>
-            <a :href="siteHref('/locales')" @click.prevent="navigate('/locales')" class="block px-4 py-3 rounded-xl text-sm font-bold text-slate-200 hover:bg-white/10">Para Locales</a>
-            <a :href="siteHref('/ecommerce')" @click.prevent="navigate('/ecommerce')" class="block px-4 py-3 rounded-xl text-sm font-bold text-slate-200 hover:bg-white/10">Para E-commerce</a>
-            <a :href="siteHref('/developers')" @click.prevent="navigate('/developers')" class="block px-4 py-3 rounded-xl text-sm font-bold text-slate-200 hover:bg-white/10">Developers</a>
-            <a :href="siteHref('/descargar')" @click.prevent="navigate('/descargar')" class="block px-4 py-3 rounded-xl text-sm font-bold text-brand-400 hover:bg-white/10"><i class="bi bi-download"></i> Descargar app</a>
-            <div class="h-px bg-white/10 my-2"></div>
-            <a :href="repoHref('/app/')" class="block px-4 py-3 rounded-xl text-sm font-bold text-brand-400 hover:bg-white/10">Acceder</a>
-            <button @click="openModal('partner')" class="w-full text-left px-4 py-3 rounded-xl text-sm font-black bg-brand-500 text-slate-950 hover:bg-brand-400">Ser Partner</button>
+          <nav v-if="isMobileMenuOpen" class="xl:hidden mt-4 max-h-[calc(100vh-6rem)] overflow-y-auto rounded-3xl bg-slate-950/95 border border-white/10 p-4 shadow-2xl backdrop-blur-xl" aria-label="Menú principal">
+            <p class="px-1 pb-3 text-[10px] font-black uppercase tracking-[0.24em] text-slate-500">¿Qué necesitas hacer?</p>
+            <div class="grid grid-cols-2 gap-2">
+              <a :href="siteHref('/') + '#tracking'" @click.prevent="goToTracking" class="rounded-2xl border border-white/10 bg-white/5 p-4 text-left hover:border-brand-500/40 hover:bg-white/10 transition-all">
+                <i class="bi bi-search text-brand-400"></i>
+                <span class="mt-3 block text-sm font-black text-white">Rastrear</span>
+                <span class="mt-1 block text-[10px] text-slate-500">Consultar un envío</span>
+              </a>
+              <a :href="siteHref('/guias')" @click.prevent="navigate('/guias')" class="rounded-2xl border border-white/10 bg-white/5 p-4 text-left hover:border-brand-500/40 hover:bg-white/10 transition-all">
+                <i class="bi bi-box-seam text-brand-400"></i>
+                <span class="mt-3 block text-sm font-black text-white">Enviar</span>
+                <span class="mt-1 block text-[10px] text-slate-500">Comprar una guía</span>
+              </a>
+              <a :href="siteHref('/excursiones')" @click.prevent="navigate('/excursiones')" class="rounded-2xl border border-white/10 bg-white/5 p-4 text-left hover:border-brand-500/40 hover:bg-white/10 transition-all">
+                <i class="bi bi-compass text-brand-400"></i>
+                <span class="mt-3 block text-sm font-black text-white">Reservar</span>
+                <span class="mt-1 block text-[10px] text-slate-500">Elegir una excursión</span>
+              </a>
+              <a :href="siteHref('/servicios')" @click.prevent="navigate('/servicios')" class="rounded-2xl border border-white/10 bg-white/5 p-4 text-left hover:border-brand-500/40 hover:bg-white/10 transition-all">
+                <i class="bi bi-grid-3x3-gap text-brand-400"></i>
+                <span class="mt-3 block text-sm font-black text-white">Servicios</span>
+                <span class="mt-1 block text-[10px] text-slate-500">Ver el catálogo</span>
+              </a>
+            </div>
+            <button type="button" @click="openModal('map')" class="mt-3 w-full rounded-2xl border border-brand-500/30 bg-brand-500/10 px-4 py-3.5 text-left text-sm font-black text-brand-400 hover:bg-brand-500/15">
+              <i class="bi bi-geo-alt-fill mr-2"></i> Encontrar un punto cercano
+            </button>
+            <div class="my-4 h-px bg-white/10"></div>
+            <button type="button" @click="openModal('partner')" class="w-full rounded-2xl bg-brand-500 px-4 py-4 text-center text-sm font-black text-slate-950 hover:bg-brand-400">Afiliar mi negocio</button>
+            <a :href="repoHref('/app/')" class="mt-2 block rounded-2xl border border-white/10 px-4 py-3.5 text-center text-sm font-bold text-white hover:bg-white/5">Acceder a mi cuenta</a>
+            <div class="mt-3 flex items-center justify-center gap-5 text-xs font-bold text-slate-500">
+              <a :href="siteHref('/ecommerce')" @click.prevent="navigate('/ecommerce')" class="hover:text-white">Para empresas</a>
+              <a :href="siteHref('/descargar')" @click.prevent="navigate('/descargar')" class="hover:text-white">Instalar web app</a>
+            </div>
           </nav>
         </Transition>
       </div>
     </header>
+
+    <button
+      v-if="isMobileMenuOpen"
+      type="button"
+      class="fixed inset-0 z-40 bg-slate-950/75 backdrop-blur-sm xl:hidden"
+      aria-label="Cerrar menu principal"
+      @click="isMobileMenuOpen = false"
+    ></button>
 
     <!-- Main Content -->
     <main class="flex-grow">
@@ -71,24 +99,54 @@
     </main>
 
     <!-- Footer -->
-    <footer class="bg-slate-900 text-slate-400 py-12 border-t border-slate-800">
+    <footer class="bg-slate-900 text-slate-400 py-14 border-t border-slate-800">
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="flex flex-col md:flex-row justify-between items-center gap-6">
-          <div class="flex items-center gap-3 opacity-50 grayscale hover:grayscale-0 transition-all duration-300">
-            <div class="w-8 h-8 rounded-lg bg-brand-500 flex items-center justify-center">
-              <i class="bi bi-box-seam text-slate-900"></i>
+        <div class="grid gap-10 sm:grid-cols-2 lg:grid-cols-[1.3fr_1fr_1fr_1fr]">
+          <div>
+            <div class="flex items-center gap-3">
+              <div class="w-10 h-10 rounded-xl bg-brand-500 flex items-center justify-center shadow-lg shadow-brand-500/20">
+                <i class="bi bi-box-seam text-slate-900"></i>
+              </div>
+              <span class="font-bold text-xl text-white tracking-tight">Easy<span class="text-brand-400">point</span></span>
             </div>
-            <span class="font-bold text-xl text-white tracking-tight">Easypoint</span>
+            <p class="mt-4 max-w-xs text-sm leading-relaxed text-slate-500">Tu red cercana para enviar, recoger, pagar y reservar servicios.</p>
           </div>
-          
-          <div class="flex flex-wrap gap-4 md:gap-6 text-sm font-medium">
-            <a :href="siteHref('/condiciones')" @click.prevent="navigate('/condiciones')" class="hover:text-white transition-colors">Términos y Condiciones</a>
-            <a :href="siteHref('/privacidad')" @click.prevent="navigate('/privacidad')" class="hover:text-white transition-colors">Política de Privacidad</a>
-            <a :href="siteHref('/developers')" @click.prevent="navigate('/developers')" class="hover:text-white transition-colors">Developer Portal</a>
+
+          <div>
+            <h2 class="text-xs font-black uppercase tracking-[0.2em] text-white">Servicios</h2>
+            <div class="mt-4 flex flex-col items-start gap-3 text-sm">
+              <a :href="siteHref('/') + '#tracking'" @click.prevent="goToTracking" class="hover:text-white">Rastrear envío</a>
+              <a :href="siteHref('/guias')" @click.prevent="navigate('/guias')" class="hover:text-white">Enviar paquete</a>
+              <a :href="siteHref('/excursiones')" @click.prevent="navigate('/excursiones')" class="hover:text-white">Reservar excursión</a>
+              <button type="button" @click="openModal('map')" class="hover:text-white">Encontrar un punto</button>
+            </div>
           </div>
-          
-          <div class="text-sm">
-            &copy; 2026 Easypoint. Todos los derechos reservados.
+
+          <div>
+            <h2 class="text-xs font-black uppercase tracking-[0.2em] text-white">Para negocios</h2>
+            <div class="mt-4 flex flex-col items-start gap-3 text-sm">
+              <button type="button" @click="openModal('partner')" class="hover:text-white">Afiliar un punto</button>
+              <a :href="siteHref('/ecommerce')" @click.prevent="navigate('/ecommerce')" class="hover:text-white">Soluciones e-commerce</a>
+              <a :href="siteHref('/descargar')" @click.prevent="navigate('/descargar')" class="hover:text-white">Instalar web app</a>
+              <a :href="repoHref('/app/')" class="hover:text-white">Acceso operativo</a>
+            </div>
+          </div>
+
+          <div>
+            <h2 class="text-xs font-black uppercase tracking-[0.2em] text-white">Desarrolladores</h2>
+            <div class="mt-4 flex flex-col items-start gap-3 text-sm">
+              <a :href="siteHref('/developers')" @click.prevent="navigate('/developers')" class="hover:text-white">Portal para desarrolladores</a>
+              <a :href="repoHref('/app/openapi.json')" target="_blank" rel="noopener noreferrer" class="hover:text-white">Especificación OpenAPI</a>
+              <a :href="siteHref('/ecommerce')" @click.prevent="navigate('/ecommerce')" class="hover:text-white">Integraciones e-commerce</a>
+            </div>
+          </div>
+        </div>
+
+        <div class="mt-12 flex flex-col gap-4 border-t border-slate-800 pt-6 text-xs sm:flex-row sm:items-center sm:justify-between">
+          <p>&copy; 2026 Easypoint. Todos los derechos reservados.</p>
+          <div class="flex flex-wrap gap-5">
+            <a :href="siteHref('/condiciones')" @click.prevent="navigate('/condiciones')" class="hover:text-white">Términos y Condiciones</a>
+            <a :href="siteHref('/privacidad')" @click.prevent="navigate('/privacidad')" class="hover:text-white">Política de Privacidad</a>
           </div>
         </div>
       </div>
@@ -371,7 +429,7 @@ export default {
   },
   methods: {
     siteHref(path) {
-      return `${this.siteBasePath}${path === '/' ? '' : path}`;
+      return path === '/' ? `${this.siteBasePath}/` : `${this.siteBasePath}${path}`;
     },
     repoHref(path) {
       return `${this.repoBasePath}${path}`;
@@ -386,6 +444,27 @@ export default {
       }
       this.isMobileMenuOpen = false;
       window.scrollTo({ top: 0, behavior: 'smooth' });
+    },
+    goToTracking() {
+      const targetUrl = `${this.siteHref('/')}#tracking`;
+      if (this.currentRoute !== '/') {
+        this.currentRoute = '/';
+        window.history.pushState(null, '', targetUrl);
+      } else if (window.location.hash !== '#tracking') {
+        window.history.pushState(null, '', targetUrl);
+      }
+      this.isMobileMenuOpen = false;
+      this.$nextTick(() => this.scrollToTracking());
+    },
+    scrollToTracking(attempt = 0) {
+      const tracking = document.getElementById('tracking');
+      if (tracking) {
+        tracking.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        return;
+      }
+      if (attempt < 20) {
+        window.setTimeout(() => this.scrollToTracking(attempt + 1), 100);
+      }
     },
     handleScroll() {
       this.isScrolled = window.scrollY > 20;
