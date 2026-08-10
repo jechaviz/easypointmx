@@ -1,12 +1,12 @@
 <template>
-  <div class="min-h-screen relative flex items-center justify-center overflow-hidden bg-slate-950">
+  <div class="min-h-screen relative flex items-center justify-center overflow-x-hidden overflow-y-auto bg-slate-950">
     <div class="absolute inset-0 pointer-events-none">
       <div class="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] rounded-full bg-brand-500 blur-[120px] opacity-[0.03] animate-pulse"></div>
       <div class="absolute bottom-[-10%] right-[-10%] w-[60%] h-[60%] rounded-full bg-blue-700 blur-[140px] opacity-[0.03]"></div>
       <div class="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(132,204,22,0.02),transparent_70%)]"></div>
     </div>
 
-    <div class="relative z-10 w-full max-w-md px-8 animate-fade-in py-8">
+    <div class="relative z-10 w-full max-w-md px-4 sm:px-8 animate-fade-in py-6 sm:py-8">
       <a :href="websiteHref" class="block text-center mb-8 group transition-all">
         <div class="inline-flex items-center justify-center w-14 h-14 rounded-[1.25rem] bg-slate-900 border border-slate-800 shadow-2xl mb-4 group-hover:scale-105 transition-transform relative overflow-hidden">
           <div class="absolute inset-0 bg-brand-500 opacity-10 blur-xl"></div>
@@ -16,7 +16,7 @@
         <p class="text-[8px] text-slate-500 font-bold uppercase tracking-[0.4em] mt-1.5">Logistics Excellence</p>
       </a>
 
-      <div class="bg-slate-900/40 backdrop-blur-2xl border border-slate-800 rounded-[2rem] p-8 shadow-[0_32px_100px_-20px_rgba(0,0,0,0.8)] space-y-6 relative overflow-hidden group">
+      <div class="bg-slate-900/40 backdrop-blur-2xl border border-slate-800 rounded-[2rem] p-5 sm:p-8 shadow-[0_32px_100px_-20px_rgba(0,0,0,0.8)] space-y-6 relative overflow-hidden group">
         <div class="absolute -top-24 -left-24 w-48 h-48 bg-brand-500/5 blur-[60px] rounded-full pointer-events-none"></div>
 
         <div v-if="loadingSettings" class="text-center py-2 h-[40px] flex items-center justify-center">

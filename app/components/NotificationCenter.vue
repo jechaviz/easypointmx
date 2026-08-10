@@ -1,12 +1,13 @@
 <template>
   <div v-if="appState.currentRoute !== 'login' && appState.user">
     <button
-      class="fixed top-5 right-5 z-[70] pointer-events-auto group"
+      class="fixed top-3 right-3 md:top-5 md:right-5 z-[70] pointer-events-auto group"
       type="button"
+      :aria-label="unreadCount ? `${unreadCount} notificaciones pendientes` : 'Abrir notificaciones'"
       @click="toggleNotificationCenter"
     >
-      <div class="bg-slate-950/90 backdrop-blur-xl border border-slate-800 rounded-[1.75rem] px-4 py-3 shadow-[0_20px_60px_rgba(0,0,0,0.45)] hover:border-brand-500/30 transition-all flex items-center gap-3 min-w-[220px]">
-        <div class="relative w-11 h-11 rounded-2xl bg-brand-500/10 text-brand-400 border border-brand-500/20 flex items-center justify-center">
+      <div class="w-12 h-12 md:w-auto md:h-auto md:min-w-[220px] bg-slate-950/90 backdrop-blur-xl border border-slate-800 rounded-2xl md:rounded-[1.75rem] p-0 md:px-4 md:py-3 shadow-[0_20px_60px_rgba(0,0,0,0.45)] hover:border-brand-500/30 transition-all flex items-center justify-center md:justify-start gap-3">
+        <div class="relative w-10 h-10 md:w-11 md:h-11 rounded-xl md:rounded-2xl bg-brand-500/10 text-brand-400 border border-brand-500/20 flex items-center justify-center">
           <i class="bi bi-bell-fill text-lg"></i>
           <span
             v-if="unreadCount"
@@ -15,7 +16,7 @@
             {{ unreadCount > 9 ? '9+' : unreadCount }}
           </span>
         </div>
-        <div class="text-left min-w-0">
+        <div class="hidden md:block text-left min-w-0">
           <p class="text-[10px] text-slate-500 font-black uppercase tracking-[0.24em]">Eventos</p>
           <p class="text-xs font-black text-white truncate">
             {{ unreadCount ? `${unreadCount} pendiente${unreadCount === 1 ? '' : 's'}` : 'Centro al dia' }}
@@ -29,8 +30,8 @@
       <div v-if="appState.notificationCenterOpen" class="fixed inset-0 z-[75]">
         <div class="absolute inset-0 bg-slate-950/55 backdrop-blur-sm" @click="closeNotificationCenter"></div>
 
-        <aside class="absolute top-5 right-5 bottom-5 w-[min(92vw,24rem)] bg-slate-950/95 border border-slate-800 rounded-[2rem] shadow-[0_30px_120px_rgba(0,0,0,0.6)] overflow-hidden flex flex-col">
-          <div class="px-6 py-5 border-b border-slate-800/90 bg-slate-900/60">
+        <aside class="absolute top-3 right-3 bottom-3 left-3 md:left-auto md:top-5 md:right-5 md:bottom-5 md:w-[min(92vw,24rem)] bg-slate-950/95 border border-slate-800 rounded-[1.5rem] md:rounded-[2rem] shadow-[0_30px_120px_rgba(0,0,0,0.6)] overflow-hidden flex flex-col">
+          <div class="px-4 md:px-6 py-5 border-b border-slate-800/90 bg-slate-900/60">
             <div class="flex items-start justify-between gap-4">
               <div>
                 <p class="text-[10px] text-slate-500 font-black uppercase tracking-[0.24em]">Business Events</p>
