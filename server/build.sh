@@ -13,6 +13,7 @@ V_ROOT="$(dirname "$V_BIN")"
 DIST="$DIR/dist"
 OUT="$DIST/easypoint.c"
 rm -rf "$DIST" 2>/dev/null || true; mkdir -p "$DIST"
+node "$DIR/../scripts/gen-schema.mjs"
 "$V_BIN" -d cgi -os linux -gc none -o "$OUT" "$DIR"
 # El fork de V emite rutas ABSOLUTAS de Windows a sus cabeceras (v_recover.h, track_heap_checks.h...):
 # se vendorizan junto al C y se reescriben como relativas, para compilar en el servidor sin V.

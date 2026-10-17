@@ -86,6 +86,9 @@ ok('Los 6 roles inician sesión', Object.values(T).every(Boolean));
 }
 
 // ── C. precios y cotizador ───────────────────────────────────────────────────
+const sierra0 = (await get('/api/public/excursions')).data.find((x) => x.name.startsWith('Sierra Gorda'));
+// la base puede traer corridas previas (salidas canceladas): se repone el calendario para que el e2e sea repetible
+await post('/api/provider/dates', { excursion_id: sierra0.id, dates: Array.from({ length: 14 }, (_, i) => day(100 + i * 7)).join(',') }, T.provider);
 const exc = (await get('/api/public/excursions')).data;
 const sierra = exc.find((x) => x.name.startsWith('Sierra Gorda'));
 const dateA = (sierra.departures.find((d) => d.date >= day(10)) || sierra.departures[0]).date;

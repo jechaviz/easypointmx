@@ -14,6 +14,9 @@ fn main() {
 		load_env_file(env_or('EP_ENV_FILE', ''))
 	}
 	args := os.args[1..]
+	if args.len > 0 && args[0] == '--selftest' {
+		exit(run_selftest())
+	}
 	if os.getenv('GATEWAY_INTERFACE') != '' {
 		run_cgi()
 		return

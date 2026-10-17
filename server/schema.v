@@ -1,5 +1,7 @@
 module main
 
+import encoding.base64
+
 // Esquema: el DDL embebido es la única fuente de verdad. De él se deducen los tipos de cada
 // columna (num / bool / dt / str) para (a) literales SQL seguros y (b) tipos JSON correctos.
 
@@ -9,10 +11,14 @@ pub mut:
 	names  map[string]string // nombre de columna -> tipo (convención: mismo nombre = mismo tipo)
 }
 
-const ddl_files = [
-	$embed_file('schema/001_core.sql'),
-	$embed_file('schema/002_fixes.sql'),
-]
+// El DDL viaja como constante generada (schema_gen.v): $embed_file no se incrusta en el C transpilado de desarrollo.
+fn ddl_texts() []string {
+	mut out := []string{}
+	for b in ddl_b64 {
+		out << base64.decode_str(b)
+	}
+	return out
+}
 
 fn kind_of(typ string) string {
 	t := typ.to_lower()
@@ -31,8 +37,8 @@ fn kind_of(typ string) string {
 
 pub fn load_schema() &Schema {
 	mut s := &Schema{}
-	for f in ddl_files {
-		parse_ddl(mut s, f.to_string())
+	for f in ddl_texts() {
+		parse_ddl(mut s, f)
 	}
 	return s
 }
@@ -98,14 +104,14 @@ fn lit(kind string, v string) string {
 pub fn (d &Db) migrate() !int {
 	d.exec('CREATE TABLE IF NOT EXISTS schema_migrations (version VARCHAR(80) NOT NULL PRIMARY KEY, applied_at DATETIME NOT NULL) ENGINE=InnoDB')!
 	mut applied := 0
-	for i, f in ddl_files {
+	for i, f in ddl_texts() {
 		ver := 'ddl-${i + 1:03}'
 		have := d.scalar('SELECT COUNT(*) FROM schema_migrations WHERE version=${q(ver)}')!.int()
 		if have > 0 {
 			continue
 		}
 		// una sentencia por CREATE TABLE (separadas por ';')
-		for stmt in f.to_string().split(';\n') {
+		for stmt in f.split(';\n') {
 			mut lines := []string{}
 			for ln in stmt.split('\n') {
 				if !ln.trim_space().starts_with('--') {

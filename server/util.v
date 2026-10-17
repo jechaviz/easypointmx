@@ -67,7 +67,7 @@ fn num(s string) f64 {
 
 fn fmt_money(x f64) string {
 	r := round2(x)
-	s := '${r:.2}'
+	s := '${r:.2f}'
 	if s.ends_with('.00') {
 		return s[..s.len - 3]
 	}

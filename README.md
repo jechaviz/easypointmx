@@ -33,10 +33,10 @@ Cuentas demo: `admin@`, `soporte@`, `ventas@`, `chofer@`, `punto@`, `proveedor@e
 
 ## Pruebas
 ```bash
-node tests/site_audit.mjs     # contrato del front + deriva de vendor/   (sin servidor)
-node tests/e2e_v2.mjs         # flujos de todos los actores               (MySQL real)
-node tests/e2e_engine.mjs     # motor de automatización y escenarios límite
-node scripts/sync-lib.mjs --check
+node scripts/check.mjs        # sin base de datos: DDL, deriva de vendor/, contrato del front, compilación y autoprueba
+node tests/e2e_v2.mjs         # flujos de todos los actores               (MySQL real, 115 casos)
+node tests/e2e_engine.mjs     # motor de automatización y escenarios límite (50 casos)
+node scripts/dev.mjs          # entorno local completo en un comando
 ```
 
 ## Estructura

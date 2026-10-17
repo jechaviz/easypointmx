@@ -67,7 +67,15 @@ El servidor parsea su propio DDL al iniciar. Convención: un nombre de columna i
 `scripts/sync-lib.mjs` copia los archivos y escribe `vendor/MANIFEST.json` con el origen y hash; `--check` falla si `lib/` cambió y `vendor/` no (prueba de deriva), igual que en `appniverse`.
 
 ## Pruebas
-* `node tests/e2e_v2.mjs` — 115 casos de flujos de cliente, punto, chofer, proveedor y admin contra MySQL real.
-* `node tests/e2e_engine.mjs` — 50 casos de motor y escenarios límite (`docs/ESCENARIOS.md`).
-* `node tests/site_audit.mjs` — estructura del front y deriva de `vendor/`.
-* Las pruebas viajan en el tiempo con SQL directo (fechas de reservas, `created_at`, `sla_due`) para ejercitar el motor sin esperar.
+| Prueba | Qué cubre |
+|---|---|
+| `node scripts/check.mjs` | Sin base de datos: DDL generado al día, `vendor/` sin deriva, contrato del front, el servidor compila y pasa `--selftest` (39 verificaciones de dinero, fechas, literales SQL a prueba de inyección, JSON tipado, etapas, reglas de negocio, plantillas) |
+| `node tests/e2e_v2.mjs` | 115 casos de flujos de cliente, punto, chofer, proveedor y admin contra MySQL real |
+| `node tests/e2e_engine.mjs` | 50 casos de motor y escenarios límite (`docs/ESCENARIOS.md`) |
+| `node tests/site_audit.mjs` | Estructura del front (site-audit-core) y deriva de `vendor/` |
+
+Las pruebas viajan en el tiempo con SQL directo (fechas de reservas, `created_at`, `sla_due`) para ejercitar el motor sin esperar.
+
+**Cadena de producción verificada:** `e2e_v2` corre igual contra el servidor de desarrollo y **a través de `php -S` → `shim.php` → binario → MariaDB (115/115)**; además el C transpilado se compiló con gcc en Linux (WSL) y su binario respondió el protocolo CGI real (health, login con bcrypt/JWT, 401 sin token, reserva con `GET_LOCK`, pago atómico, cotizador, `--tick`) contra MySQL.
+
+> `$embed_file` de V **no** se incrusta en el C transpilado de builds de desarrollo, así que el DDL viaja como constante generada (`server/schema_gen.v`, base64) con `scripts/gen-schema.mjs`; `scripts/check.mjs` falla si no coincide con `server/schema/*.sql`.

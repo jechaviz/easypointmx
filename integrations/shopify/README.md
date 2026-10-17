@@ -1,17 +1,20 @@
-# Shopify Integration Reference Implementation
+# Integración con Shopify
 
-This directory contains a reference implementation for integrating Easypoint with Shopify.
+Puente de referencia (Node/Express) sobre la **API v1** de Easypoint.
 
-## Structure
-- `/extension`: (Sample) Checkout UI Extension for the Map Picker.
-- `server.js`: Node/Express backend for handling OAuth and Webhooks.
+| Endpoint de Easypoint | Uso |
+|---|---|
+| `GET  /api/v1/points` | Lista de puntos para el selector del checkout |
+| `POST /api/v1/shipments` | Alta del envío cuando el pedido se paga (idempotente: `409` si ya existe) |
+| `GET  /api/v1/track/<id>` | Rastreo |
 
-## Key Features
-- **Carrier Service API:** Register Easypoint as a custom shipping rate provider.
-- **Webhook Listeners:** Automatically create shipments in the Easypoint API when an order is paid.
-- **Checkout UI Extensions:** Custom map trigger in the Shopify checkout page.
+Todas requieren `X-API-Key: epk_…`, que genera el administrador en **Administración → Socios API** (se muestra una sola vez).
 
-## Getting Started
-1. Install Shopify CLI.
-2. Create a new app: `shopify app init`.
-3. Use the code in `server.js` as your backend template.
+## Pasos
+1. `shopify app init` y usa `server.js` como backend.
+2. Registra un *Carrier Service* que apunte a `POST /shipping/rates`.
+3. Suscribe el webhook `orders/paid` a `POST /webhooks/order_paid`.
+4. Variables: `EASYPOINT_API`, `EASYPOINT_API_KEY`, `EASYPOINT_RATE_CENTS`.
+5. En el checkout guarda el punto elegido como atributo de pedido `easypoint_id` (la extensión de UI puede usar `GET /points`).
+
+El cliente final recibe avisos por WhatsApp/correo cuando el paquete llega al punto y lo rastrea en `/website/#/rastreo`.

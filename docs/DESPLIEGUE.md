@@ -48,7 +48,7 @@ mkdir -p ../shared/bin && [ -f ../shared/bin/easypoint ] && cp ../shared/bin/eas
 install -m 755 easypoint ../shared/bin/easypoint
 ```
 
-> El C transpilado se verificó compilando con gcc en Linux (Kali/WSL) → ELF de ~1.2 MB.
+> El C transpilado se verificó con gcc en Linux (Kali/WSL): ELF de ~1.2 MB que responde el protocolo CGI contra MySQL. `build.sh` primero regenera `server/schema_gen.v` desde `server/schema/*.sql`. Diagnóstico en el servidor: `easypoint --selftest`.
 
 ## 3. Esquema, parámetros y primer administrador
 ```bash

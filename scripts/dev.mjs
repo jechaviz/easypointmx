@@ -51,6 +51,7 @@ sql("CREATE DATABASE IF NOT EXISTS easypoint CHARACTER SET utf8mb4 COLLATE utf8m
 // 2) compilar
 if (!args.includes('--no-build') || !fs.existsSync(ep)) {
   console.log('· compilando server/ con V…');
+  run(process.execPath, [path.join(root, 'scripts/gen-schema.mjs')]);
   const r = run(V, ['-o', ep, path.join(root, 'server')]);
   if (r.status !== 0) process.exit(r.status || 1);
 }
