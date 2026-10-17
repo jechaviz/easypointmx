@@ -9,6 +9,8 @@ const pbDir = path.join(repoRoot, 'pb');
 const pbBin = process.env.POCKETBASE_BIN || path.join(pbDir, 'pocketbase.exe');
 const webEntry = path.join(repoRoot, 'app', 'server.mjs');
 const smokeEntry = path.join(repoRoot, 'tests', 'api_e2e.mjs');
+const businessModelEntry = path.join(repoRoot, 'tests', 'business_model_e2e.mjs');
+const providerFlowEntry = path.join(repoRoot, 'tests', 'provider_flow_e2e.mjs');
 const generatedRuntimeConfig = path.join(repoRoot, 'runtime-config.generated.js');
 const mode = process.argv[2] || 'serve';
 const pbPort = Number.parseInt(process.env.PB_PORT || '', 10) || 8091;
@@ -156,24 +158,37 @@ async function startStack() {
 }
 
 async function runSmoke() {
-  const test = spawn(process.execPath, [smokeEntry], {
-    cwd: repoRoot,
-    env: {
-      ...process.env,
-      PB_API: `${pbUrl}/api`,
-      WEB_URL: webAliasUrl
-    },
-    windowsHide: true,
-    stdio: 'inherit'
-  });
+  const runTest = (entry, label) => {
+    console.log(`\n▶ Ejecutando ${label}...`);
+    return new Promise((resolve, reject) => {
+      const test = spawn(process.execPath, [entry], {
+        cwd: repoRoot,
+        env: {
+          ...process.env,
+          PB_API: `${pbUrl}/api`,
+          WEB_URL: webAliasUrl
+        },
+        windowsHide: true,
+        stdio: 'inherit'
+      });
+      test.once('error', reject);
+      test.once('exit', (code) => resolve(code ?? 1));
+    });
+  };
 
-  const exitCode = await new Promise((resolve, reject) => {
-    test.once('error', reject);
-    test.once('exit', (code) => resolve(code ?? 1));
-  });
+  const code1 = await runTest(smokeEntry, 'Suite Smoke Base');
+  if (code1 !== 0) {
+    throw new Error(`Smoke test base failed with exit code ${code1}`);
+  }
 
-  if (exitCode !== 0) {
-    throw new Error(`Smoke test failed with exit code ${exitCode}`);
+  const code2 = await runTest(businessModelEntry, 'Suite Modelo de Negocio Extendido');
+  if (code2 !== 0) {
+    throw new Error(`Business model E2E test failed with exit code ${code2}`);
+  }
+
+  const code3 = await runTest(providerFlowEntry, 'Suite Flujo Integral Cliente - Proveedor');
+  if (code3 !== 0) {
+    throw new Error(`Provider flow E2E test failed with exit code ${code3}`);
   }
 }
 

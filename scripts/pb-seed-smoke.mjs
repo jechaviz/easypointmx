@@ -1,10 +1,11 @@
-import { ensureJson, pbApi } from '../pb/scripts/_shared.mjs';
+import { adminHeaders, ensureJson, pbApi } from '../pb/scripts/_shared.mjs';
 
 async function main() {
+  const headers = await adminHeaders();
   const createJson = async (path, body) => {
     const response = await fetch(pbApi(path), {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers,
       body: JSON.stringify(body)
     });
     return ensureJson(response, `POST ${path}`);

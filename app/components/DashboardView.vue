@@ -1,9 +1,19 @@
 <template>
   <div class="min-h-screen bg-slate-950 flex text-sm selection:bg-brand-500/30 selection:text-brand-200">
+    <button
+      v-if="sidebarOpen"
+      type="button"
+      class="fixed inset-0 z-40 bg-slate-950/75 backdrop-blur-sm md:hidden"
+      aria-label="Cerrar menu del punto"
+      @click="sidebarOpen = false"
+    ></button>
     
     <!-- SIDEBAR (Premium Glass Design) -->
-    <aside class="w-72 border-r border-slate-800 bg-slate-900/50 backdrop-blur-xl flex flex-col sticky top-0 h-screen z-50 hidden md:flex shrink-0">
-      <div class="p-8">
+    <aside
+      class="fixed inset-y-0 left-0 w-72 border-r border-slate-800 bg-slate-900/95 backdrop-blur-xl flex flex-col h-screen z-50 shrink-0 transition-transform duration-300 md:sticky md:top-0 md:translate-x-0 md:bg-slate-900/50"
+      :class="sidebarOpen ? 'translate-x-0' : '-translate-x-full'"
+    >
+      <div class="flex-1 min-h-0 overflow-y-auto p-5 md:p-8">
         <div class="flex items-center gap-3 mb-10 group overflow-hidden">
            <div class="w-10 h-10 rounded-2xl bg-brand-500 flex items-center justify-center shadow-lg shadow-brand-500/20 group-hover:scale-110 transition-transform">
               <i class="bi bi-box-seam-fill text-slate-900 text-xl"></i>
@@ -12,34 +22,37 @@
               <h1 class="text-white font-black text-lg tracking-tighter leading-none">Punto<span class="text-brand-400">Hub</span></h1>
               <p class="text-[9px] text-slate-500 font-bold uppercase tracking-[0.2em] mt-1">Easypoint Ops</p>
            </div>
-        </div>
+           <button type="button" class="ml-auto w-10 h-10 rounded-xl border border-slate-800 text-slate-400 md:hidden" aria-label="Cerrar menu" @click="sidebarOpen = false">
+             <i class="bi bi-x-lg"></i>
+           </button>
+         </div>
 
         <nav class="space-y-1">
-          <button @click="section = 'dashboard'; currentMode = null"
+          <button @click="section = 'dashboard'; currentMode = null; sidebarOpen = false"
             class="w-full flex items-center gap-4 px-5 py-3.5 rounded-2xl transition-all"
             :class="section === 'dashboard' ? 'bg-brand-500 text-slate-900 shadow-lg' : 'text-slate-400 hover:bg-slate-800/50 hover:text-white'">
             <i class="bi bi-grid-1x2-fill text-xl"></i>
             <span class="text-xs font-black uppercase tracking-widest">Dashboard</span>
           </button>
-          <button @click="section = 'inventory'; currentMode = null"
+          <button @click="section = 'inventory'; currentMode = null; sidebarOpen = false"
             class="w-full flex items-center gap-4 px-5 py-3.5 rounded-2xl transition-all"
             :class="section === 'inventory' ? 'bg-brand-500 text-slate-900 shadow-lg' : 'text-slate-400 hover:bg-slate-800/50 hover:text-white'">
             <i class="bi bi-archive-fill text-xl"></i>
             <span class="text-xs font-black uppercase tracking-widest">Inventario</span>
           </button>
-          <button @click="section = 'guias'; currentMode = null"
+          <button @click="section = 'guias'; currentMode = null; sidebarOpen = false"
             class="w-full flex items-center gap-4 px-5 py-3.5 rounded-2xl transition-all"
             :class="section === 'guias' ? 'bg-brand-500 text-slate-900 shadow-lg' : 'text-slate-400 hover:bg-slate-800/50 hover:text-white'">
             <i class="bi bi-upc-scan text-xl"></i>
             <span class="text-xs font-black uppercase tracking-widest">Vender Guía</span>
           </button>
-          <button @click="section = 'abonos'; currentMode = null"
+          <button @click="section = 'abonos'; currentMode = null; sidebarOpen = false"
             class="w-full flex items-center gap-4 px-5 py-3.5 rounded-2xl transition-all"
             :class="section === 'abonos' ? 'bg-brand-500 text-slate-900 shadow-lg' : 'text-slate-400 hover:bg-slate-800/50 hover:text-white'">
             <i class="bi bi-cash-coin text-xl"></i>
             <span class="text-xs font-black uppercase tracking-widest">Abonos</span>
           </button>
-          <button @click="section = 'servicios'; currentMode = null"
+          <button @click="section = 'servicios'; currentMode = null; sidebarOpen = false"
             class="w-full flex items-center gap-4 px-5 py-3.5 rounded-2xl transition-all"
             :class="section === 'servicios' ? 'bg-brand-500 text-slate-900 shadow-lg' : 'text-slate-400 hover:bg-slate-800/50 hover:text-white'">
             <i class="bi bi-grid-3x3-gap text-xl"></i>
@@ -63,7 +76,7 @@
                   <p class="text-[11px] font-black text-white truncate">{{ user.name || 'Operador' }}</p>
                   <p class="text-[9px] text-slate-500 font-bold uppercase tracking-widest">Punto de Entrega</p>
                </div>
-               <button @click="logout" class="text-slate-600 hover:text-red-400 transition-colors p-1 flex-shrink-0" title="Cerrar Sesión">
+               <button @click="logout" type="button" aria-label="Cerrar sesion" class="text-slate-600 hover:text-red-400 transition-colors p-1 flex-shrink-0" title="Cerrar Sesión">
                   <i class="bi bi-power text-lg"></i>
                </button>
             </div>
@@ -71,10 +84,19 @@
     </aside>
 
     <!-- MAIN CONTENT -->
-    <main class="flex-1 overflow-auto bg-[radial-gradient(circle_at_top_right,rgba(132,204,22,0.03),transparent_40%)]">
+    <main class="flex-1 min-w-0 overflow-auto bg-[radial-gradient(circle_at_top_right,rgba(132,204,22,0.03),transparent_40%)]">
+      <div class="sticky top-0 z-30 flex items-center gap-3 border-b border-slate-800 bg-slate-950/90 pl-4 pr-16 py-3 backdrop-blur-xl md:hidden">
+        <button type="button" class="w-11 h-11 rounded-xl bg-slate-900 border border-slate-800 text-brand-400" aria-label="Abrir menu del punto" @click="sidebarOpen = true">
+          <i class="bi bi-list text-2xl"></i>
+        </button>
+        <div class="min-w-0">
+          <p class="truncate text-sm font-black text-white">PuntoHub</p>
+          <p class="truncate text-[9px] font-bold uppercase tracking-widest text-slate-500">{{ point?.name || 'Panel de operador' }}</p>
+        </div>
+      </div>
 
       <!-- Slim page title -->
-      <div class="px-8 md:px-12 pt-8 pb-4">
+      <div class="px-4 md:px-12 pt-6 md:pt-8 pb-4">
         <h2 class="text-white text-2xl md:text-3xl font-black tracking-tight mb-1">
           {{ section === 'inventory' ? 'Inventario del Local' : section === 'guias' ? 'Vender Guía (DHL / Estafeta)' : section === 'abonos' ? 'Abonos del cliente' : section === 'servicios' ? 'Servicios de la red' : (currentMode ? formatMode(currentMode) : 'Dashboard') }}
         </h2>
@@ -86,18 +108,18 @@
         <div v-if="section === 'dashboard'">
           
           <!-- Premium Point Info Header -->
-          <div v-if="point" class="animate-fade-in bg-slate-900 border border-slate-800 rounded-[2.5rem] p-8 shadow-2xl mb-8 relative overflow-hidden group">
+          <div v-if="point" class="animate-fade-in bg-slate-900 border border-slate-800 rounded-[2rem] md:rounded-[2.5rem] p-5 md:p-8 shadow-2xl mb-8 relative overflow-hidden group">
             <div class="absolute -top-12 -right-12 w-32 h-32 bg-brand-500/5 blur-[50px] rounded-full group-hover:bg-brand-500/10 transition-all"></div>
             <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-10">
-              <div class="flex items-center gap-6 relative z-10">
-                <div class="w-16 h-16 rounded-[1.5rem] bg-slate-950 flex items-center justify-center text-brand-500 text-3xl border border-slate-800 shadow-inner group-hover:scale-110 transition-transform">
+              <div class="flex items-start md:items-center gap-4 md:gap-6 relative z-10 min-w-0">
+                <div class="w-14 h-14 md:w-16 md:h-16 rounded-[1.5rem] bg-slate-950 flex items-center justify-center text-brand-500 text-2xl md:text-3xl border border-slate-800 shadow-inner group-hover:scale-110 transition-transform shrink-0">
                   <i class="bi bi-shop"></i>
                 </div>
-                <div>
+                <div class="min-w-0">
                    <p class="text-[10px] font-black uppercase tracking-[0.3em] text-slate-500 mb-1">Terminal Activa</p>
-                   <h1 class="text-3xl font-black text-white leading-tight tracking-tight">{{ point.name }}</h1>
+                   <h1 class="text-2xl md:text-3xl font-black text-white leading-tight tracking-tight break-words">{{ point.name }}</h1>
                    <div class="flex items-center gap-4 mt-2">
-                     <a :href="getMapsUrl(point.address)" target="_blank" rel="noopener noreferrer" class="text-slate-400 text-xs font-medium hover:text-brand-400 transition-colors flex items-center gap-2">
+                      <a :href="getMapsUrl(point.address)" target="_blank" rel="noopener noreferrer" class="text-slate-400 text-xs font-medium hover:text-brand-400 transition-colors flex items-start gap-2 break-words">
                         <i class="bi bi-pin-map-fill opacity-50"></i> {{ point.address }}
                      </a>
                    </div>
@@ -287,6 +309,7 @@ export default {
   data() {
     return {
       section: 'dashboard',
+      sidebarOpen: false,
       currentMode: null, // 'receive' | 'deliver' | null
       inventoryCols: [
         { key: 'pkg', label: 'ID Paquete' },

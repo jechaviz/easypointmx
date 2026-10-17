@@ -115,7 +115,12 @@ routerAdd('GET', '/api/wallet/lookup', (c) => {
   const ref = String(c.queryParam('ref') || '').trim();
   if (!phone && ref) {
     try {
-      const bk = $app.dao().findRecordById('excursion_bookings', ref);
+      let bk = null;
+      try {
+        bk = $app.dao().findRecordById('excursion_bookings', ref);
+      } catch (_) {
+        bk = $app.dao().findFirstRecordByFilter('excursion_bookings', 'voucher_code = {:ref} || id = {:ref}', { ref: ref });
+      }
       phone = String(bk.getString('customer_phone') || '').trim();
       name = bk.getString('customer_name');
     } catch (err) { return c.json(404, { error: 'booking_not_found' }); }
@@ -138,9 +143,17 @@ routerAdd('POST', '/api/wallet/apply', (c) => {
   const ref = String(body.ref || c.queryParam('ref') || '').trim();
   if (!ref) return c.json(400, { error: 'missing_ref' });
 
-  let bk;
-  try { bk = $app.dao().findRecordById('excursion_bookings', ref); }
-  catch (err) { return c.json(404, { error: 'booking_not_found' }); }
+  let bk = null;
+  try {
+    bk = $app.dao().findRecordById('excursion_bookings', ref);
+  } catch (_) {
+    try {
+      bk = $app.dao().findFirstRecordByFilter('excursion_bookings', 'voucher_code = {:ref} || id = {:ref}', { ref: ref });
+    } catch (err2) {
+      return c.json(404, { error: 'booking_not_found' });
+    }
+  }
+  if (!bk) return c.json(404, { error: 'booking_not_found' });
 
   const phone = String(bk.getString('customer_phone') || '').trim();
   if (!phone) return c.json(400, { error: 'no_phone' });

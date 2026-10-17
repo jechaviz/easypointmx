@@ -130,7 +130,9 @@ const DEMO_USERS = [
     { id: 'u2', full_name: 'Roberto Operador', name: 'Roberto Operador', email: 'roberto@punto.mx',     role: 'operator', point_ref: 'p1', verified: true },
     { id: 'u3', full_name: 'Maria Papelería',  name: 'Maria Papelería',  email: 'maria@yopmail.com',    role: 'operator', point_ref: 'p2', verified: true },
     { id: 'u4', full_name: 'Juan Driver',      name: 'Juan Driver',      email: 'driver@easypoint.mx',  role: 'driver',   point_ref: null, verified: true },
-    { id: 'u5', full_name: 'Carlos Ventas',    name: 'Carlos Ventas',    email: 'carlos@sales.mx',      role: 'sales',    point_ref: null, verified: true }
+    { id: 'u5', full_name: 'Carlos Ventas',    name: 'Carlos Ventas',    email: 'carlos@sales.mx',      role: 'sales',    point_ref: null, verified: true },
+    { id: 'u6', full_name: 'SkyMex Tours',     name: 'SkyMex Tours',     email: 'sky@tours.mx',         role: 'provider', provider_ref: 'pr1', verified: true },
+    { id: 'u7', full_name: 'Raíces MX',        name: 'Raíces MX',        email: 'hola@raicesmx.com',    role: 'provider', provider_ref: 'pr2', verified: true }
 ];
 const DEMO_PWDS = ['Punto2024!', 'easypoint123'];
 
@@ -504,6 +506,39 @@ function buildBusinessEvents({ user, snapshot }) {
         }
     }
 
+    if (user.role === 'provider') {
+        const excursions = toList(data.excursions);
+        const myExcursions = excursions.filter(e => e.provider_id === user.provider_ref);
+        const bookings = toList(data.excursion_bookings);
+        const myBookings = bookings.filter(b => myExcursions.some(e => e.id === b.excursion_ref));
+        const pendingCheckIn = myBookings.filter(b => b.status === 'confirmed' && !b.checked_in);
+        const pendingSettlements = toList(data.settlements).filter(s => s.ref === user.provider_ref && s.status === 'pending');
+
+        if (pendingCheckIn.length) {
+            events.push(createBusinessEvent({
+                id: `provider:checkin:${signatureOf(pendingCheckIn, [item => item?.id])}`,
+                audience: 'provider',
+                severity: 'info',
+                icon: 'qr-code-scan',
+                title: `${pendingCheckIn.length} pasajero(s) listos para abordar`,
+                message: `Prepara el check-in de ${previewList(pendingCheckIn, item => item?.customer_name) || 'tus pasajeros'}.`,
+                createdAt: latestTimestamp(pendingCheckIn)
+            }));
+        }
+
+        if (pendingSettlements.length) {
+            events.push(createBusinessEvent({
+                id: `provider:settlement:${signatureOf(pendingSettlements, [item => item?.id])}`,
+                audience: 'provider',
+                severity: 'success',
+                icon: 'cash-coin',
+                title: `${pendingSettlements.length} liquidación(es) lista(s)`,
+                message: 'Tienes saldos concluidos listos para dispersión bancaria.',
+                createdAt: latestTimestamp(pendingSettlements)
+            }));
+        }
+    }
+
     return events.sort((left, right) => Date.parse(right.createdAt) - Date.parse(left.createdAt));
 }
 
@@ -654,10 +689,11 @@ const app = Vue.createApp({
                 localStorage.setItem('ep_remember', rememberMe ? '1' : '0');
 
                 const role = this.user.role;
-                if      (role === 'admin')  this.currentRoute = 'admin';
-                else if (role === 'driver') this.currentRoute = 'driver';
-                else if (role === 'sales')  this.currentRoute = 'sales';
-                else                        this.currentRoute = 'dashboard';
+                if      (role === 'admin')    this.currentRoute = 'admin';
+                else if (role === 'driver')   this.currentRoute = 'driver';
+                else if (role === 'sales')    this.currentRoute = 'sales';
+                else if (role === 'provider') this.currentRoute = 'provider';
+                else                          this.currentRoute = 'dashboard';
 
                 this.notificationCenterOpen = false;
                 this.businessSnapshot = this.demoMode ? (this.demoData || {}) : {};
@@ -831,10 +867,11 @@ const app = Vue.createApp({
                 this.currentRoute = 'login';
                 return;
             }
-            if      (userRole === 'admin')  this.currentRoute = 'admin';
-            else if (userRole === 'driver') this.currentRoute = 'driver';
-            else if (userRole === 'sales')  this.currentRoute = 'sales';
-            else if (userRole)              this.currentRoute = 'dashboard';
+            if      (userRole === 'admin')    this.currentRoute = 'admin';
+            else if (userRole === 'driver')   this.currentRoute = 'driver';
+            else if (userRole === 'sales')    this.currentRoute = 'sales';
+            else if (userRole === 'provider') this.currentRoute = 'provider';
+            else if (userRole)                this.currentRoute = 'dashboard';
 
             this.businessSnapshot = this.demoMode ? (this.demoData || {}) : {};
             this.refreshNotifications();

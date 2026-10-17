@@ -24,8 +24,11 @@ onRecordBeforeCreateRequest((e) => {
   if (people < 1) { people = 1; }
   record.set('people', people);
 
-  // saldo inicial = total enviado (se recalcula abajo si resuelve el catálogo)
-  record.set('balance', Number(record.getFloat('total')) || 0);
+  // Saldo y estado de pago inicial (se recalcula abajo si resuelve el catálogo)
+  const initialTotal = Number(record.getFloat('total')) || 0;
+  const initialPaid = Number(record.getFloat('amount_paid')) || 0;
+  record.set('balance', initialTotal > initialPaid ? initialTotal - initialPaid : 0);
+  record.set('payment_status', initialPaid <= 0 ? 'pending' : (initialTotal > 0 && initialPaid >= initialTotal ? 'paid' : 'partial'));
 
   const today = new Date().toISOString().slice(0, 10);
   const date = String(record.getString('excursion_date') || '').trim();
@@ -56,8 +59,11 @@ onRecordBeforeCreateRequest((e) => {
   }
 
   const price = Number(exc.getFloat('price')) || 0;
-  record.set('total', price * people);
-  record.set('balance', (price * people) - (Number(record.getFloat('amount_paid')) || 0));
+  const tot = price * people;
+  const paid = Number(record.getFloat('amount_paid')) || 0;
+  record.set('total', tot);
+  record.set('balance', tot > paid ? tot - paid : 0);
+  record.set('payment_status', paid <= 0 ? 'pending' : (tot > 0 && paid >= tot ? 'paid' : 'partial'));
 
   const cap = Number(exc.getFloat('max_capacity')) || 0;
   if (cap > 0 && date) {

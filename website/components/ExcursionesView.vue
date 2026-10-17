@@ -177,13 +177,15 @@
           </div>
 
           <div class="space-y-3">
+            <button v-if="lastBookingId" @click="goToVoucher" class="w-full bg-brand-500 text-slate-900 font-black py-4 rounded-xl hover:bg-brand-400 transition-all flex items-center justify-center gap-3 shadow-lg shadow-brand-500/20">
+              <i class="bi bi-ticket-perforated-fill text-lg"></i>
+              <span>Ver mi Voucher Digital & Pase de Abordar</span>
+            </button>
             <button @click="payNow" :disabled="paying" class="w-full bg-slate-900 text-white font-black py-4 rounded-xl hover:bg-slate-800 transition-all flex items-center justify-center gap-3 disabled:opacity-50">
               <i v-if="paying" class="bi bi-arrow-repeat animate-spin"></i><i v-else class="bi bi-credit-card"></i>
               {{ paying ? 'Abriendo pago...' : (depositAmount > 0 ? ('Apartar ' + formatMoney(depositAmount)) : 'Pagar en línea') }}
             </button>
-            <a v-if="canConfirmWa" :href="confirmWaUrl" target="_blank" rel="noopener noreferrer" class="w-full bg-brand-500 text-slate-900 font-black py-4 rounded-xl hover:bg-brand-400 transition-all flex items-center justify-center gap-3"><i class="bi bi-whatsapp"></i> Confirmar mi reserva</a>
-            <a v-if="providerWa && hasContact" :href="waProviderUrl" target="_blank" rel="noopener noreferrer" class="w-full bg-slate-100 text-slate-700 font-black py-3 rounded-xl hover:bg-slate-200 transition-all flex items-center justify-center gap-2 text-sm"><i class="bi bi-person-badge"></i> Escribir al proveedor</a>
-          </div>
+            <a v-if="canConfirmWa" :href="confirmWaUrl" target="_blank" rel="noopener noreferrer" class="w-full bg-emerald-500 text-slate-950 font-black py-3.5 rounded-xl hover:bg-emerald-400 transition-all flex items-center justify-center gap-2 text-xs"><i class="bi bi-whatsapp"></i> Confirmar vía WhatsApp</a>
           <div v-if="manualPay" class="mt-5 bg-slate-50 border border-slate-200 rounded-2xl p-4 text-left">
             <p class="text-xs font-black text-slate-700 uppercase tracking-widest mb-1">Pago</p>
             <p class="text-sm text-slate-600">{{ manualPay.instructions }}</p>
@@ -362,6 +364,11 @@ export default {
           }
         } catch (_) {}
       }
+    },
+    goToVoucher() {
+      const id = this.lastBookingId;
+      this.closeBooking();
+      this.$emit('navigate', '/mi-reserva?code=' + encodeURIComponent(id));
     },
     closeBooking() {
       this.selected = null;

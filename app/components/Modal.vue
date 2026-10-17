@@ -1,15 +1,15 @@
 <template>
   <Transition name="modal-bounce">
-    <div v-if="modelValue" class="fixed inset-0 z-[100] flex items-center justify-center p-4">
+    <div v-if="modelValue" class="fixed inset-0 z-[100] flex items-center justify-center p-3 md:p-4">
       <!-- Backdrop -->
       <div class="absolute inset-0 bg-slate-950/80 backdrop-blur-md" @click="handleCancel"></div>
       
       <!-- Modal Box -->
-      <div class="relative bg-slate-900 border border-slate-800 rounded-[2.5rem] w-full max-w-sm overflow-hidden shadow-[0_30px_100px_rgba(0,0,0,0.8)] animate-scale-in">
+      <div class="relative bg-slate-900 border border-slate-800 rounded-[2rem] md:rounded-[2.5rem] w-full max-w-sm max-h-[calc(100vh-1.5rem)] overflow-y-auto shadow-[0_30px_100px_rgba(0,0,0,0.8)] animate-scale-in">
         <!-- Decor: Brand Glow -->
         <div class="absolute -top-24 -left-24 w-48 h-48 bg-brand-500/10 blur-[60px] rounded-full"></div>
         
-        <div class="p-8 relative z-10 text-center">
+        <div class="p-6 md:p-8 relative z-10 text-center">
           <!-- Icon Header -->
           <div class="mb-6 flex justify-center">
              <div class="w-20 h-20 rounded-3xl flex items-center justify-center text-4xl shadow-2xl border" :class="typeStyles[type].iconContainer">

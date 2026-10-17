@@ -50,9 +50,9 @@
 
     <!-- Modal nueva guía -->
     <Transition name="fade">
-      <div v-if="showForm" class="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-slate-950/80 backdrop-blur-md">
-        <div class="bg-slate-900 border border-slate-800 rounded-[2.5rem] p-10 max-w-2xl w-full shadow-2xl relative max-h-[90vh] overflow-y-auto">
-          <button @click="showForm = false" class="absolute top-8 right-8 text-slate-500 hover:text-white transition-colors text-2xl"><i class="bi bi-x-lg"></i></button>
+      <div v-if="showForm" class="fixed inset-0 z-[100] flex items-center justify-center p-3 md:p-6 bg-slate-950/80 backdrop-blur-md">
+        <div class="bg-slate-900 border border-slate-800 rounded-[2rem] md:rounded-[2.5rem] p-5 md:p-10 max-w-2xl w-full shadow-2xl relative max-h-[calc(100vh-1.5rem)] overflow-y-auto">
+          <button @click="showForm = false" aria-label="Cerrar formulario" class="absolute top-5 right-5 md:top-8 md:right-8 text-slate-500 hover:text-white transition-colors text-2xl"><i class="bi bi-x-lg"></i></button>
           <h3 class="text-2xl font-black text-white mb-1 uppercase tracking-tight">Vender guía</h3>
           <p class="text-[10px] text-slate-500 font-bold uppercase tracking-widest mb-8">Convenio DHL / Estafeta</p>
 

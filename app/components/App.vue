@@ -5,6 +5,7 @@
       <AdminView   v-else-if="appState.currentRoute === 'admin'" key="admin" />
       <DriverView  v-else-if="appState.currentRoute === 'driver'" key="driver" />
       <SalesView   v-else-if="appState.currentRoute === 'sales'"  key="sales" />
+      <ProviderView v-else-if="appState.currentRoute === 'provider'" key="provider" />
       <DashboardView v-else                                       key="dash"  />
     </Transition>
 
@@ -36,6 +37,7 @@ export default {
     AdminView:     Vue.defineAsyncComponent(() => loadModule('./components/AdminView.vue', window.options)),
     DriverView:    Vue.defineAsyncComponent(() => loadModule('./components/DriverView.vue', window.options)),
     SalesView:     Vue.defineAsyncComponent(() => loadModule('./components/SalesView.vue', window.options)),
+    ProviderView:  Vue.defineAsyncComponent(() => loadModule('./components/ProviderView.vue', window.options)),
     Modal:         Vue.defineAsyncComponent(() => loadModule('./components/Modal.vue', window.options)),
     Loading:       Vue.defineAsyncComponent(() => loadModule('./components/Loading.vue', window.options)),
     NotificationCenter: Vue.defineAsyncComponent(() => loadModule('./components/NotificationCenter.vue', window.options))

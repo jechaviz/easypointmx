@@ -1,12 +1,12 @@
 <template>
-  <div class="min-h-screen relative flex items-center justify-center overflow-hidden bg-slate-950">
+  <div class="min-h-screen relative flex items-center justify-center overflow-x-hidden overflow-y-auto bg-slate-950">
     <div class="absolute inset-0 pointer-events-none">
       <div class="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] rounded-full bg-brand-500 blur-[120px] opacity-[0.03] animate-pulse"></div>
       <div class="absolute bottom-[-10%] right-[-10%] w-[60%] h-[60%] rounded-full bg-blue-700 blur-[140px] opacity-[0.03]"></div>
       <div class="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(132,204,22,0.02),transparent_70%)]"></div>
     </div>
 
-    <div class="relative z-10 w-full max-w-md px-8 animate-fade-in py-8">
+    <div class="relative z-10 w-full max-w-md px-4 sm:px-8 animate-fade-in py-6 sm:py-8">
       <a :href="websiteHref" class="block text-center mb-8 group transition-all">
         <div class="inline-flex items-center justify-center w-14 h-14 rounded-[1.25rem] bg-slate-900 border border-slate-800 shadow-2xl mb-4 group-hover:scale-105 transition-transform relative overflow-hidden">
           <div class="absolute inset-0 bg-brand-500 opacity-10 blur-xl"></div>
@@ -16,7 +16,7 @@
         <p class="text-[8px] text-slate-500 font-bold uppercase tracking-[0.4em] mt-1.5">Logistics Excellence</p>
       </a>
 
-      <div class="bg-slate-900/40 backdrop-blur-2xl border border-slate-800 rounded-[2rem] p-8 shadow-[0_32px_100px_-20px_rgba(0,0,0,0.8)] space-y-6 relative overflow-hidden group">
+      <div class="bg-slate-900/40 backdrop-blur-2xl border border-slate-800 rounded-[2rem] p-5 sm:p-8 shadow-[0_32px_100px_-20px_rgba(0,0,0,0.8)] space-y-6 relative overflow-hidden group">
         <div class="absolute -top-24 -left-24 w-48 h-48 bg-brand-500/5 blur-[60px] rounded-full pointer-events-none"></div>
 
         <div v-if="loadingSettings" class="text-center py-2 h-[40px] flex items-center justify-center">
@@ -34,6 +34,7 @@
           >
             <option value="">-- Selecciona un acceso demo --</option>
             <option value="admin@demo.mx|easypoint123">Admin demo</option>
+            <option value="sky@tours.mx|Punto2024!">Proveedor: SkyMex Tours</option>
             <option value="roberto@punto.mx|Punto2024!">Local: Roberto Operador</option>
             <option value="maria@yopmail.com|Punto2024!">Local: La Papeleria</option>
             <option value="driver@easypoint.mx|Punto2024!">Repartidor</option>
@@ -152,7 +153,7 @@
 
           <form v-else @submit.prevent="handleRegister" class="space-y-4">
             <p class="text-slate-400 text-xs leading-relaxed">
-              Solicita acceso como <strong class="text-white">Local</strong>, <strong class="text-white">Repartidor</strong> o <strong class="text-white">Ventas</strong>. Tu cuenta quedara pendiente hasta que un admin la apruebe.
+              Solicita acceso como <strong class="text-white">Local</strong>, <strong class="text-white">Proveedor de Experiencias</strong>, <strong class="text-white">Repartidor</strong> o <strong class="text-white">Ventas</strong>. Tu cuenta quedara pendiente hasta que un admin la apruebe.
             </p>
 
             <div class="space-y-1.5">
@@ -195,6 +196,7 @@
                 class="w-full bg-slate-950 border border-slate-800 text-white rounded-xl px-4 py-3 text-xs focus:outline-none focus:border-brand-500/50 focus:ring-4 focus:ring-brand-500/5 transition-all"
               >
                 <option value="operator">Local</option>
+                <option value="provider">Proveedor de Experiencias</option>
                 <option value="driver">Repartidor</option>
                 <option value="sales">Ventas</option>
               </select>

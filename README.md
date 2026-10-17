@@ -2,9 +2,9 @@
 
 Easypoint es una aplicacion web sin build-step que combina:
 
-- `website/`: sitio comercial y captacion.
-- `app/`: panel operativo para admin, locales, choferes y ventas.
-- `pb/`: backend PocketBase local con hooks, migraciones y datos.
+- `website/`: sitio comercial, captación y portal de autoservicio de vouchers con pagos de abonos.
+- `app/`: panel operativo para admin, locales, choferes, ventas y proveedores de experiencias.
+- `pb/`: backend PocketBase local con hooks, migraciones y liquidaciones automáticas.
 - `tests/`: smoke tests HTTP/API.
 
 ## Stack
@@ -99,6 +99,29 @@ Copy-Item runtime-config.local.example.js runtime-config.local.js
 - Usa `node scripts/local-stack.mjs smoke` antes de publicar cambios.
 - Manten `runtime-config.local.js` fuera de git.
 - No edites `pb/pb_data/data.db` manualmente; usa migraciones o scripts.
+
+## Migración a MySQL 8.x / MariaDB
+
+EasyPoint incluye herramientas integradas para migrar esquemas y datos desde PocketBase (SQLite) a cualquier servidor MySQL o MariaDB (AWS RDS, GCP Cloud SQL, PlanetScale, cPanel o local):
+
+1. **Esquema Relacional DDL**: [`deploy/easypoint_mysql_schema.sql`](./deploy/easypoint_mysql_schema.sql)
+   - Contiene la definición DDL con tipos nativos (`VARCHAR`, `DATETIME(3)`, `DECIMAL(12,2)`, `TINYINT(1)`, `JSON`), claves primarias, índices y restricciones para las 20 colecciones operativas y tablas de administración.
+
+2. **Generador de Dump Completo**:
+   ```bash
+   node scripts/pb-to-mysql.mjs
+   ```
+   - Extrae los datos actuales de `pb/pb_data/data.db` y genera [`deploy/easypoint_mysql_dump.sql`](./deploy/easypoint_mysql_dump.sql) con sentencias `INSERT` idempotentes (`ON DUPLICATE KEY UPDATE`).
+
+3. **Importación a Servidor MySQL**:
+   ```bash
+   mysql -h <host> -u <usuario> -p <base_de_datos> < deploy/easypoint_mysql_dump.sql
+   ```
+
+4. **Verificación de Integridad SQLite**:
+   ```bash
+   node scripts/pb-to-mysql.mjs --check
+   ```
 
 ## Documentacion
 
