@@ -34,6 +34,7 @@
           >
             <option value="">-- Selecciona un acceso demo --</option>
             <option value="admin@demo.mx|easypoint123">Admin demo</option>
+            <option value="sky@tours.mx|Punto2024!">Proveedor: SkyMex Tours</option>
             <option value="roberto@punto.mx|Punto2024!">Local: Roberto Operador</option>
             <option value="maria@yopmail.com|Punto2024!">Local: La Papeleria</option>
             <option value="driver@easypoint.mx|Punto2024!">Repartidor</option>
@@ -152,7 +153,7 @@
 
           <form v-else @submit.prevent="handleRegister" class="space-y-4">
             <p class="text-slate-400 text-xs leading-relaxed">
-              Solicita acceso como <strong class="text-white">Local</strong>, <strong class="text-white">Repartidor</strong> o <strong class="text-white">Ventas</strong>. Tu cuenta quedara pendiente hasta que un admin la apruebe.
+              Solicita acceso como <strong class="text-white">Local</strong>, <strong class="text-white">Proveedor de Experiencias</strong>, <strong class="text-white">Repartidor</strong> o <strong class="text-white">Ventas</strong>. Tu cuenta quedara pendiente hasta que un admin la apruebe.
             </p>
 
             <div class="space-y-1.5">
@@ -195,6 +196,7 @@
                 class="w-full bg-slate-950 border border-slate-800 text-white rounded-xl px-4 py-3 text-xs focus:outline-none focus:border-brand-500/50 focus:ring-4 focus:ring-brand-500/5 transition-all"
               >
                 <option value="operator">Local</option>
+                <option value="provider">Proveedor de Experiencias</option>
                 <option value="driver">Repartidor</option>
                 <option value="sales">Ventas</option>
               </select>

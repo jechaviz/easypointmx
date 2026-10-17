@@ -5,7 +5,26 @@ async function wipe() {
     const { token } = await adminAuth();
 
     const headers = { 'Authorization': token };
-    const collections = ['shipments', 'points', 'commissions', 'invoices', 'partner_applications'];
+    const collections = [
+        'excursion_bookings',
+        'shipping_guides',
+        'service_orders',
+        'payments',
+        'support_tickets',
+        'wallet_entries',
+        'wallets',
+        'settlements',
+        'commissions',
+        'invoices',
+        'audit_log',
+        'shipments',
+        'tracking_alerts',
+        'partner_applications',
+        'excursions',
+        'services',
+        'points',
+        'providers'
+    ];
 
     for (const col of collections) {
         const res = await fetch(pbApi(`/api/collections/${col}/records?perPage=500`), { headers });

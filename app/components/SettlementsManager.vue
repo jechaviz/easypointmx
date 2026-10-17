@@ -9,7 +9,17 @@
           <span class="text-[9px] font-black px-2.5 py-1 rounded-lg border uppercase tracking-wider" :class="kindBadge(item.kind)">{{ kindLabel(item.kind) }}</span>
         </td>
         <td class="px-6 py-4">
-          <div class="flex flex-col"><span class="text-white font-bold text-xs">{{ item.ref_name || item.ref || '—' }}</span><span v-if="item.folio" class="text-[10px] text-slate-500 font-mono">{{ item.folio }}</span></div>
+          <div class="flex flex-col">
+            <span class="text-white font-bold text-xs">{{ item.ref_name || item.ref || '—' }}</span>
+            <div v-if="getProviderClabe(item)" class="flex items-center gap-1.5 mt-0.5">
+              <span class="text-[10px] font-mono text-emerald-400 font-semibold">{{ getProviderClabe(item) }}</span>
+              <button @click.stop="copyClabe(getProviderClabe(item))" title="Copiar CLABE" class="text-[10px] text-slate-400 hover:text-white transition-colors">
+                <i class="bi bi-clipboard"></i>
+              </button>
+            </div>
+            <span v-if="item.folio" class="text-[10px] text-slate-500 font-mono">{{ item.folio }}</span>
+            <span v-if="item.notes" class="text-[10px] text-slate-400 italic mt-0.5 line-clamp-1" :title="item.notes">{{ item.notes }}</span>
+          </div>
         </td>
         <td class="px-6 py-4 text-[10px] text-slate-400 font-mono">{{ item.period || '—' }}</td>
         <td class="px-6 py-4 text-right">
@@ -30,6 +40,16 @@
           <div class="flex items-center justify-between mb-2"><span class="text-[9px] font-black px-2 py-1 rounded-lg border uppercase" :class="kindBadge(item.kind)">{{ kindLabel(item.kind) }}</span><span class="text-[9px] font-black px-2 py-1 rounded-lg border uppercase" :class="statusBadge(item.status)">{{ statusLabel(item.status) }}</span></div>
           <p class="text-white font-black text-sm">{{ item.ref_name || item.ref }}</p>
           <p class="text-[10px] text-slate-500 font-mono mb-2">{{ item.period }} <span v-if="item.folio">· {{ item.folio }}</span></p>
+          <div v-if="getProviderClabe(item)" class="flex items-center justify-between bg-slate-950/60 p-2.5 rounded-xl border border-slate-800 my-2">
+            <div>
+              <div class="text-[9px] uppercase tracking-wider text-slate-400 font-bold">CLABE Para Transferencia</div>
+              <div class="text-xs font-mono text-emerald-400 font-semibold">{{ getProviderClabe(item) }}</div>
+            </div>
+            <button @click.stop="copyClabe(getProviderClabe(item))" class="px-2.5 py-1 rounded-lg bg-slate-800 text-xs text-white hover:bg-slate-700 flex items-center gap-1 font-bold">
+              <i class="bi bi-clipboard"></i> Copiar
+            </button>
+          </div>
+          <p v-if="item.notes" class="text-[10px] text-slate-400 italic mb-2">{{ item.notes }}</p>
           <p class="text-white font-black">{{ formatMoney(item.net) }} <span class="text-[10px] text-slate-500 font-bold">neto</span></p>
         </div>
       </template>
@@ -47,6 +67,7 @@ export default {
   data() {
     return {
       settlements: [],
+      providers: [],
       saving: false,
       cols: [
         { key: 'kind', label: 'Tipo' },
@@ -95,7 +116,33 @@ export default {
       }
       await fetch(`${this.pb_url}/api/collections/${coll}/records/${id}`, { method: 'DELETE', headers: { Authorization: this.token() } });
     },
-    async load() { try { const d = await this.apiGet('settlements'); this.settlements = d.items || []; } catch (_) { this.settlements = []; } },
+    async load() {
+      try {
+        const [d, p] = await Promise.all([
+          this.apiGet('settlements'),
+          this.apiGet('providers').catch(() => ({ items: [] }))
+        ]);
+        this.settlements = d.items || [];
+        this.providers = p.items || [];
+      } catch (_) {
+        this.settlements = [];
+        this.providers = [];
+      }
+    },
+    getProviderClabe(item) {
+      if (item && item.kind === 'provider') {
+        const p = this.providers.find(x => x.id === item.ref);
+        if (p && p.clabe) return p.clabe;
+      }
+      const m = String(item && item.notes || '').match(/CLABE:\s*(\d{18})/);
+      if (m) return m[1];
+      return '';
+    },
+    copyClabe(clabe) {
+      if (!clabe) return;
+      navigator.clipboard.writeText(clabe);
+      this.showModal({ title: 'CLABE Copiada', message: `CLABE ${clabe} copiada al portapapeles.`, type: 'success' });
+    },
     async runSettlements() {
       const period = window.prompt('Periodo a liquidar (ej. 2026-07 o "Julio 2026"):', new Date().toISOString().slice(0, 7));
       if (period == null) return;

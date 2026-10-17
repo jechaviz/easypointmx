@@ -5,6 +5,26 @@
 // callbacks de hook solo ven los globals de PB). Nunca rompemos la petición
 // original si el log falla -> todo dentro de try/catch.
 
+// Alta de reserva de excursión.
+onRecordAfterCreateRequest((e) => {
+  try {
+    const rec = e.record;
+    let actor = '';
+    try { const info = $apis.requestInfo(e.httpContext); actor = (info && info.authRecord) ? String(info.authRecord.id) : ''; } catch (err) { actor = ''; }
+    const status = String(rec.getString('status') || '');
+    const ps = String(rec.getString('payment_status') || '');
+    const voucher = String(rec.getString('voucher_code') || '');
+    const log = new Record($app.dao().findCollectionByNameOrId('audit_log'), {
+      actor: actor,
+      action: 'create',
+      target_collection: 'excursion_bookings',
+      target_id: String(rec.id),
+      detail: `voucher=${voucher} status=${status} payment_status=${ps} total=${Number(rec.getFloat('total')) || 0} paid=${Number(rec.getFloat('amount_paid')) || 0}`
+    });
+    $app.dao().saveRecord(log);
+  } catch (err) {}
+}, 'excursion_bookings');
+
 // Actualización de reserva de excursión.
 onRecordAfterUpdateRequest((e) => {
   try {
@@ -23,6 +43,26 @@ onRecordAfterUpdateRequest((e) => {
     $app.dao().saveRecord(log);
   } catch (err) {}
 }, 'excursion_bookings');
+
+// Alta de guía de envío.
+onRecordAfterCreateRequest((e) => {
+  try {
+    const rec = e.record;
+    let actor = '';
+    try { const info = $apis.requestInfo(e.httpContext); actor = (info && info.authRecord) ? String(info.authRecord.id) : ''; } catch (err) { actor = ''; }
+    const status = String(rec.getString('status') || '');
+    const carrier = String(rec.getString('carrier') || '').toUpperCase();
+    const tracking = String(rec.getString('tracking_number') || '');
+    const log = new Record($app.dao().findCollectionByNameOrId('audit_log'), {
+      actor: actor,
+      action: 'create',
+      target_collection: 'shipping_guides',
+      target_id: String(rec.id),
+      detail: `carrier=${carrier} tracking=${tracking} status=${status} price=${Number(rec.getFloat('price')) || 0}`
+    });
+    $app.dao().saveRecord(log);
+  } catch (err) {}
+}, 'shipping_guides');
 
 // Actualización de guía de envío.
 onRecordAfterUpdateRequest((e) => {

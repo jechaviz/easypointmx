@@ -682,6 +682,11 @@
                   <h4 class="text-white font-bold">Modo Test (Login Rápido)</h4>
                   <p class="text-slate-400 text-xs mt-1 max-w-md">Habilita el selector desplegable en la pantalla de inicio de sesión.</p>
                 </div>
+                <button @click="toggleTestMode" 
+                        class="px-4 py-2 rounded-xl text-[10px] font-black uppercase transition-all flex items-center gap-2"
+                        :class="testModeData.enabled ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 hover:bg-emerald-500/30' : 'bg-slate-700 text-slate-300 hover:bg-slate-600'">
+                  <i class="bi" :class="testModeData.enabled ? 'bi-toggle-on text-emerald-400 text-base' : 'bi-toggle-off text-slate-400 text-base'"></i>
+                  <span>{{ testModeData.enabled ? 'Activado' : 'Desactivado' }}</span>
                 </button>
               </div>
 
@@ -1088,28 +1093,52 @@ export default {
        }
 
        this.showLoading('Limpiando base de datos...');
-       try {
-          // 1. Wipe Shipments
-          for (const s of this.shipments) {
-             await fetch(`${PB}/api/collections/shipments/records/${s.id}`, { method: 'DELETE', headers: this.headers() });
-          }
-          // 2. Wipe Points
-          for (const p of this.points) {
-             await fetch(`${PB}/api/collections/points/records/${p.id}`, { method: 'DELETE', headers: this.headers() });
-          }
-          // 3. Wipe Users (Except current)
-          for (const u of this.users) {
-             if (u.id === this.appState.user.id) continue;
-             await fetch(`${PB}/api/collections/users/records/${u.id}`, { method: 'DELETE', headers: this.headers() });
-          }
-          
-          await this.loadAll();
-          this.showModal({ title: 'Sistema Limpio', message: 'La base de datos ha sido purgada. Ahora puedes configurar la red de producción.', type: 'success' });
-       } catch (e) {
-          this.showModal({ title: 'Error Fatal', message: 'No se pudieron borrar todos los datos: ' + e.message, type: 'error' });
-       } finally {
-          this.hideLoading();
-       }
+        try {
+           const collectionsToWipe = [
+             'provider_ratings',
+             'abonos',
+             'settlements',
+             'customer_wallets',
+             'shipping_guides',
+             'excursion_bookings',
+             'excursion_trips',
+             'excursions',
+             'providers',
+             'invoices',
+             'commissions',
+             'shipments',
+             'partner_applications',
+             'tracking_events',
+             'audit_logs',
+             'notifications',
+             'points'
+           ];
+
+           for (const col of collectionsToWipe) {
+             try {
+               const res = await fetch(`${PB}/api/collections/${col}/records?perPage=500`, { headers: this.headers() });
+               if (res.ok) {
+                 const data = await res.json();
+                 for (const item of (data.items || [])) {
+                   await fetch(`${PB}/api/collections/${col}/records/${item.id}`, { method: 'DELETE', headers: this.headers() });
+                 }
+               }
+             } catch (_) {}
+           }
+
+           // Wipe Users (Except current logged in user)
+           for (const u of (this.users || [])) {
+              if (u.id === this.appState.user?.id) continue;
+              await fetch(`${PB}/api/collections/users/records/${u.id}`, { method: 'DELETE', headers: this.headers() });
+           }
+           
+           await this.loadAll();
+           this.showModal({ title: 'Sistema Limpio', message: 'La base de datos ha sido purgada. Ahora puedes configurar la red de producción.', type: 'success' });
+        } catch (e) {
+           this.showModal({ title: 'Error Fatal', message: 'No se pudieron borrar todos los datos: ' + e.message, type: 'error' });
+        } finally {
+           this.hideLoading();
+        }
     },
     
     showLoading(msg) { 

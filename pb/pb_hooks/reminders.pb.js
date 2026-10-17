@@ -60,14 +60,17 @@ routerAdd('POST', '/api/reminders/run', (c) => {
     const balance = Number(b.getFloat('balance')) || 0;
     const name = b.getString('customer_name');
     const excName = b.getString('excursion_name') || b.getString('destination') || 'tu excursión';
+    const voucherCode = b.getString('voucher_code') || ('EP-BK-' + b.id.slice(0, 6).toUpperCase());
+    const appBase = ($os.getenv('EASYPOINT_APP_URL') || $app.settings().meta.appUrl || 'https://easypoint.mx').replace(/\/app\/?$/, '');
+    const voucherUrl = `${appBase}/website/#/voucher?code=${encodeURIComponent(voucherCode)}`;
 
     if ((channel === 'email' || channel === 'both') && email) {
       try {
         const msg = new MailerMessage({
           from: { address: $app.settings().meta.senderAddress, name: $app.settings().meta.senderName },
           to: [{ address: email }],
-          subject: 'Recordatorio de abono — Easypoint',
-          html: `Hola ${name}, te recordamos tu abono pendiente de ${excName}. Saldo: $${balance}. Abona en tu punto Easypoint o en línea para asegurar tu lugar.`
+          subject: `Recordatorio de abono (${voucherCode}) — Easypoint`,
+          html: `<p>Hola <strong>${name}</strong>,</p><p>Te recordamos tu abono pendiente para <strong>${excName}</strong>.</p><p>Saldo a liquidar: <strong>$${balance} MXN</strong><br>Folio de reserva: <code>${voucherCode}</code></p><p><a href="${voucherUrl}" style="background:#84cc16;color:#020617;font-weight:bold;padding:10px 20px;border-radius:8px;text-decoration:none;display:inline-block;">Abonar o liquidar en línea</a></p><p>También puedes abonar en efectivo en cualquiera de nuestros puntos Easypoint.</p>`
         });
         $app.newMailClient().send(msg);
         sent++;
@@ -81,7 +84,7 @@ routerAdd('POST', '/api/reminders/run', (c) => {
           $http.send({
             url: waUrl, method: 'POST',
             headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + waToken },
-            body: JSON.stringify({ to: phone, text: `Easypoint: recordatorio de abono de ${excName}. Saldo $${balance}. Abona para asegurar tu lugar.` }),
+            body: JSON.stringify({ to: phone, text: `Easypoint: recordatorio de abono para ${excName}. Saldo: $${balance} MXN. Folio: ${voucherCode}. Abona o consulta tu voucher aquí: ${voucherUrl}` }),
             timeout: 15
           });
           sent++;
@@ -120,14 +123,17 @@ cronAdd('payment_reminders', '0 14 * * *', () => {
     const balance = Number(b.getFloat('balance')) || 0;
     const name = b.getString('customer_name');
     const excName = b.getString('excursion_name') || b.getString('destination') || 'tu excursión';
+    const voucherCode = b.getString('voucher_code') || ('EP-BK-' + b.id.slice(0, 6).toUpperCase());
+    const appBase = ($os.getenv('EASYPOINT_APP_URL') || $app.settings().meta.appUrl || 'https://easypoint.mx').replace(/\/app\/?$/, '');
+    const voucherUrl = `${appBase}/website/#/voucher?code=${encodeURIComponent(voucherCode)}`;
 
     if ((channel === 'email' || channel === 'both') && email) {
       try {
         const msg = new MailerMessage({
           from: { address: $app.settings().meta.senderAddress, name: $app.settings().meta.senderName },
           to: [{ address: email }],
-          subject: 'Recordatorio de abono — Easypoint',
-          html: `Hola ${name}, te recordamos tu abono pendiente de ${excName}. Saldo: $${balance}.`
+          subject: `Recordatorio de abono (${voucherCode}) — Easypoint`,
+          html: `<p>Hola <strong>${name}</strong>,</p><p>Te recordamos tu abono pendiente para <strong>${excName}</strong>.</p><p>Saldo a liquidar: <strong>$${balance} MXN</strong><br>Folio de reserva: <code>${voucherCode}</code></p><p><a href="${voucherUrl}" style="background:#84cc16;color:#020617;font-weight:bold;padding:10px 20px;border-radius:8px;text-decoration:none;display:inline-block;">Abonar o liquidar en línea</a></p>`
         });
         $app.newMailClient().send(msg);
       } catch (err) {}
@@ -137,7 +143,7 @@ cronAdd('payment_reminders', '0 14 * * *', () => {
       const waToken = $os.getenv('WHATSAPP_API_TOKEN');
       if (waUrl && waToken && phone) {
         try {
-          $http.send({ url: waUrl, method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + waToken }, body: JSON.stringify({ to: phone, text: `Easypoint: recordatorio de abono de ${excName}. Saldo $${balance}.` }), timeout: 15 });
+          $http.send({ url: waUrl, method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + waToken }, body: JSON.stringify({ to: phone, text: `Easypoint: recordatorio de abono para ${excName}. Saldo: $${balance} MXN. Folio: ${voucherCode}. Abona o consulta tu voucher aquí: ${voucherUrl}` }), timeout: 15 });
         } catch (err) {}
       }
     }

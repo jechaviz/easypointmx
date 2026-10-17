@@ -4,9 +4,9 @@
 //
 //   PB_API=http://127.0.0.1:8097/api PB_ADMIN_EMAIL=... PB_ADMIN_PASSWORD=... node tests/business_model_e2e.mjs
 
-const PB_API = (process.env.PB_API || 'http://127.0.0.1:8097/api').replace(/\/$/, '');
-const ADMIN_EMAIL = process.env.PB_ADMIN_EMAIL || 'admin@easypoint.test';
-const ADMIN_PASSWORD = process.env.PB_ADMIN_PASSWORD || 'Test12345!';
+const PB_API = (process.env.PB_API || 'http://127.0.0.1:8091/api').replace(/\/$/, '');
+const ADMIN_IDENTITIES = [process.env.PB_ADMIN_EMAIL, 'admin@easypoint.mx', 'admin@demo.mx', 'admin@easypoint.test'].filter(Boolean);
+const ADMIN_PASSWORDS = [process.env.PB_ADMIN_PASSWORD, 'easypoint123', 'Test12345!'].filter(Boolean);
 
 let pass = 0, fail = 0;
 const rnd = () => Math.floor(Math.random() * 1e6);
@@ -30,9 +30,18 @@ async function run() {
   console.log('🧪 E2E modelo de negocio extendido\n');
 
   // 0. Admin auth (PocketBase superuser/admin, 0.22 -> /api/admins)
-  const auth = await req('POST', '/admins/auth-with-password', { body: { identity: ADMIN_EMAIL, password: ADMIN_PASSWORD } });
-  ok('Admin auth', auth.ok && auth.data?.token, `status ${auth.status}`);
-  const adminToken = auth.data?.token;
+  let adminToken = null;
+  for (const identity of ADMIN_IDENTITIES) {
+    for (const password of ADMIN_PASSWORDS) {
+      const auth = await req('POST', '/admins/auth-with-password', { body: { identity, password } });
+      if (auth.ok && auth.data?.token) {
+        adminToken = auth.data.token;
+        break;
+      }
+    }
+    if (adminToken) break;
+  }
+  ok('Admin auth', Boolean(adminToken), `token disponible`);
   if (!adminToken) { summary(); return; }
 
   // 1. Punto base (para guia / shipment)
@@ -100,7 +109,7 @@ async function run() {
   ok('Anónimo NO ve reservas (PII protegida)', (anonBookings.data?.items?.length || 0) === 0, `status ${anonBookings.status}, items ${anonBookings.data?.items?.length}`);
 
   // 6. Admin lista reservas y confirma
-  const adminBookings = await req('GET', '/collections/excursion_bookings/records', { token: adminToken });
+  const adminBookings = await req('GET', '/collections/excursion_bookings/records?sort=-created&perPage=200', { token: adminToken });
   ok('Admin lista reservas', adminBookings.ok && adminBookings.data?.items?.some(b => b.id === bookingId), `status ${adminBookings.status}`);
 
   if (bookingId) {

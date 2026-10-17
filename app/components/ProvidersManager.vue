@@ -9,6 +9,13 @@
         <td class="px-6 py-4">
           <div class="flex flex-col"><span class="text-white font-bold text-xs">{{ item.name }}</span><span v-if="item.email" class="text-[10px] text-slate-500">{{ item.email }}</span></div>
         </td>
+        <td class="px-6 py-4">
+          <div v-if="item.clabe" class="flex flex-col">
+            <span class="text-white font-mono text-[11px]">{{ item.clabe }}</span>
+            <span class="text-[10px] text-slate-400">{{ item.bank_name || 'Banco' }}{{ item.beneficiary ? ' • ' + item.beneficiary : '' }}</span>
+          </div>
+          <span v-else class="text-[10px] text-slate-600 italic">Sin CLABE</span>
+        </td>
         <td class="px-6 py-4 text-[10px] text-slate-400 font-mono">{{ item.whatsapp || '—' }}</td>
         <td class="px-6 py-4 text-right text-white font-black text-xs">{{ feeLabel(item) }}</td>
         <td class="px-6 py-4">
@@ -29,6 +36,11 @@
           </div>
           <p v-if="item.email" class="text-[10px] text-slate-500 mb-1">{{ item.email }}</p>
           <p class="text-[10px] text-slate-500 font-mono mb-3">{{ item.whatsapp || '—' }}</p>
+          <div v-if="item.clabe" class="bg-slate-950/60 p-3 rounded-xl border border-slate-800/80 mb-3">
+            <div class="text-[9px] uppercase tracking-wider text-slate-400 font-bold">Datos Bancarios</div>
+            <div class="text-xs font-mono text-white mt-0.5">{{ item.clabe }}</div>
+            <div class="text-[10px] text-slate-400">{{ item.bank_name || 'Banco' }}{{ item.beneficiary ? ' • ' + item.beneficiary : '' }}</div>
+          </div>
           <p class="text-white font-black mt-auto">Fee Easypoint: {{ feeLabel(item) }}</p>
         </div>
       </template>
@@ -46,6 +58,11 @@
               <div class="flex flex-col"><label class="label-sm">WhatsApp</label><input v-model="form.whatsapp" class="input-dark" placeholder="5215511112222"></div>
               <div class="flex flex-col"><label class="label-sm">Email</label><input v-model="form.email" type="email" class="input-dark" placeholder="contacto@proveedor.mx"></div>
             </div>
+            <div class="grid grid-cols-2 gap-4">
+              <div class="flex flex-col"><label class="label-sm">Banco</label><input v-model="form.bank_name" class="input-dark" placeholder="BBVA / Banorte / STP"></div>
+              <div class="flex flex-col"><label class="label-sm">CLABE Interbancaria (18 dígitos)</label><input v-model="form.clabe" maxlength="18" class="input-dark font-mono" placeholder="012345678901234567"></div>
+            </div>
+            <div class="flex flex-col"><label class="label-sm">Beneficiario / Razón Social</label><input v-model="form.beneficiary" class="input-dark" placeholder="Nombre completo o razón social"></div>
             <div class="flex flex-col">
               <label class="label-sm">Fee Easypoint</label>
               <div class="flex gap-2">
@@ -86,6 +103,7 @@ export default {
       form: this.blankForm(),
       cols: [
         { key: 'name', label: 'Proveedor' },
+        { key: 'bank', label: 'Datos Bancarios' },
         { key: 'wa', label: 'WhatsApp' },
         { key: 'fee', label: 'Fee', align: 'right' },
         { key: 'active', label: 'Estado' }
@@ -102,7 +120,7 @@ export default {
       return (Number(item && item.fee_rate) || 0) + '%';
     },
     blankForm() {
-      return { id: null, name: '', whatsapp: '', email: '', fee_type: 'percent', fee_rate: 15, fee_amount: 0, active: true };
+      return { id: null, name: '', whatsapp: '', email: '', clabe: '', bank_name: '', beneficiary: '', fee_type: 'percent', fee_rate: 15, fee_amount: 0, active: true };
     },
     token() { return localStorage.getItem('ep_token'); },
     formatMoney(a) { return new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN', maximumFractionDigits: 0 }).format(Number(a) || 0); },

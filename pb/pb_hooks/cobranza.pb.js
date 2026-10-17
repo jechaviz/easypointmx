@@ -16,7 +16,18 @@ onRecordAfterCreateRequest((e) => {
   const ref = String(rec.getString('ref') || '').trim();
   if (!ref) return;
   try {
-    const bk = $app.dao().findRecordById('excursion_bookings', ref);
+    let bk = null;
+    try {
+      bk = $app.dao().findRecordById('excursion_bookings', ref);
+    } catch (_) {
+      try {
+        bk = $app.dao().findFirstRecordByFilter('excursion_bookings', 'voucher_code = {:ref} || id = {:ref}', { ref: ref });
+      } catch (err2) {
+        bk = null;
+      }
+    }
+    if (!bk) return;
+
     const total = Number(bk.getFloat('total')) || 0;
     const paid = (Number(bk.getFloat('amount_paid')) || 0) + (Number(rec.getFloat('amount')) || 0);
     bk.set('amount_paid', paid);
@@ -24,6 +35,10 @@ onRecordAfterCreateRequest((e) => {
     const ps = bk.getString('payment_status');
     if (ps !== 'credit' && ps !== 'refunded' && ps !== 'failed') {
       bk.set('payment_status', paid <= 0 ? 'pending' : (total > 0 && paid >= total ? 'paid' : 'partial'));
+    }
+    if (bk.getString('status') === 'new') {
+      bk.set('status', 'confirmed');
+      bk.set('confirmed_channel', 'point_cash');
     }
     $app.dao().saveRecord(bk);
   } catch (err) {}

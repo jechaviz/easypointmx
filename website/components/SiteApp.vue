@@ -22,6 +22,7 @@
             <a :href="siteHref('/') + '#tracking'" @click.prevent="goToTracking" class="px-3 py-2 text-sm font-semibold text-slate-300 hover:text-white transition-colors">Rastrear envío</a>
             <a :href="siteHref('/guias')" @click.prevent="navigate('/guias')" class="px-3 py-2 text-sm font-semibold text-slate-300 hover:text-white transition-colors">Enviar paquete</a>
             <a :href="siteHref('/excursiones')" @click.prevent="navigate('/excursiones')" class="px-3 py-2 text-sm font-semibold text-slate-300 hover:text-white transition-colors">Reservar excursión</a>
+            <a :href="siteHref('/mi-reserva')" @click.prevent="navigate('/mi-reserva')" class="px-3 py-2 text-sm font-semibold text-brand-400 hover:text-brand-300 transition-colors flex items-center gap-1.5"><i class="bi bi-ticket-perforated"></i> Mi Reserva</a>
             <a :href="siteHref('/servicios')" @click.prevent="navigate('/servicios')" class="px-3 py-2 text-sm font-semibold text-slate-300 hover:text-white transition-colors">Servicios</a>
             <div class="mx-1 h-7 w-px bg-slate-700"></div>
             <button type="button" @click="openModal('map')" class="inline-flex items-center gap-2 rounded-full border border-white/15 px-4 py-2.5 text-sm font-bold text-white hover:border-brand-500/60 hover:bg-white/5 transition-all">
@@ -54,6 +55,11 @@
                 <span class="mt-3 block text-sm font-black text-white">Rastrear</span>
                 <span class="mt-1 block text-[10px] text-slate-500">Consultar un envío</span>
               </a>
+              <a :href="siteHref('/mi-reserva')" @click.prevent="navigate('/mi-reserva')" class="rounded-2xl border border-brand-500/30 bg-brand-500/5 p-4 text-left hover:border-brand-500 hover:bg-brand-500/10 transition-all">
+                <i class="bi bi-ticket-perforated text-brand-400"></i>
+                <span class="mt-3 block text-sm font-black text-white">Mi Reserva</span>
+                <span class="mt-1 block text-[10px] text-brand-400/80">Voucher & Abonos</span>
+              </a>
               <a :href="siteHref('/guias')" @click.prevent="navigate('/guias')" class="rounded-2xl border border-white/10 bg-white/5 p-4 text-left hover:border-brand-500/40 hover:bg-white/10 transition-all">
                 <i class="bi bi-box-seam text-brand-400"></i>
                 <span class="mt-3 block text-sm font-black text-white">Enviar</span>
@@ -64,7 +70,7 @@
                 <span class="mt-3 block text-sm font-black text-white">Reservar</span>
                 <span class="mt-1 block text-[10px] text-slate-500">Elegir una excursión</span>
               </a>
-              <a :href="siteHref('/servicios')" @click.prevent="navigate('/servicios')" class="rounded-2xl border border-white/10 bg-white/5 p-4 text-left hover:border-brand-500/40 hover:bg-white/10 transition-all">
+              <a :href="siteHref('/servicios')" @click.prevent="navigate('/servicios')" class="rounded-2xl border border-white/10 bg-white/5 p-4 text-left hover:border-brand-500/40 hover:bg-white/10 transition-all col-span-2">
                 <i class="bi bi-grid-3x3-gap text-brand-400"></i>
                 <span class="mt-3 block text-sm font-black text-white">Servicios</span>
                 <span class="mt-1 block text-[10px] text-slate-500">Ver el catálogo</span>
@@ -127,6 +133,7 @@
             <div class="mt-4 flex flex-col items-start gap-3 text-sm">
               <button type="button" @click="openModal('partner')" class="hover:text-white">Afiliar un punto</button>
               <a :href="siteHref('/ecommerce')" @click.prevent="navigate('/ecommerce')" class="hover:text-white">Soluciones e-commerce</a>
+              <a :href="repoHref('/app/')" class="hover:text-white text-brand-400 font-bold">Portal Proveedores</a>
               <a :href="siteHref('/descargar')" @click.prevent="navigate('/descargar')" class="hover:text-white">Instalar web app</a>
               <a :href="repoHref('/app/')" class="hover:text-white">Acceso operativo</a>
             </div>
@@ -365,7 +372,8 @@ export default {
     ServiciosView: Vue.defineAsyncComponent(() => loadModule('./components/ServiciosView.vue', options)),
     DescargarView: Vue.defineAsyncComponent(() => loadModule('./components/DescargarView.vue', options)),
     PrivacidadView: Vue.defineAsyncComponent(() => loadModule('./components/PrivacidadView.vue', options)),
-    DeveloperView: Vue.defineAsyncComponent(() => loadModule('./components/DeveloperView.vue', options))
+    DeveloperView: Vue.defineAsyncComponent(() => loadModule('./components/DeveloperView.vue', options)),
+    VoucherView: Vue.defineAsyncComponent(() => loadModule('./components/VoucherView.vue', options))
   },
   data() {
     return {
@@ -411,7 +419,9 @@ export default {
         '/servicios': 'ServiciosView',
         '/descargar': 'DescargarView',
         '/privacidad': 'PrivacidadView',
-        '/developers': 'DeveloperView'
+        '/developers': 'DeveloperView',
+        '/mi-reserva': 'VoucherView',
+        '/voucher': 'VoucherView'
       };
       return routes[this.currentRoute] || 'HomeView';
     }

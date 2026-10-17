@@ -13,7 +13,10 @@
           <td class="px-6 py-4">
             <div class="flex flex-col">
               <span class="text-white font-bold text-xs">{{ item.customer_name }}</span>
-              <span class="text-[10px] text-slate-500 font-mono">{{ item.customer_phone }}</span>
+              <div class="flex items-center gap-1.5 mt-0.5">
+                <span class="text-[10px] text-slate-500 font-mono">{{ item.customer_phone }}</span>
+                <span v-if="item.voucher_code" class="text-[9px] bg-brand-500/10 text-brand-400 font-mono px-1.5 py-0.2 rounded border border-brand-500/20 font-bold" :title="'Voucher: ' + item.voucher_code">{{ item.voucher_code }}</span>
+              </div>
             </div>
           </td>
           <td class="px-6 py-4">
@@ -33,6 +36,9 @@
           <td class="px-6 py-4">
             <span class="text-[9px] font-black px-2.5 py-1 rounded-lg border uppercase tracking-wider" :class="statusBadge(item.status)">{{ statusLabel(item.status) }}</span>
             <span class="block mt-1 text-[9px] font-black uppercase tracking-wider" :class="payColor(item.payment_status)">{{ payLabel(item.payment_status) }}</span>
+            <span v-if="item.checked_in" class="inline-flex items-center gap-1 mt-1 text-[8px] bg-emerald-950/60 text-emerald-300 border border-emerald-500/30 px-1.5 py-0.5 rounded font-black uppercase tracking-wider" :title="item.checked_in_at ? 'Abordó: ' + formatDate(item.checked_in_at) : 'Abordó'">
+              <i class="bi bi-check-all"></i> Abordó
+            </span>
           </td>
         </template>
 
@@ -48,8 +54,16 @@
         <template #card="{ item }">
           <div class="bg-slate-900 border border-slate-800 rounded-3xl p-6 flex flex-col">
             <div class="flex items-center justify-between mb-2">
-              <span class="text-white font-black text-sm">{{ item.customer_name }}</span>
-              <span class="text-[9px] font-black px-2.5 py-1 rounded-lg border uppercase tracking-wider" :class="statusBadge(item.status)">{{ statusLabel(item.status) }}</span>
+              <div class="flex flex-col">
+                <span class="text-white font-black text-sm">{{ item.customer_name }}</span>
+                <span v-if="item.voucher_code" class="text-[9px] text-brand-400 font-mono font-bold">{{ item.voucher_code }}</span>
+              </div>
+              <div class="flex flex-col items-end gap-1">
+                <span class="text-[9px] font-black px-2.5 py-1 rounded-lg border uppercase tracking-wider" :class="statusBadge(item.status)">{{ statusLabel(item.status) }}</span>
+                <span v-if="item.checked_in" class="text-[8px] bg-emerald-950/60 text-emerald-300 border border-emerald-500/30 px-1.5 py-0.5 rounded font-black uppercase tracking-wider">
+                  <i class="bi bi-check-all"></i> Abordó
+                </span>
+              </div>
             </div>
             <p class="text-[10px] text-slate-500 font-mono mb-2">{{ item.customer_phone }}</p>
             <p class="text-slate-300 text-xs font-bold">{{ item.excursion_name }}</p>
@@ -198,16 +212,18 @@ export default {
     bookingLines(item) {
       return [
         `Reserva Easypoint: ${item.excursion_name || ''}`,
+        item.voucher_code ? `Folio/Voucher: ${item.voucher_code}` : '',
         `Destino: ${item.destination || ''}`,
         `Cliente: ${item.customer_name} (${item.customer_phone})`,
         `Personas: ${item.people || 1}`,
         `Fecha excursión: ${item.excursion_date || ''}`,
         `Total: ${this.formatMoney(item.total)}`
-      ];
+      ].filter(Boolean);
     },
     waClient(item) {
       const phone = String(item.customer_phone || '').replace(/\D/g, '');
-      const msg = [`Hola ${item.customer_name || ''}, tu reserva para ${item.excursion_name || 'la excursión'} el ${item.excursion_date || ''} está confirmada. ¡Te esperamos!`];
+      const codeMsg = item.voucher_code ? ` Folio de voucher: ${item.voucher_code}.` : '';
+      const msg = [`Hola ${item.customer_name || ''}, tu reserva para ${item.excursion_name || 'la excursión'} el ${item.excursion_date || ''} está confirmada.${codeMsg} ¡Te esperamos!`];
       return `https://wa.me/${phone}?text=${encodeURIComponent(msg.join('\n'))}`;
     },
     waProvider(item) { return `https://wa.me/${this.providerWaFor(item)}?text=${encodeURIComponent(this.bookingLines(item).join('\n'))}`; },
