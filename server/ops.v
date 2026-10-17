@@ -231,3 +231,31 @@ fn (mut a App) economics(days_in int) Resp {
 	manual := a.db.count('outbox', "status='manual'")
 	return json_ok('{"window_days":${days},"since":${jstr(since[..10])},"excursions":{"bookings":${total_b},"active":${live},"completed":${done},"cancelled":${total_b - live},"gmv_booked":${gmv:.2f},"cash_collected":${collected:.2f},"take_booked":${take_booked:.2f},"take_recognized":${take_rec:.2f},"protect_revenue":${protect:.2f},"discounts_given":${disc:.2f},"take_rate_pct":${if gmv > 0 { round2(take_booked / gmv * 100.0) } else { 0.0 }:.2f},"avg_ticket":${if live > 0 { round2(gmv / f64(live)) } else { 0.0 }:.2f}},"funnel":{${st_json.join(',')}},"guides":{"count":${guides.len},"gmv":${g_gmv:.2f},"point_commission":${g_com:.2f},"take":${g_take:.2f},"insurance_revenue":${g_ins:.2f}},"services":{"count":${orders.len},"gmv":${o_gmv:.2f},"point_commission":${o_com:.2f},"take":${o_take:.2f}},"custody":{"cash_at_points":${held:.2f},"cash_in_route":${route:.2f},"customer_deposits_on_active_trips":${deferred:.2f},"credit_liability":${liab:.2f},"float_total":${held + route + deferred:.2f}},"growth_cost":{"referral_and_cashback":${promo:.2f},"cancellation_bonus":${bonus:.2f},"discounts":${disc:.2f},"breakage_revenue":${breakage:.2f}},"club":{"new_members":${club_new},"revenue":${club_rev:.2f}},"contribution":{"revenue":${revenue:.2f},"variable_cost":${cost:.2f},"margin":${margin:.2f},"margin_pct":${if revenue > 0 { round2(margin / revenue * 100.0) } else { 0.0 }:.2f},"point_commission_paid":${point_com:.2f}},"customers":{"total":${custs.len},"buyers":${buyers},"repeat_rate_pct":${if buyers > 0 { round2(f64(repeat) / f64(buyers) * 100.0) } else { 0.0 }:.2f},"avg_ltv":${if buyers > 0 { round2(spend / f64(buyers)) } else { 0.0 }:.2f},"club_members":${members},"segments":{${seg_json.join(',')}}},"health":{"deposit_conversion_pct":${if total_b > 0 { round2(f64(paidish) / f64(total_b) * 100.0) } else { 0.0 }:.2f},"cancel_rate_pct":${if total_b > 0 { round2(f64(total_b - live) / f64(total_b) * 100.0) } else { 0.0 }:.2f},"open_risk_flags":${risk},"open_tasks":${tasks_open},"outbox_manual_pending":${manual}}}')
 }
+
+// Serie diaria para gráficas: reservas, GMV reservado y abonos recibidos.
+fn (mut a App) ops_series(days_in int) Resp {
+	days := if days_in < 3 { 14 } else if days_in > 120 { 120 } else { days_in }
+	since := add_days(today(), -(days - 1))
+	bk := a.db.rows("SELECT DATE(created_at) AS d, COUNT(*) AS n_c, COALESCE(SUM(total),0) AS n_gmv FROM bookings WHERE created_at>=${q(since + ' 00:00:00')} AND status<>'cancelled' GROUP BY DATE(created_at)") or {
+		[]Row{}
+	}
+	pay := a.db.rows("SELECT DATE(created_at) AS d, COALESCE(SUM(amount),0) AS n_amt FROM payments WHERE created_at>=${q(since + ' 00:00:00')} AND method<>'credit' AND status<>'cancelled' AND status<>'pending_confirm' GROUP BY DATE(created_at)") or {
+		[]Row{}
+	}
+	mut bc := map[string]int{}
+	mut bg := map[string]f64{}
+	mut pa := map[string]f64{}
+	for r in bk {
+		bc[r['d']] = r['n_c'].int()
+		bg[r['d']] = r['n_gmv'].f64()
+	}
+	for r in pay {
+		pa[r['d']] = r['n_amt'].f64()
+	}
+	mut out := []string{}
+	for i in 0 .. days {
+		d := add_days(since, i)
+		out << '{"date":${jstr(d)},"bookings":${bc[d] or { 0 }},"gmv":${(bg[d] or { 0.0 }):.2f},"payments":${(pa[d] or { 0.0 }):.2f}}'
+	}
+	return json_ok('{"days":[${out.join(',')}]}')
+}

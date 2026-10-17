@@ -108,6 +108,7 @@ fn (mut a App) route_public(r &Req, segs []string) Resp {
 			}
 		}
 		'quote' { return a.public_quote(r) }
+		'reviews' { return a.public_reviews() }
 		'referral' { return a.referral_check(r) }
 		'track' {
 			if segs.len == 4 {
@@ -221,6 +222,12 @@ fn (mut a App) route_ops(u User, r &Req, segs []string) Resp {
 				return fail(403, 'forbidden')
 			}
 			return a.economics((r.query['days'] or { '30' }).int())
+		}
+		'series' {
+			if u.role != 'admin' {
+				return fail(403, 'forbidden')
+			}
+			return a.ops_series((r.query['days'] or { '14' }).int())
 		}
 		'finance' {
 			if u.role != 'admin' {

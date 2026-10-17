@@ -1,0 +1,30 @@
+# Easypoint · Apache (cPanel / Spaceship). Estáticos directos; /api → shim.php → binario V.
+# Ajusta RewriteBase si se despliega en un subdirectorio (p. ej. /easypoint/).
+RewriteEngine On
+RewriteBase /
+
+# El encabezado Authorization y X-API-Key deben llegar al binario
+RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
+SetEnvIf X-API-Key "(.+)" HTTP_X_API_KEY=$1
+
+# API
+RewriteRule ^api(/.*)?$ shim.php [L,QSA]
+
+# Raíz → sitio público
+RewriteRule ^$ website/ [R=302,L]
+
+# SPA: rutas sin extensión dentro de /website y /app caen a su index
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^website/ website/index.html [L]
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^app/ app/index.html [L]
+
+# Seguridad básica
+<FilesMatch "\.(env|sql|v|sh|md)$">
+  Require all denied
+</FilesMatch>
+Options -Indexes
+Header always set X-Content-Type-Options "nosniff"
+Header always set Referrer-Policy "strict-origin-when-cross-origin"

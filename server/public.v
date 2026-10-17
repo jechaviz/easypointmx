@@ -66,7 +66,7 @@ fn (mut a App) departures_json(exc_filter string) map[string]string {
 }
 
 fn (mut a App) public_excursions() Resp {
-	rs := a.db.rows('SELECT e.id, e.provider_id, e.name, e.destination, e.description, e.price, e.duration, e.image_url, e.max_capacity, e.min_people, e.deposit_amount, e.policy, e.meeting_point, e.departure_time, e.featured, e.tags, e.rating_avg, e.rating_count, p.name AS provider_name FROM excursions e LEFT JOIN providers p ON p.id=e.provider_id WHERE e.active=1 ORDER BY e.featured DESC, e.id') or {
+	rs := a.db.rows('SELECT e.id, e.provider_id, e.name, e.destination, e.description, e.price, e.duration, e.image_url, e.max_capacity, e.min_people, e.deposit_amount, e.cutoff_days, e.policy, e.meeting_point, e.departure_time, e.featured, e.tags, e.rating_avg, e.rating_count, p.name AS provider_name FROM excursions e LEFT JOIN providers p ON p.id=e.provider_id WHERE e.active=1 ORDER BY e.featured DESC, e.id') or {
 		[]Row{}
 	}
 	deps := a.departures_json('')
@@ -518,4 +518,16 @@ fn (mut a App) webhook_mercadopago(r &Req) Resp {
 		actor:       'mercadopago'
 	})
 	return json_ok('{"ok":true,"applied":${res.ok},"reason":${jstr(res.err)}}')
+}
+
+// Reseñas públicas: sólo las de 4-5 estrellas con texto (las demás van al canal privado).
+fn (mut a App) public_reviews() Resp {
+	rs := a.db.rows("SELECT customer_name, excursion_name, rating, review_text FROM bookings WHERE rating>=4 AND review_text<>'' ORDER BY id DESC LIMIT 6") or {
+		[]Row{}
+	}
+	mut out := []string{}
+	for r in rs {
+		out << '{"name":${jstr(first_word(r['customer_name']))},"excursion":${jstr(r['excursion_name'])},"rating":${r['rating'].int()},"quote":${jstr(r['review_text'])}}'
+	}
+	return json_ok('[' + out.join(',') + ']')
 }

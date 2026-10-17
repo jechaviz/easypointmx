@@ -236,7 +236,7 @@ let cust;
   const a = await post('/api/public/bookings', { excursion_id: sierra.id, date: dd, people: 1, customer_name: 'Sin Pagar', customer_phone: ph1, customer_email: `np${uniq}@test.mx` });
   const b = await post('/api/public/bookings', { excursion_id: sierra.id, date: dd, people: 1, customer_name: 'Abonó y Dejó', customer_phone: ph2 });
   await post('/api/public/voucher/pay', { code: b.data.booking.code, amount: 400 });
-  sql(`UPDATE bookings SET excursion_date='${day(2)}' WHERE code IN ('${a.data.booking.code}','${b.data.booking.code}')`);
+  sql(`UPDATE bookings SET excursion_date='${day(2)}', created_at=DATE_SUB(created_at, INTERVAL 2 DAY) WHERE code IN ('${a.data.booking.code}','${b.data.booking.code}')`);
   sql(`UPDATE departures SET date='${day(2)}' WHERE excursion_id=${sierra.id} AND date='${dd}' AND NOT EXISTS (SELECT 1 FROM (SELECT 1) x WHERE 0)`);
   const t1 = await post('/api/admin/tick', {}, T.admin);
   ok('Tick full corre sin errores', t1.status === 200 && t1.data.errors.length === 0, JSON.stringify(t1.data));

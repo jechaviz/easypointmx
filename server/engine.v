@@ -32,6 +32,7 @@ fn (mut a App) scan_bookings(mut st Stats) {
 	nudge_h := a.cfg_i('policy.nudge_hours_unpaid', 24)
 	review_delay := a.cfg_i('growth.review_delay_days', 1)
 	club_pct := a.cfg_f('club.cashback_pct', 5)
+	grace_h := a.cfg_f('policy.last_minute_grace_hours', 12)
 	t := today()
 	rows := a.db.rows("SELECT b.*, e.cutoff_days AS x_cutoff, e.deposit_amount AS x_deposit, e.name AS x_name, e.meeting_point AS x_meeting FROM bookings b JOIN excursions e ON e.id=b.excursion_id WHERE b.status<>'cancelled' ORDER BY b.id DESC LIMIT 3000") or {
 		[]Row{}
@@ -162,7 +163,7 @@ fn (mut a App) scan_bookings(mut st Stats) {
 			}
 		}
 		// 3) vencimiento: lo abonado NO se devuelve en efectivo → crédito; sin abono libera el cupo
-		if balance > 0 && days <= cutoff && total > 0 {
+		if balance > 0 && days <= cutoff && total > 0 && (days <= 0 || hours_since_dt(b['created_at']) >= grace_h) {
 			until := add_months_dt(now_dt(), a.cfg_i('policy.credit_validity_months', 12))[..10]
 			if paid > 0 && phone != '' {
 				a.credit(phone, b['customer_name'], paid, 'credit_from_booking', b['code'])

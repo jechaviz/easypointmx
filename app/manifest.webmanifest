@@ -1,0 +1,13 @@
+{
+  "name": "Easypoint · Panel de trabajo",
+  "short_name": "Easypoint Panel",
+  "description": "Cobra abonos, recolecta efectivo, gestiona salidas y atiende a tus clientes.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#070b14",
+  "theme_color": "#0b1220",
+  "lang": "es-MX",
+  "icons": [{ "src": "../website/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }]
+}

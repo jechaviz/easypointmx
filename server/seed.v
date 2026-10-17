@@ -8,6 +8,7 @@ const config_defaults = [
 	['policy', 'policy.nudge_hours_unpaid', '24', 'Horas sin abono para el primer recordatorio'],
 	['policy', 'policy.protect_refund_pct', '80', '% reembolsable con Easypoint Protege (cancelando con ≥7 días)'],
 	['policy', 'policy.reschedule_fee', '150', 'Costo de cambio de fecha sin Protege/Club (después del primero gratis)'],
+	['policy', 'policy.last_minute_grace_hours', '12', 'Horas de gracia para pagar una reserva hecha dentro de la ventana de pago'],
 	['policy', 'policy.reschedule_min_days', '3', 'Días mínimos de anticipación para cambiar fecha'],
 	['policy', 'policy.first_reschedule_free', 'true', 'El primer cambio de fecha es gratis'],
 	['pricing', 'pricing.dynamic_enabled', 'false', 'Activar reglas de precio dinámico'],
@@ -160,7 +161,7 @@ fn (mut a App) seed_demo() {
 		[prov_ids[2].str(), 'Peña de Bernal y Pueblo Mágico', 'Bernal', 'Ascenso guiado a la tercera roca monolítica más grande del mundo y comida típica.', '890', 'Medio día · 6 h', '25', '6', '200', 'Terminal de autobuses, Querétaro', '08:00', 'senderismo,pueblo mágico', '0'],
 		[prov_ids[0].str(), 'Rafting y Tirolesa en Jalpan', 'Jalpan de Serra', 'Descenso en balsa por el río Santa María y cuatro tirolesas sobre el cañón.', '1890', '1 día · 11 h', '12', '6', '500', 'Salida 5:30 am desde Querétaro centro', '05:30', 'aventura,rio', '0'],
 		[prov_ids[2].str(), 'Tren turístico y Hacienda', 'Querétaro', 'Paseo en tren de época, visita a una hacienda colonial y comida de tres tiempos.', '1190', 'Medio día · 7 h', '18', '8', '300', 'Estación de ferrocarril, Querétaro', '10:00', 'tren,historia', '0'],
-		[prov_ids[1].str(), 'Cavas de Freixenet y Glamping', 'Ezequiel Montes', 'Recorrido por la cava, cata de espumosos y noche opcional en glamping.', '2150', '2 días · 1 noche', '10', '4', '600', 'Plaza de Armas, Querétaro', '09:30', 'vino,glamping,romántico', '1'],
+		[prov_ids[1].str(), 'Cavas de Espumosos y Glamping', 'Ezequiel Montes', 'Recorrido por la cava, cata de espumosos y noche opcional en glamping.', '2150', '2 días · 1 noche', '10', '4', '600', 'Plaza de Armas, Querétaro', '09:30', 'vino,glamping,romántico', '1'],
 	]
 	mut exc_ids := []i64{}
 	for e in excs {

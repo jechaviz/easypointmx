@@ -198,7 +198,7 @@ fn resources() []Res {
 			name:   'outbox'
 			table:  'outbox'
 			read:   ['admin', 'support', 'sales']
-			write:  ['admin', 'support']
+			write:  ['admin', 'support', 'sales']
 			search: ['recipient', 'to_name', 'template', 'subject']
 			no_create: true
 		},

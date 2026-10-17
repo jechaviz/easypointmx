@@ -1,0 +1,97 @@
+{
+  "vendor/growth-kit/index.js": {
+    "from": "growth-kit/js/index.js",
+    "sha256_16": "d8f572c7fe7508cd",
+    "bytes": 177
+  },
+  "vendor/growth-kit/whatsapp.js": {
+    "from": "growth-kit/js/whatsapp.js",
+    "sha256_16": "acf2da56eb5de350",
+    "bytes": 1885
+  },
+  "vendor/growth-kit/attribution.js": {
+    "from": "growth-kit/js/attribution.js",
+    "sha256_16": "ba891732426042ae",
+    "bytes": 1659
+  },
+  "vendor/growth-kit/share.js": {
+    "from": "growth-kit/js/share.js",
+    "sha256_16": "e8414e21a1751664",
+    "bytes": 1462
+  },
+  "vendor/growth-kit/campaign.js": {
+    "from": "growth-kit/js/campaign.js",
+    "sha256_16": "a3b7a3a3ae584d1a",
+    "bytes": 17455
+  },
+  "vendor/growth-kit/leads.js": {
+    "from": "growth-kit/js/leads.js",
+    "sha256_16": "38745ef08e1d7e18",
+    "bytes": 3106
+  },
+  "vendor/growth-kit/ui.js": {
+    "from": "growth-kit/js/ui.js",
+    "sha256_16": "ca965b5fd57c76e4",
+    "bytes": 2628
+  },
+  "vendor/web-ui/FAQ.vue": {
+    "from": "web-ui/components/FAQ.vue",
+    "sha256_16": "bddb24770184a540",
+    "bytes": 4596
+  },
+  "vendor/web-ui/Testimonials.vue": {
+    "from": "web-ui/components/Testimonials.vue",
+    "sha256_16": "a528f4db4d862dec",
+    "bytes": 3980
+  },
+  "vendor/web-ui/Timeline.vue": {
+    "from": "web-ui/components/Timeline.vue",
+    "sha256_16": "346c5cc3f1b026cc",
+    "bytes": 3296
+  },
+  "vendor/web-ui/AudiencePaths.vue": {
+    "from": "web-ui/components/AudiencePaths.vue",
+    "sha256_16": "af4b3065dcdc7c91",
+    "bytes": 7855
+  },
+  "vendor/web-ui/Gallery.vue": {
+    "from": "web-ui/components/Gallery.vue",
+    "sha256_16": "90a3e549d55e0608",
+    "bytes": 5866
+  },
+  "vendor/web-ui/Lightbox.vue": {
+    "from": "web-ui/components/Lightbox.vue",
+    "sha256_16": "1e1001bed435358f",
+    "bytes": 6401
+  },
+  "vendor/web-ui/SocialBar.vue": {
+    "from": "web-ui/components/SocialBar.vue",
+    "sha256_16": "3cc82a3b1043dd73",
+    "bytes": 8772
+  },
+  "vendor/web-common/browser.js": {
+    "from": "web-common/browser.js",
+    "sha256_16": "0624fcf58139b67a",
+    "bytes": 21215
+  },
+  "vendor/procurement-common/browser.js": {
+    "from": "procurement-common/browser.js",
+    "sha256_16": "135ff220c4053d47",
+    "bytes": 10253
+  },
+  "vendor/qrcode/qrcode.js": {
+    "from": "erp/ui/vendor/qrcode.js",
+    "sha256_16": "c345e191768fc7dc",
+    "bytes": 56718
+  },
+  "vendor/site-audit-core/index.mjs": {
+    "from": "site-audit-core/index.mjs",
+    "sha256_16": "7b59878620045dae",
+    "bytes": 15120
+  },
+  "vendor/site-audit-core/promotion.mjs": {
+    "from": "site-audit-core/promotion.mjs",
+    "sha256_16": "ccec0d475ee7ae1f",
+    "bytes": 7630
+  }
+}

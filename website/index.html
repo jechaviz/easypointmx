@@ -1,115 +1,67 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="es-MX">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <!-- SPA deep-link restore: 404.html redirige aquí con ?redirect=/ruta -->
-    <script>
-      (function () {
-        try {
-          var r = new URLSearchParams(window.location.search).get('redirect');
-          if (r) window.history.replaceState(null, '', window.location.pathname.replace(/\/$/, '') + decodeURIComponent(r));
-        } catch (e) {}
-      })();
-    </script>
-    <title>Easypoint | Tus compras online, cerca de ti siempre.</title>
-
-    <!-- PWA: app instalable -->
-    <link rel="manifest" href="manifest.webmanifest">
-    <meta name="theme-color" content="#84cc16">
-    <link rel="apple-touch-icon" href="icon.svg">
-    <script>
-      // Captura el prompt de instalación para usarlo desde la vista /descargar.
-      window.addEventListener('beforeinstallprompt', function (e) {
-        e.preventDefault();
-        window.__epInstallPrompt = e;
-        window.dispatchEvent(new Event('ep-installable'));
-      });
-      if ('serviceWorker' in navigator) {
-        window.addEventListener('load', function () {
-          navigator.serviceWorker.register('sw.js').catch(function () {});
-        });
-      }
-    </script>
-    
-    <!-- Meta SEO -->
-    <meta name="description" content="Rastrea paquetes, consulta puntos Easypoint disponibles y solicita evaluación para operar como punto de entrega.">
-    <meta name="keywords" content="logística, ecommerce, puntos de recolección, méxico, envíos, última milla">
-    
-    <!-- Fonts & Icons -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@100;300;400;500;600;700;800;900&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
-    
-    <!-- Tailwind CSS (CDN for consistency) -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    colors: {
-                        brand: {
-                            50: '#f7fee7', 100: '#ecfccb', 200: '#d9f99d', 300: '#bef264',
-                            400: '#a3e635', 500: '#84cc16', 600: '#65a30d', 700: '#4d7c0f',
-                            800: '#3f6212', 900: '#365314', 950: '#1a2e05',
-                        },
-                    },
-                    fontFamily: {
-                        sans: ['Outfit', 'sans-serif'],
-                    },
-                }
-            }
-        }
-    </script>
-
-    <!-- Vue 3 & SFC Loader -->
-    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/vue3-sfc-loader/dist/vue3-sfc-loader.js"></script>
-    <script src="../runtime-config.js"></script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Easypoint · Tu ciudad, a un punto de distancia</title>
+  <meta name="description" content="Recibe paquetes, envía con DHL y Estafeta, paga servicios y reserva excursiones con apartado desde $100 en el punto Easypoint más cercano.">
+  <meta name="theme-color" content="#84cc16">
+  <meta property="og:title" content="Easypoint · Tu ciudad, a un punto de distancia">
+  <meta property="og:description" content="Paquetes, guías, servicios y excursiones con apartado, en una red de puntos cerca de ti.">
+  <meta property="og:type" content="website">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="icon.svg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="../shared/ep-ui.css">
+  <script>
+    // Redirección de enlaces profundos (404.html → ?redirect=/ruta) y tema antes del primer pintado
+    (function () {
+      try {
+        var r = new URLSearchParams(location.search).get('redirect');
+        if (r) history.replaceState(null, '', location.pathname.replace(/\/$/, '') + '/#' + decodeURIComponent(r));
+        var t = localStorage.getItem('ep-theme');
+        if (t && t !== 'auto') document.documentElement.setAttribute('data-theme', t);
+      } catch (e) {}
+      window.addEventListener('beforeinstallprompt', function (e) { e.preventDefault(); window.__epInstall = e; window.dispatchEvent(new Event('ep-installable')); });
+      if ('serviceWorker' in navigator) window.addEventListener('load', function () { navigator.serviceWorker.register('sw.js').catch(function () {}); });
+    })();
+  </script>
+  <script type="application/ld+json">{"@context":"https://schema.org","@type":"Organization","name":"Easypoint","description":"Red de puntos para recibir paquetes, enviar guías, pagar servicios y reservar excursiones.","areaServed":"MX"}</script>
 </head>
-<body class="bg-white text-slate-900 selection:bg-brand-500/30">
-    <div id="app"></div>
-
-    <script>
-        function loadOptionalScript(src, done) {
-            const script = document.createElement('script');
-            script.src = src;
-            script.async = false;
-            script.onload = done;
-            script.onerror = done;
-            document.head.appendChild(script);
-        }
-
-        function mountSite() {
-            const { loadModule } = window['vue3-sfc-loader'];
-
-            const options = {
-                moduleCache: { vue: Vue },
-                async getFile(url) {
-                    const res = await fetch(url);
-                    if (!res.ok) throw Object.assign(new Error(res.statusText + ' ' + url), { res });
-                    return { getContentData: asBinary => asBinary ? res.arrayBuffer() : res.text() }
-                },
-                addStyle(textContent) {
-                    const style = Object.assign(document.createElement('style'), { textContent });
-                    document.head.appendChild(style);
-                },
-            };
-
-            const app = Vue.createApp({
-                template: '<SiteApp/>',
-                components: {
-                    SiteApp: Vue.defineAsyncComponent(() => loadModule('./components/SiteApp.vue', options))
-                }
-            });
-
-            app.mount('#app');
-        }
-
-        loadOptionalScript('../runtime-config.generated.js', () => {
-            loadOptionalScript('../runtime-config.local.js', mountSite);
-        });
-    </script>
+<body>
+  <div id="app"><div style="min-height:100vh;display:grid;place-items:center;font-family:system-ui;color:#64748b">Cargando Easypoint…</div></div>
+  <noscript><p style="padding:24px;font-family:system-ui">Easypoint necesita JavaScript. También puedes escribirnos por WhatsApp.</p></noscript>
+  <script src="https://unpkg.com/vue@3.5.13/dist/vue.global.prod.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/vue3-sfc-loader@0.9.5/dist/vue3-sfc-loader.js"></script>
+  <script src="../runtime-config.js"></script>
+  <script src="../runtime-config.generated.js" onerror="void 0"></script>
+  <script src="../vendor/web-common/browser.js"></script>
+  <script src="../vendor/procurement-common/browser.js"></script>
+  <script src="../shared/ep-art.js"></script>
+  <script src="../shared/ep-core.js"></script>
+  <script>
+    EP.boot({
+      base: './components/',
+      shell: './components/Shell.vue',
+      notFound: { path: '*', name: 'notfound', comp: 'pages/NotFound.vue', title: 'No encontrada' },
+      routes: [
+        { path: '/', name: 'home', comp: 'pages/Home.vue', title: 'Tu ciudad, a un punto de distancia' },
+        { path: '/excursiones', name: 'excursiones', comp: 'pages/Excursiones.vue', title: 'Excursiones con apartado' },
+        { path: '/excursion/:id', name: 'excursion', comp: 'pages/Excursion.vue', title: 'Reserva tu excursión' },
+        { path: '/voucher', name: 'voucher', comp: 'pages/Voucher.vue', title: 'Mi voucher' },
+        { path: '/envia', name: 'envia', comp: 'pages/Envia.vue', title: 'Envía con DHL y Estafeta' },
+        { path: '/rastreo', name: 'rastreo', comp: 'pages/Rastreo.vue', title: 'Rastrea tu paquete' },
+        { path: '/puntos', name: 'puntos', comp: 'pages/Puntos.vue', title: 'Puntos Easypoint' },
+        { path: '/servicios', name: 'servicios', comp: 'pages/Servicios.vue', title: 'Servicios en tu punto' },
+        { path: '/club', name: 'club', comp: 'pages/Club.vue', title: 'Easypoint Club' },
+        { path: '/afiliate', name: 'afiliate', comp: 'pages/Afiliate.vue', title: 'Afíliate: puntos, proveedores y e-commerce' },
+        { path: '/ayuda', name: 'ayuda', comp: 'pages/Ayuda.vue', title: 'Ayuda' },
+        { path: '/legal/:doc', name: 'legal', comp: 'pages/Legal.vue', title: 'Legal' },
+        { path: '/descargar', name: 'descargar', comp: 'pages/Descargar.vue', title: 'Instala la app' }
+      ]
+    });
+  </script>
 </body>
 </html>
