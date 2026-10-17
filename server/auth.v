@@ -125,6 +125,23 @@ fn (a &App) limited(r &Req, bucket string, limit int, window_s int) bool {
 	return false
 }
 
+// Límite sólo sobre fallos: consulta sin incrementar.
+fn (a &App) over_limit(r &Req, bucket string, limit int, window_s int) bool {
+	now := time.now().unix()
+	row := a.db.one('SELECT hits, window_start FROM rate_limits WHERE bucket=${q('${bucket}:${r.ip}')}') or { return false }
+	if row.len == 0 || now - row['window_start'].i64() >= window_s {
+		return false
+	}
+	return row['hits'].int() >= limit
+}
+
+// Registra un fallo en el bucket (abre la ventana si no existe).
+fn (a &App) hit(r &Req, bucket string, window_s int) {
+	now := time.now().unix()
+	key := q('${bucket}:${r.ip}')
+	a.db.exec('INSERT INTO rate_limits (bucket,hits,window_start) VALUES (${key},1,${now}) ON DUPLICATE KEY UPDATE hits = IF(${now} - window_start >= ${window_s}, 1, hits + 1), window_start = IF(${now} - window_start >= ${window_s}, ${now}, window_start)') or {}
+}
+
 fn (a &App) audit(actor string, action string, target string, target_id i64, detail string) {
 	a.db.insert('audit_log', {
 		'actor':     actor

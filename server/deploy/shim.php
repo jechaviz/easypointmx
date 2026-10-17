@@ -63,6 +63,7 @@ fclose($pipes[1]);
 $err = stream_get_contents($pipes[2]) ?: '';
 fclose($pipes[2]);
 $code = proc_close($proc);
+if ($err !== '') error_log('[easypoint] ' . substr($err, 0, 600));   // líneas [db-error] del binario
 
 if ($out === '') fail(502, 'Respuesta vacía del backend' . ($code !== 0 ? " (salida $code)" : '') . ($err !== '' ? ': ' . substr($err, 0, 200) : ''));
 

@@ -11,6 +11,7 @@ pub mut:
 
 const ddl_files = [
 	$embed_file('schema/001_core.sql'),
+	$embed_file('schema/002_fixes.sql'),
 ]
 
 fn kind_of(typ string) string {
@@ -105,8 +106,14 @@ pub fn (d &Db) migrate() !int {
 		}
 		// una sentencia por CREATE TABLE (separadas por ';')
 		for stmt in f.to_string().split(';\n') {
-			s := stmt.trim_space()
-			if s == '' || s.starts_with('--') && !s.contains('CREATE') {
+			mut lines := []string{}
+			for ln in stmt.split('\n') {
+				if !ln.trim_space().starts_with('--') {
+					lines << ln
+				}
+			}
+			s := lines.join('\n').trim_space()
+			if s == '' {
 				continue
 			}
 			d.exec(s)!

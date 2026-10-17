@@ -88,7 +88,7 @@ ok('Los 6 roles inician sesión', Object.values(T).every(Boolean));
 // ── C. precios y cotizador ───────────────────────────────────────────────────
 const exc = (await get('/api/public/excursions')).data;
 const sierra = exc.find((x) => x.name.startsWith('Sierra Gorda'));
-const dateA = sierra.departures[0].date;
+const dateA = (sierra.departures.find((d) => d.date >= day(10)) || sierra.departures[0]).date;
 {
   const q1 = (await get(`/api/public/quote?excursion=${sierra.id}&date=${dateA}&people=2`)).data;
   ok('Cotización base = precio × personas', q1.total === 2900 && q1.discount === 0 && q1.deposit === 800);
@@ -237,7 +237,7 @@ let cust;
   const b = await post('/api/public/bookings', { excursion_id: sierra.id, date: dd, people: 1, customer_name: 'Abonó y Dejó', customer_phone: ph2 });
   await post('/api/public/voucher/pay', { code: b.data.booking.code, amount: 400 });
   sql(`UPDATE bookings SET excursion_date='${day(2)}', created_at=DATE_SUB(created_at, INTERVAL 2 DAY) WHERE code IN ('${a.data.booking.code}','${b.data.booking.code}')`);
-  sql(`UPDATE departures SET date='${day(2)}' WHERE excursion_id=${sierra.id} AND date='${dd}' AND NOT EXISTS (SELECT 1 FROM (SELECT 1) x WHERE 0)`);
+  sql(`INSERT IGNORE INTO departures (excursion_id, date, status, created_at) VALUES (${sierra.id}, '${day(2)}', 'open', NOW())`);
   const t1 = await post('/api/admin/tick', {}, T.admin);
   ok('Tick full corre sin errores', t1.status === 200 && t1.data.errors.length === 0, JSON.stringify(t1.data));
   const sa = sql(`SELECT status, payment_status, closed_reason FROM bookings WHERE code='${a.data.booking.code}'`);
@@ -290,13 +290,14 @@ let cust;
   ok('No se puede reseñar dos veces', dup.status === 400);
 
   // ticket público → SLA → resolución con compensación
-  const tk = await post('/api/public/tickets', { kind: 'complaint', customer_name: 'Quejoso', customer_phone: '4499990000', message: 'Me cobraron doble y no me responden' });
+  const tkPhone = '4499' + String(100000 + Math.floor(Math.random() * 899999));
+  const tk = await post('/api/public/tickets', { kind: 'complaint', customer_name: 'Quejoso', customer_phone: tkPhone, message: 'Me cobraron doble y no me responden' });
   ok('Ticket público clasifica prioridad urgente por contenido', tk.status === 201 && tk.data.priority === 'urgent');
   const tid = Number(sql(`SELECT id FROM support_tickets WHERE code='${tk.data.code}'`));
   const over = await post(`/api/admin/tickets/${tid}/resolve`, { resolution: 'Se corrigió', compensation: 500 }, T.support);
   ok('Soporte no puede compensar arriba del tope ($300)', over.status === 403 && over.data.error === 'over_cap');
   const res = await post(`/api/admin/tickets/${tid}/resolve`, { resolution: 'Se corrigió el cobro y se disculpó', compensation: 200 }, T.support);
-  ok('Soporte resuelve con compensación en crédito', res.data.ok && sql(`SELECT balance FROM wallets WHERE customer_phone='4499990000'`) === '200.00');
+  ok('Soporte resuelve con compensación en crédito', res.data.ok && sql(`SELECT balance FROM wallets WHERE customer_phone='${tkPhone}'`) === '200.00');
   ok('Honeypot de ticket: bots no crean registros', (await post('/api/public/tickets', { message: 'spam spam spam', website: 'http://bot' })).status === 201);
 }
 

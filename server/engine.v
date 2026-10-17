@@ -315,7 +315,7 @@ fn (mut a App) scan_cash(mut st Stats) {
 	dr_limit := a.cfg_f('cash.driver_limit', 5000)
 	big := a.cfg_f('cash.large_payment_flag', 8000)
 	t := today()
-	held := a.db.rows("SELECT point_id, point_name, COUNT(*) AS n_count, SUM(net) AS n_net, MIN(created_at) AS oldest FROM payments WHERE status='held_at_point' AND point_id>0 AND method<>'credit' GROUP BY point_id, point_name") or {
+	held := a.db.rows("SELECT point_id, point_name, COUNT(*) AS n_count, SUM(net) AS n_net, MAX(id) AS n_last, MIN(created_at) AS oldest FROM payments WHERE status='held_at_point' AND point_id>0 AND method<>'credit' GROUP BY point_id, point_name") or {
 		[]Row{}
 	}
 	for g in held {
@@ -331,7 +331,7 @@ fn (mut a App) scan_cash(mut st Stats) {
 				detail:    '${g['n_count']} abonos retenidos · el más viejo tiene ${age} día(s).'
 				entity:    'point'
 				entity_id: pid
-				dedupe:    'collect:${pid}:${t}'
+				dedupe:    'collect:${pid}:${g['n_last']}'
 				action:    'collect_cash'
 				payload:   pid.str()
 			})
@@ -349,7 +349,7 @@ fn (mut a App) scan_cash(mut st Stats) {
 	for p in bigs {
 		a.flag('medium', 'large_cash', 'payment', p['id'].i64(), 'Abono en efectivo de ${mxn(p['amount'].f64())} en ${p['point_name']}', 'bigcash:${p['id']}')
 	}
-	drv := a.db.rows("SELECT collected_by, collected_by_name, SUM(collected_amount) AS n_sum, MIN(collected_at) AS oldest FROM payments WHERE status='collected' GROUP BY collected_by, collected_by_name") or {
+	drv := a.db.rows("SELECT collected_by, collected_by_name, SUM(collected_amount) AS n_sum, MAX(id) AS n_last, MIN(collected_at) AS oldest FROM payments WHERE status='collected' GROUP BY collected_by, collected_by_name") or {
 		[]Row{}
 	}
 	for g in drv {
@@ -364,7 +364,7 @@ fn (mut a App) scan_cash(mut st Stats) {
 				priority: if sum >= dr_limit { 'urgent' } else { 'high' }
 				title:    'Entrega ${mxn(sum)} al administrador'
 				detail:   'Tienes efectivo recolectado${if days_on > 0 { ' desde hace ${days_on} día(s)' } else { '' }}. Cierra tu corte.'
-				dedupe:   'deliver:${did}:${t}'
+				dedupe:   'deliver:${did}:${g['n_last']}'
 				action:   'close_corte'
 			})
 			a.flag(if sum >= dr_limit * 1.5 { 'high' } else { 'medium' }, 'driver_cash_exposure', 'user', did, '${g['collected_by_name']} trae ${mxn(sum)} sin entregar', 'drvcash:${did}:${t}')
@@ -398,7 +398,7 @@ fn (mut a App) scan_support(mut st Stats) {
 fn (mut a App) scan_network(mut st Stats) {
 	inactive_days := a.cfg_i('ops.point_inactive_days', 14)
 	t := today()
-	pts := a.db.rows("SELECT p.id, p.name, p.whatsapp, p.created_at, GREATEST(COALESCE(p.last_activity_at,'2000-01-01'), COALESCE((SELECT MAX(created_at) FROM payments WHERE point_id=p.id),'2000-01-01'), COALESCE((SELECT MAX(created_at) FROM service_orders WHERE point_id=p.id),'2000-01-01'), COALESCE((SELECT MAX(created_at) FROM shipments WHERE point_id=p.id),'2000-01-01')) AS last_act FROM points p WHERE p.active=1") or {
+	pts := a.db.rows("SELECT p.id, p.name, p.whatsapp, p.created_at, GREATEST(COALESCE(p.last_activity_at,'2000-01-01 00:00:00'), COALESCE((SELECT MAX(created_at) FROM payments WHERE point_id=p.id),'2000-01-01 00:00:00'), COALESCE((SELECT MAX(created_at) FROM service_orders WHERE point_id=p.id),'2000-01-01 00:00:00'), COALESCE((SELECT MAX(created_at) FROM shipments WHERE point_id=p.id),'2000-01-01 00:00:00')) AS last_act FROM points p WHERE p.active=1") or {
 		[]Row{}
 	}
 	for p in pts {

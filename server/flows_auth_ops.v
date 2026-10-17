@@ -13,12 +13,14 @@ fn (mut a App) login(r &Req) Resp {
 	b := body_map(r)
 	email := (b['email'] or { '' }).trim_space().to_lower()
 	pass := b['password'] or { '' }
-	if a.limited(r, 'login:${email}', 8, 900) || a.limited(r, 'login', 40, 900) {
+	if a.over_limit(r, 'login:${email}', 8, 900) || a.over_limit(r, 'login', env_or('EP_LOGIN_GLOBAL_LIMIT', '60').int(), 900) {
 		return fail_code(429, 'rate_limited', 'Demasiados intentos. Espera unos minutos.')
 	}
 	row := a.db.one('SELECT * FROM users WHERE email=${q(email)} AND active=1 LIMIT 1') or { empty_row() }
 	ok := row.len > 0 && verify_password(pass, row['password_hash'])
 	if !ok {
+		a.hit(r, 'login:${email}', 900)
+		a.hit(r, 'login', 900)
 		a.audit(email, 'login_failed', 'users', 0, r.ip)
 		return fail_code(401, 'invalid_credentials', 'Correo o contraseña incorrectos.')
 	}

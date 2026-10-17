@@ -57,16 +57,16 @@ const config_defaults = [
 ]
 
 fn (mut a App) seed_config() int {
-	mut n := 0
+	// una sola sentencia: INSERT IGNORE de todos los parámetros que falten
+	mut rows := []string{}
 	for c in config_defaults {
-		res := a.db.rows('INSERT IGNORE INTO ep_config (ckey, cvalue, grp, label) VALUES (${q(c[1])}, ${q(c[2])}, ${q(c[0])}, ${q(c[3])});\nSELECT ROW_COUNT() AS n') or {
-			continue
-		}
-		if res.len > 0 && res[0]['n'].int() > 0 {
-			n++
-		}
+		rows << '(${q(c[1])}, ${q(c[2])}, ${q(c[0])}, ${q(c[3])})'
 	}
-	return n
+	res := a.db.rows('INSERT IGNORE INTO ep_config (ckey, cvalue, grp, label) VALUES ${rows.join(',')};
+SELECT ROW_COUNT() AS n') or {
+		return 0
+	}
+	return if res.len > 0 { res[0]['n'].int() } else { 0 }
 }
 
 fn (mut a App) seed_rules() {

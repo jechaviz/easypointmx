@@ -253,7 +253,7 @@ CREATE TABLE IF NOT EXISTS payments (
   commission DECIMAL(12,2) NOT NULL DEFAULT 0,
   net DECIMAL(12,2) NOT NULL DEFAULT 0,
   method VARCHAR(12) NOT NULL DEFAULT 'cash',
-  status VARCHAR(14) NOT NULL DEFAULT 'held_at_point',
+  status VARCHAR(20) NOT NULL DEFAULT 'held_at_point',
   collected_by BIGINT NOT NULL DEFAULT 0,
   collected_by_name VARCHAR(160) NOT NULL DEFAULT '',
   collected_at DATETIME NULL,

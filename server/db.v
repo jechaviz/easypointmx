@@ -111,7 +111,9 @@ fn (d &Db) run(stmt string, headers bool) !string {
 		os.rm(tmp) or {}
 	}
 	if code != 0 {
-		return error(errout.trim_space())
+		msg := errout.trim_space()
+		eprintln('[db-error] ' + if msg.len > 300 { msg[..300] } else { msg })
+		return error(msg)
 	}
 	return out
 }
