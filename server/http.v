@@ -177,6 +177,7 @@ pub fn parse_cgi_request(base string) Req {
 	h['x-forwarded-for'] = os.getenv('HTTP_X_FORWARDED_FOR')
 	h['x-webhook-signature'] = os.getenv('HTTP_X_WEBHOOK_SIGNATURE')
 	h['x-api-key'] = os.getenv('HTTP_X_API_KEY')
+	h['x-ep-demo'] = os.getenv('HTTP_X_EP_DEMO')
 	mut ip := os.getenv('REMOTE_ADDR')
 	if os.getenv('EP_TRUST_PROXY') == '1' && h['x-forwarded-for'] != '' {
 		ip = h['x-forwarded-for'].all_before(',').trim_space()

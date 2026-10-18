@@ -1,6 +1,6 @@
 <template>
   <div>
-    <div v-if="!authed" class="auth-wrap"><div class="page-anim" :key="EP.route.path"><component :is="EP.view.comp" /></div><ep-dialogs /></div>
+    <div v-if="!authed" class="auth-wrap"><div class="page-anim" :key="EP.route.path"><component :is="EP.view.comp" /></div><ep-dialogs /><ep-demobar /></div>
     <div v-else class="app" :class="{ nav: navOpen }">
       <aside class="side" aria-label="Menú">
         <a :href="EP.href('/')" class="brand row"><img :src="logo" width="32" height="32" alt="" /><span class="wm">easy<b>point</b></span></a>
@@ -28,7 +28,7 @@
         <a v-for="m in menu.slice(0, 5)" :key="m.to" :href="EP.href(m.to)" :class="{ on: active(m.to) }"><ep-ico :name="m.i" :size="22" /><span>{{ m.t }}</span></a>
       </nav>
       <div class="scrim only-sm" v-if="navOpen" @click="navOpen = false"></div>
-      <ep-dialogs />
+      <ep-dialogs /><ep-demobar />
     </div>
   </div>
 </template>
@@ -46,7 +46,7 @@ const ROLE = { admin: 'Administrador', operator: 'Punto', driver: 'Chofer', prov
 export default {
   data() { return { EP, logo: EP.root + 'website/icon.svg', navOpen: false, openTasks: 0, online: navigator.onLine }; },
   computed: {
-    authed() { return !!EP.session.token && !!EP.session.user && EP.view.name !== '/login' && EP.view.name !== '/reset'; },
+    authed() { return !!EP.session.token && !!EP.session.user && EP.view.name !== '/login' && EP.view.name !== '/reset' && EP.view.name !== '/setup'; },
     user() { return EP.session.user || {}; },
     roleLabel() { return ROLE[this.user.role] || this.user.role; },
     menu() { return (MENUS[this.user.role] || MENUS.support).map(([to, t, i]) => ({ to, t, i })); },

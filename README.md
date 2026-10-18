@@ -26,10 +26,14 @@
 # 1) MariaDB local y variables (ver docs/DESPLIEGUE.md §9)
 # 2) compilar y levantar
 C:\git\v\v.exe -o .data/ep.exe server
-.data/ep.exe --migrate && .data/ep.exe --seed-demo
-.data/ep.exe --serve 8081          # http://127.0.0.1:8081/website/  y  /app/
+.data/ep.exe --seed            # base REAL: esquema + parámetros (sin datos de ejemplo)
+.data/ep.exe --seed-demo       # base DEMO (<EP_DB_NAME>_demo): datos ficticios, jamás en la real
+.data/ep.exe --serve 8081      # http://127.0.0.1:8081/website/ · /app/ · /demo/
 ```
-Cuentas demo: `admin@`, `soporte@`, `ventas@`, `chofer@`, `punto@`, `proveedor@easypoint.mx` · `Demo12345!`.
+O todo en un comando: `node scripts/dev.mjs`.
+
+* **Demostración** — `/demo/` (contraseña `midemo`, `EP_DEMO_PASSWORD`): base aislada, pagos simulados, seis cuentas ficticias, reiniciable.
+* **Negocio real** — `/app/` en una base en blanco abre el **asistente de configuración** (`/app/#/setup`). Detalle: [docs/DEMO_Y_CONFIGURACION.md](docs/DEMO_Y_CONFIGURACION.md).
 
 ## Pruebas
 ```bash

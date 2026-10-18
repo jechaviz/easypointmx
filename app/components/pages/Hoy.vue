@@ -1,5 +1,9 @@
 <template>
   <div class="stack" style="--gap:22px">
+    <a v-if="setup && !setup.completed" :href="EP.href('/setup')" class="card card-pad row between wrap setupbar">
+      <div class="row" style="gap:12px"><ep-ico name="rocket" :size="22" /><div><b>Termina de configurar tu negocio</b><div class="small muted">Faltan {{ setup.required_left }} paso(s) obligatorio(s) para operar de verdad.</div></div></div>
+      <span class="btn btn-primary btn-sm">Continuar configuración</span>
+    </a>
     <section class="hello card card-pad row between wrap">
       <div class="stack" style="--gap:4px"><span class="kicker">{{ EP.fmt.date(today, { weekday: 'long', day: 'numeric', month: 'long' }) }}</span><h2 class="h2">{{ greet }}, {{ first }}</h2><p class="muted small">{{ blurb }}</p></div>
       <div class="row wrap" style="gap:8px"><a v-for="q in quick" :key="q.to" :href="EP.href(q.to)" class="btn" :class="q.p ? 'btn-primary' : 'btn-ghost'"><ep-ico :name="q.i" :size="18" /> {{ q.t }}</a>
@@ -24,7 +28,7 @@
 </template>
 <script>
 export default {
-  data() { return { EP, home: null, series: [], ticking: false, today: EP.today() }; },
+  data() { return { EP, setup: null, home: null, series: [], ticking: false, today: EP.today() }; },
   computed: {
     role() { return EP.session.user.role; },
     first() { return String(EP.session.user.name || EP.session.user.email).split(' ')[0]; },
@@ -42,6 +46,7 @@ export default {
     kkind(k) { return /^(held|route|receivable|credit|commission|on_hand|pending)$/.test(k.key) ? 'money' : (k.key === 'rating' ? 'dec' : 'num'); },
     kval(k) { return typeof k.value === 'number' ? k.value : Number(k.value); },
     async load() {
+      if (this.role === 'admin' && !EP.demo.active && !this.setup) { try { this.setup = await EP.get('/setup/checklist'); } catch (_) {} }
       try { this.home = await EP.get('/ops/home'); if (this.role === 'admin' && !this.series.length) this.series = (await EP.get('/ops/series?days=14')).days; } catch (e) { EP.err(e); }
     },
     async tick() {
@@ -61,6 +66,7 @@ export default {
 };
 </script>
 <style scoped>
+.setupbar { border: 1px solid var(--brand); background: var(--brand-soft); text-decoration: none; color: inherit; }
 .hello { background: radial-gradient(600px 160px at 100% 0%, color-mix(in srgb, var(--brand) 22%, transparent), transparent 70%), var(--surface); }
 @media (max-width: 960px) { #hoy-grid { grid-template-columns: 1fr !important; } }
 </style>

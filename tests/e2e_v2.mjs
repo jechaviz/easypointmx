@@ -13,10 +13,19 @@ function ok(name, cond, extra = '') {
   else { fail++; failures.push(name); console.log('❌', name, extra ? '→ ' + extra : ''); }
 }
 
+// Corre en el entorno de DEMOSTRACIÓN (base *_demo, pagos simulados): se entra una vez con la contraseña de /demo.
+const DEMO_DB = process.env.EP_DEMO_DB_NAME || (process.env.EP_DB_NAME || 'easypoint') + '_demo';
+let demoTok = null;
+async function demoToken() {
+  if (demoTok) return demoTok;
+  const r = await fetch(API + '/api/demo/login', { method: 'POST', body: JSON.stringify({ password: process.env.EP_DEMO_PASSWORD || 'midemo' }) });
+  const d = await r.json(); if (!d.token) throw new Error('No se pudo entrar a la demo: ' + JSON.stringify(d));
+  return (demoTok = d.token);
+}
 async function api(method, path, body, token, headers = {}) {
   const res = await fetch(API + path, {
     method,
-    headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: 'Bearer ' + token } : {}), ...headers },
+    headers: { 'Content-Type': 'application/json', ...(path.startsWith('/api/demo/') ? {} : { 'X-EP-Demo': await demoToken() }), ...(token ? { Authorization: 'Bearer ' + token } : {}), ...headers },
     body: body === undefined ? undefined : JSON.stringify(body)
   });
   let data = null;
@@ -30,7 +39,7 @@ const put = (p, b, t) => api('PUT', p, b, t);
 function sql(q) {
   return execFileSync(process.env.EP_MARIADB_BIN, [
     '-N', '-B', `-h${process.env.EP_DB_HOST || '127.0.0.1'}`, `-P${process.env.EP_DB_PORT || '3307'}`,
-    `-u${process.env.EP_DB_USER || 'ep'}`, process.env.EP_DB_NAME || 'easypoint', '-e', q
+    `-u${process.env.EP_DB_USER || 'ep'}`, DEMO_DB, '-e', q
   ], { env: { ...process.env, MYSQL_PWD: process.env.EP_DB_PASS || 'ep_dev_pw' }, stdio: ['ignore', 'pipe', 'ignore'] }).toString().trim();
 }
 

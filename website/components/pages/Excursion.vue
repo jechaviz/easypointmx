@@ -196,7 +196,7 @@ export default {
       try {
         const r = await EP.post('/public/voucher/pay', { code: this.done.booking.code, amount: this.depositDue });
         if (r.mode === 'gateway') { location.href = r.checkout_url; return; }
-        if (r.mode === 'manual_confirm') { this.payNote = `Transferencia por confirmar. Referencia ${r.reference}. ${r.instructions}`; return; }
+        if (r.mode === 'manual_confirm') { this.payNote = `Transferencia por confirmar. Referencia ${r.reference}. ${r.clabe ? `Deposita a ${r.bank} · CLABE ${r.clabe} · ${r.beneficiary}. ` : ''}${r.instructions}`; return; }
         this.paid = true; this.done.booking.amount_paid = r.amount_paid; this.done.booking.balance = r.balance;
         this.payNote = '✓ Pago recibido. Tu lugar está confirmado.'; EP.toast('Pago recibido', 'ok');
       } catch (x) { EP.err(x); } finally { this.busy = false; }

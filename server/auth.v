@@ -92,7 +92,7 @@ fn (a &App) auth(r &Req) ?User {
 	if tok == '' {
 		return none
 	}
-	uid := jwt_verify(a.secret, tok)
+	uid := jwt_verify(a.tsec(), tok)
 	if uid <= 0 {
 		return none
 	}

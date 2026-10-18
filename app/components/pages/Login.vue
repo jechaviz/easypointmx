@@ -11,8 +11,9 @@
         <div class="error" v-if="error">{{ error }}</div>
         <button class="btn btn-primary btn-lg btn-block" :class="{ 'is-loading': busy }"><span v-if="busy" class="spin"></span> Entrar</button>
         <button type="button" class="btn btn-ghost btn-sm" @click="forgot">Olvidé mi contraseña</button>
-        <div v-if="isLocal" class="demo stack" style="--gap:8px"><div class="tiny muted bold">Cuentas de demostración (sólo en desarrollo)</div>
-          <div class="row wrap" style="gap:6px"><button type="button" class="chip" v-for="d in demos" :key="d[0]" @click="fill(d[0])">{{ d[1] }}</button></div></div>
+        <div class="demo stack" style="--gap:8px" v-if="setup.demo_available || !setup.has_admin">
+          <a v-if="!setup.has_admin" :href="EP.href('/setup')" class="btn btn-primary btn-block">Configurar mi negocio</a>
+          <a v-if="setup.demo_available" :href="EP.root + 'demo/'" class="link small">¿Quieres explorar primero? Entra a la demostración →</a></div>
         <a :href="EP.root + 'website/'" class="link small">← Ir al sitio público</a>
       </form>
     </section>
@@ -21,12 +22,16 @@
 <script>
 export default {
   data() {
-    return { EP, logo: EP.root + 'website/icon.svg', email: '', pass: '', busy: false, error: '', isLocal: /^(localhost|127\.|\[::1\])/.test(location.hostname),
-      roles: ['Punto: cobra abonos y vende servicios', 'Chofer: ruta optimizada de recolección', 'Proveedor: manifiesto y liquidaciones', 'Equipo: tickets, aspirantes y economía'],
-      demos: [['admin@easypoint.mx', 'Admin'], ['punto@easypoint.mx', 'Punto'], ['chofer@easypoint.mx', 'Chofer'], ['proveedor@easypoint.mx', 'Proveedor'], ['ventas@easypoint.mx', 'Ventas'], ['soporte@easypoint.mx', 'Soporte']] };
+    return { EP, logo: EP.root + 'website/icon.svg', email: '', pass: '', busy: false, error: '', setup: { has_admin: true, demo_available: false },
+      roles: ['Punto: cobra abonos y vende servicios', 'Chofer: ruta optimizada de recolección', 'Proveedor: manifiesto y liquidaciones', 'Equipo: tickets, aspirantes y economía']
+    };
+  },
+  async mounted() {
+    if (EP.demo.active) { this.setup = { has_admin: true, demo_available: false }; return; }
+    try { this.setup = await EP.get('/setup/status', { auth: false }); } catch (_) {}
+    if (!this.setup.has_admin) EP.go('/setup', true);
   },
   methods: {
-    fill(e) { this.email = e; this.pass = 'Demo12345!'; },
     async submit() {
       this.error = ''; if (!this.email || !this.pass) { this.error = 'Escribe tu correo y contraseña.'; return; }
       this.busy = true;

@@ -415,7 +415,13 @@ fn (mut a App) admin_cancel_departure(u User, r &Req) Resp {
 }
 
 fn (mut a App) admin_config_list() Resp {
-	rows := a.db.rows('SELECT * FROM ep_config ORDER BY grp, ckey') or { []Row{} }
+	mut rows := a.db.rows('SELECT * FROM ep_config ORDER BY grp, ckey') or { []Row{} }
+	for mut row in rows {
+		// los secretos (token de la pasarela) nunca salen por la API
+		if row['ckey'].starts_with('secret.') && row['cvalue'] != '' {
+			row['cvalue'] = '••••'
+		}
+	}
 	return json_ok('{"items":${a.schema.rows_json(rows)}}')
 }
 
@@ -423,6 +429,9 @@ fn (mut a App) admin_config_set(u User, r &Req) Resp {
 	b := body_map(r)
 	mut n := 0
 	for k, v in b {
+		if k.starts_with('secret.') || k.starts_with('sys.') || k.starts_with('setup.') {
+			continue // se cambian sólo por el asistente
+		}
 		if a.db.count('ep_config', 'ckey=${q(k)}') > 0 {
 			a.set_cfg(k, v)
 			n++

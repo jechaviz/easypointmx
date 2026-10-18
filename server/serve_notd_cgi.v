@@ -34,10 +34,18 @@ fn (mut h Standalone) handle(req http.Request) http.Response {
 	url := req.url
 	path := url.all_before('?')
 	qs := if url.contains('?') { url.all_after('?') } else { '' }
+	if path in ['/demo', '/app', '/website'] {
+		// las rutas relativas (../shared) sólo funcionan con la barra final
+		return http.new_response(
+			status: .moved_permanently
+			header: http.new_header(key: .location, value: path + '/')
+		)
+	}
 	mut hdr := map[string]string{}
 	hdr['authorization'] = req.header.get(.authorization) or { '' }
 	hdr['content-type'] = req.header.get(.content_type) or { '' }
 	hdr['x-api-key'] = req.header.get_custom('X-API-Key') or { '' }
+	hdr['x-ep-demo'] = req.header.get_custom('X-EP-Demo') or { '' }
 	mut r := Req{
 		method:  req.method.str().to_upper()
 		path:    normalize_path(url_decode(path), '')
@@ -101,7 +109,7 @@ fn (mut h Standalone) static_file(path string) http.Response {
 	if !os.exists(full) {
 		// SPA: rutas sin extensión caen al index de su sección
 		if !p.contains('.') {
-			for sec in ['/website', '/app'] {
+			for sec in ['/website', '/app', '/demo'] {
 				if p.starts_with(sec) {
 					full = os.join_path(root, sec, 'index.html')
 				}

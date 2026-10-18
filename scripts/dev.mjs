@@ -45,8 +45,9 @@ if (!(await up())) {
   for (let i = 0; i < 40 && !(await up()); i++) await wait(500);
   if (!(await up())) { console.error('✗ MariaDB no arrancó (revisa .data/mysqld.log)'); process.exit(1); }
 }
-if (args.includes('--reset')) sql('DROP DATABASE IF EXISTS easypoint');
-sql("CREATE DATABASE IF NOT EXISTS easypoint CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci; CREATE USER IF NOT EXISTS 'ep'@'127.0.0.1' IDENTIFIED BY 'ep_dev_pw'; CREATE USER IF NOT EXISTS 'ep'@'localhost' IDENTIFIED BY 'ep_dev_pw'; GRANT ALL ON easypoint.* TO 'ep'@'127.0.0.1'; GRANT ALL ON easypoint.* TO 'ep'@'localhost';");
+// dos bases: easypoint (REAL, nace en blanco y se configura con el asistente /app/#/setup) y easypoint_demo (sólo /demo)
+if (args.includes('--reset')) sql('DROP DATABASE IF EXISTS easypoint; DROP DATABASE IF EXISTS easypoint_demo');
+sql("CREATE DATABASE IF NOT EXISTS easypoint CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci; CREATE DATABASE IF NOT EXISTS easypoint_demo CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci; CREATE USER IF NOT EXISTS 'ep'@'127.0.0.1' IDENTIFIED BY 'ep_dev_pw'; CREATE USER IF NOT EXISTS 'ep'@'localhost' IDENTIFIED BY 'ep_dev_pw'; GRANT ALL ON easypoint.* TO 'ep'@'127.0.0.1'; GRANT ALL ON easypoint.* TO 'ep'@'localhost'; GRANT ALL ON easypoint_demo.* TO 'ep'@'127.0.0.1'; GRANT ALL ON easypoint_demo.* TO 'ep'@'localhost';");
 
 // 2) compilar
 if (!args.includes('--no-build') || !fs.existsSync(ep)) {
@@ -56,13 +57,13 @@ if (!args.includes('--no-build') || !fs.existsSync(ep)) {
   if (r.status !== 0) process.exit(r.status || 1);
 }
 
-// 3) migrar + demo
-run(ep, ['--migrate']);
-const hasPoints = sql('SELECT COUNT(*) FROM points', 'ep').stdout.trim() !== '0';
-if (!hasPoints) { console.log('· sembrando demo…'); run(ep, ['--seed-demo']); } else run(ep, ['--seed']);
+// 3) base real: esquema + parámetros (sin datos de ejemplo); base demo: esquema + datos ficticios
+run(ep, ['--seed']);
+const demoOk = spawnSync(bin('mariadb'), ['-N', '-B', `-h127.0.0.1`, `-P${DBPORT}`, '-uep', 'easypoint_demo', '-e', 'SELECT COUNT(*) FROM points'], { env: { ...env, MYSQL_PWD: 'ep_dev_pw' }, encoding: 'utf8' });
+if (demoOk.status !== 0 || demoOk.stdout.trim() === '0') { console.log('· sembrando la demostración…'); run(ep, ['--seed-demo']); }
 
 // 4) servir
-console.log(`\n  Sitio:  http://127.0.0.1:${port}/website/\n  Panel:  http://127.0.0.1:${port}/app/   (admin@easypoint.mx / ${env.EP_SEED_PASSWORD})\n`);
+console.log(`\n  Sitio:  http://127.0.0.1:${port}/website/\n  Panel:  http://127.0.0.1:${port}/app/   (negocio real: la primera vez abre el asistente /app/#/setup)\n  Demo:   http://127.0.0.1:${port}/demo/   (contraseña: ${env.EP_DEMO_PASSWORD || 'midemo'})\n`);
 const srv = spawn(ep, ['--serve', String(port)], { stdio: 'inherit', env });
 process.on('SIGINT', () => { srv.kill(); process.exit(0); });
 srv.on('exit', (c) => process.exit(c || 0));

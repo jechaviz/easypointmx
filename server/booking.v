@@ -468,9 +468,12 @@ fn (mut a App) voucher_pay(r &Req) Resp {
 		return fail_code(400, 'amount_exceeds_balance', 'El monto excede el saldo restante (${fmt_money(remaining)}).')
 	}
 	method := b['method'] or { 'card_online' }
-	mode := a.cfg('payments.mode', 'demo')
+	mode := a.pay_mode()
+	if mode == 'unset' {
+		return pay_unset()
+	}
 	if mode == 'gateway' {
-		tok := env_or('MERCADOPAGO_ACCESS_TOKEN', '')
+		tok := a.mp_token()
 		if tok == '' {
 			return fail_code(503, 'gateway_unavailable', 'La pasarela de pago no está configurada.')
 		}
@@ -497,7 +500,7 @@ fn (mut a App) voucher_pay(r &Req) Resp {
 			dedupe:    'transfer:${ref}'
 			action:    'confirm_transfer'
 		})
-		return json_ok('{"ok":true,"mode":"manual_confirm","reference":${jstr(ref)},"amount":${amount:.2f},"instructions":${jstr(a.cfg('payments.instructions', 'Deposita a la CLABE indicada por WhatsApp e indica tu referencia.'))}}')
+		return json_ok('{"ok":true,"mode":"manual_confirm","reference":${jstr(ref)},"amount":${amount:.2f},"instructions":${jstr(a.cfg('payments.instructions', 'Deposita a la CLABE indicada e indica tu referencia.'))},"clabe":${jstr(a.cfg('payments.clabe', ''))},"bank":${jstr(a.cfg('payments.bank', ''))},"beneficiary":${jstr(a.cfg('payments.beneficiary', ''))}}')
 	}
 	// demo: pago simulado inmediato (sólo para pruebas / demostraciones)
 	res := a.apply_payment(PayIn{

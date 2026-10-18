@@ -109,7 +109,7 @@ export default {
       try {
         const r = await EP.post('/public/voucher/pay', { code: this.cur.code, amount: this.amount });
         if (r.mode === 'gateway') { location.href = r.checkout_url; return; }
-        if (r.mode === 'manual_confirm') { EP.toast('Transferencia por confirmar · ref ' + r.reference, 'ok', 8000); this.m.pay = false; return; }
+        if (r.mode === 'manual_confirm') { EP.toast('Transferencia por confirmar · ref ' + r.reference + (r.clabe ? ' · ' + r.bank + ' CLABE ' + r.clabe : ''), 'ok', 12000); this.m.pay = false; return; }
         EP.toast('Pago recibido ✓', 'ok'); this.m.pay = false; await this.lookup();
       } catch (e) { EP.err(e); } finally { this.busy = false; }
     },

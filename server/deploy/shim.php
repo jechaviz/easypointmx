@@ -48,6 +48,7 @@ if (!isset($env['HTTP_AUTHORIZATION']) && function_exists('getallheaders')) {
     foreach (getallheaders() as $hk => $hv) {
         if (strcasecmp($hk, 'Authorization') === 0) $env['HTTP_AUTHORIZATION'] = $hv;
         if (strcasecmp($hk, 'X-API-Key') === 0) $env['HTTP_X_API_KEY'] = $hv;
+        if (strcasecmp($hk, 'X-EP-Demo') === 0) $env['HTTP_X_EP_DEMO'] = $hv;
     }
 }
 

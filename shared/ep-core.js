@@ -9,7 +9,7 @@
   const VERSION = '2.0.0';
 
   // ── base de la API: <prefijo>/api, donde <prefijo> es lo que antecede a /website o /app ──
-  const m = loc.pathname.match(/^(.*?)\/(website|app)(?:\/|$)/);
+  const m = loc.pathname.match(/^(.*?)\/(website|app|demo)(?:\/|$)/);
   const PREFIX = m ? m[1] : '';
   const API = RC.apiBase && /^https?:/.test(RC.apiBase) ? RC.apiBase.replace(/\/$/, '') : PREFIX + '/api';
   const ROOT = PREFIX + '/';
@@ -32,15 +32,31 @@
     busy: Vue.reactive({ n: 0 })
   };
 
+  // ── entorno de demostración (aislado del real) ──
+  // /demo/ pide la contraseña y guarda un token de entorno (X-EP-Demo). Con él activo, TODA la API (sitio y panel) usa la base de
+  // demostración y la sesión se guarda aparte: nada de lo que se haga aquí toca al negocio real, ni al revés.
+  const demoStore = WC.createVersionedStorage ? WC.createVersionedStorage('ep-demo', 1) : null;
+  EP.demo = Vue.reactive({ active: false, token: '', exp: 0, accounts: [], password: '' });
+  (function loadDemo() {
+    if (!demoStore) return;
+    const r = demoStore.read();
+    if (r && r.value && r.value.token && r.value.exp > Date.now()) Object.assign(EP.demo, r.value, { active: true });
+    else if (r && r.value) demoStore.write(null);
+  })();
+  const saveDemo = () => { if (demoStore) demoStore.write(EP.demo.active ? { token: EP.demo.token, exp: EP.demo.exp, accounts: EP.demo.accounts, password: EP.demo.password } : null); };
+
   // ── almacenamiento (web-common) ──
-  const store = WC.createVersionedStorage ? WC.createVersionedStorage('ep-session', 2) : null;
+  // la sesión de la demostración vive en otra clave: nunca se mezcla con la del negocio real
+  const sessKey = () => (EP.demo.active ? 'ep-session-demo' : 'ep-session');
+  const stores = {};
+  const sessStore = () => { const k = sessKey(); return stores[k] || (stores[k] = WC.createVersionedStorage ? WC.createVersionedStorage(k, 2) : null); };
   function loadSession() {
-    if (!store) return;
+    const store = sessStore(); if (!store) return;
     const r = store.read();
     if (r && r.value && r.value.token) { EP.session.token = r.value.token; EP.session.user = r.value.user; }
   }
   function saveSession() {
-    if (!store) return;
+    const store = sessStore(); if (!store) return;
     store.write(EP.session.token ? { token: EP.session.token, user: EP.session.user } : null);
   }
   loadSession();
@@ -48,6 +64,7 @@
   // ── API ──
   async function api(method, path, body, opts = {}) {
     const headers = { Accept: 'application/json' };
+    if (EP.demo.active) headers['X-EP-Demo'] = EP.demo.token;
     if (body !== undefined && !(body instanceof FormData)) headers['Content-Type'] = 'application/json';
     if (EP.session.token && opts.auth !== false) headers.Authorization = 'Bearer ' + EP.session.token;
     let res;
@@ -61,6 +78,7 @@
     const txt = await res.text();
     try { data = txt ? JSON.parse(txt) : null; } catch (_) { data = { error: 'bad_response', message: 'Respuesta inesperada del servidor.' }; }
     if (!res.ok) {
+      if (res.status === 401 && data && data.error === 'demo_expired' && EP.demo.active) { EP.demoExit(true); return Promise.reject(new ApiError(401, data)); }
       if (res.status === 401 && EP.session.token && !opts.quiet401) { EP.logout(); EP.go('/login'); }
       throw new ApiError(res.status, data);
     }
@@ -81,6 +99,26 @@
     EP.session.token = r.token; EP.session.user = r.user; saveSession();
     return r.user;
   };
+  // Entrar a la demostración (contraseña) → guarda el token de entorno y recarga el modo demo.
+  EP.demoEnter = async (password) => {
+    const r = await api('POST', '/demo/login', { password }, { auth: false });
+    Object.assign(EP.demo, { active: true, token: r.token, exp: Date.now() + r.expires_in * 1000 - 60000, accounts: r.accounts || [], password: r.password || '' });
+    saveDemo();
+    EP.session.token = ''; EP.session.user = null; // la sesión del negocio real no se arrastra a la demo
+    return r;
+  };
+  // Salir de la demostración: borra el token y la sesión de demo; vuelve a /demo (o al sitio si no se pide pantalla de entrada).
+  EP.demoExit = (expired) => {
+    try { localStorage.removeItem('ep-session-demo'); } catch (_) {}
+    EP.demo.active = false; EP.demo.token = ''; saveDemo();
+    EP.session.token = ''; EP.session.user = null;
+    loc.href = ROOT + (expired ? 'demo/' : 'website/');
+  };
+  // Vuelve a sembrar los datos ficticios de la demostración.
+  EP.demoReset = async () => { await api('POST', '/demo/reset', {}); EP.logout(); };
+  // Entra directo con una de las cuentas ficticias.
+  EP.demoAs = async (email) => { const r = await api('POST', '/demo/as', { email }, { auth: false }); EP.setSession(r.token, r.user); return r.user; };
+  EP.setSession = (token, user) => { EP.session.token = token; EP.session.user = user; saveSession(); };
   EP.logout = () => { EP.session.token = ''; EP.session.user = null; saveSession(); };
   EP.isRole = (...roles) => !!EP.session.user && roles.includes(EP.session.user.role);
 
@@ -255,7 +293,7 @@
 
     const app = Vue.createApp({ components: { Shell: EP.comp(shell) }, template: '<Shell />' });
     // componentes de UI globales
-    const ui = ['ep-modal', 'ep-kpi', 'ep-table', 'ep-form', 'ep-chart', 'ep-badge', 'ep-empty', 'ep-qr', 'ep-cover', 'ep-stepper', 'ep-tasks', 'ep-dialogs', 'ep-theme', 'ep-map', 'ep-share', 'ep-ico'];
+    const ui = ['ep-modal', 'ep-kpi', 'ep-table', 'ep-form', 'ep-chart', 'ep-badge', 'ep-empty', 'ep-qr', 'ep-cover', 'ep-stepper', 'ep-tasks', 'ep-dialogs', 'ep-theme', 'ep-map', 'ep-share', 'ep-ico', 'ep-demobar'];
     ui.forEach((n) => app.component(n, EP.comp(ROOT.replace(/\/$/, '') + '/shared/ui/' + n + '.vue')));
     // componentes de web-ui (lib) con los nombres de la lib
     ['FAQ', 'Testimonials', 'Timeline', 'AudiencePaths'].forEach((n) => app.component(n, EP.comp(ROOT.replace(/\/$/, '') + '/vendor/web-ui/' + n + '.vue')));

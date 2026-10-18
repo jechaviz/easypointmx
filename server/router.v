@@ -8,7 +8,19 @@ fn (mut a App) route(r &Req) Resp {
 		return fail(404, 'not_found')
 	}
 	m := r.method
+	// entorno: la demostración (X-EP-Demo válido) usa su propia base; todo lo demás, la real
+	if segs[1] != 'demo' {
+		if bad := a.select_env(r) {
+			return bad
+		}
+	}
 	match segs[1] {
+		'demo' {
+			return a.route_demo(r, segs)
+		}
+		'setup' {
+			return a.route_setup(r, segs)
+		}
 		'health' {
 			return json_ok('{"ok":true,"service":"easypoint","version":"2.0.0","time":${jstr(now_dt())}}')
 		}
@@ -184,7 +196,7 @@ fn (mut a App) route_auth(r &Req, segs []string) Resp {
 		}
 		'refresh' {
 			u := a.auth(r) or { return fail(401, 'unauthorized') }
-			return json_ok('{"token":${jstr(jwt_mint(a.secret, u.id, u.role, 14 * 86400))},"user":${a.user_json(u)}}')
+			return json_ok('{"token":${jstr(jwt_mint(a.tsec(), u.id, u.role, 14 * 86400))},"user":${a.user_json(u)}}')
 		}
 		'password' {
 			u := a.auth(r) or { return fail(401, 'unauthorized') }

@@ -48,6 +48,8 @@ fn main() {
 			println('migraciones: ${n} · parámetros nuevos: ${c}')
 		}
 		'--seed-demo' {
+			// los datos de demostración JAMÁS van a la base real: se siembra la base *_demo
+			app.set_env(true)
 			app.db.migrate() or {
 				eprintln('migrate: ${err}')
 				exit(1)

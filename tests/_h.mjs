@@ -14,10 +14,22 @@ export function summary() {
   if (fail) { console.log('Fallos:\n - ' + failures.join('\n - ')); process.exit(1); }
 }
 
+// Todos los e2e corren en el entorno de DEMOSTRACIÓN (base *_demo, pagos simulados). El token de entorno se pide una vez.
+export const DEMO_PASSWORD = process.env.EP_DEMO_PASSWORD || 'midemo';
+export const DEMO_DB = process.env.EP_DEMO_DB_NAME || (process.env.EP_DB_NAME || 'easypoint') + '_demo';
+let demoTok = null;
+export async function demoToken() {
+  if (demoTok) return demoTok;
+  const r = await fetch(API + '/api/demo/login', { method: 'POST', body: JSON.stringify({ password: DEMO_PASSWORD }) });
+  const d = await r.json();
+  if (!d.token) throw new Error('No se pudo entrar a la demo: ' + JSON.stringify(d));
+  return (demoTok = d.token);
+}
 export async function api(method, path, body, token, headers = {}) {
+  const demo = path.startsWith('/api/demo/') ? {} : { 'X-EP-Demo': await demoToken() };
   const res = await fetch(API + path, {
     method,
-    headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: 'Bearer ' + token } : {}), ...headers },
+    headers: { 'Content-Type': 'application/json', ...demo, ...(token ? { Authorization: 'Bearer ' + token } : {}), ...headers },
     body: body === undefined ? undefined : JSON.stringify(body)
   });
   let data = null;
@@ -31,7 +43,7 @@ export const put = (p, b, t) => api('PUT', p, b, t);
 export function sql(q) {
   return execFileSync(process.env.EP_MARIADB_BIN, [
     '-N', '-B', `-h${process.env.EP_DB_HOST || '127.0.0.1'}`, `-P${process.env.EP_DB_PORT || '3307'}`,
-    `-u${process.env.EP_DB_USER || 'ep'}`, process.env.EP_DB_NAME || 'easypoint', '-e', q
+    `-u${process.env.EP_DB_USER || 'ep'}`, DEMO_DB, '-e', q
   ], { env: { ...process.env, MYSQL_PWD: process.env.EP_DB_PASS || 'ep_dev_pw' }, stdio: ['ignore', 'pipe', 'ignore'] }).toString().trim();
 }
 

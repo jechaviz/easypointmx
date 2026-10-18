@@ -9,7 +9,7 @@
       <div class="grid auto-grid" style="--min:320px;--gap:12px"><div class="card card-pad stack" style="--gap:6px" v-for="r in shown" :key="r.ckey">
         <label :for="'c' + r.ckey" class="bold small">{{ r.label }}</label>
         <label v-if="isBool(r)" class="check"><input type="checkbox" :id="'c' + r.ckey" :checked="val(r) === 'true'" @change="set(r, $event.target.checked ? 'true' : 'false')" /><span>{{ val(r) === 'true' ? 'Activado' : 'Desactivado' }}</span></label>
-        <select v-else-if="r.ckey === 'payments.mode'" class="select" :id="'c' + r.ckey" :value="val(r)" @change="set(r, $event.target.value)"><option value="demo">demo (pago simulado)</option><option value="gateway">gateway (Mercado Pago)</option><option value="manual_confirm">transferencia con confirmación</option></select>
+        <select v-else-if="r.ckey === 'payments.mode'" class="select" :id="'c' + r.ckey" :value="val(r)" @change="set(r, $event.target.value)"><option v-if="EP.demo.active" value="demo">demo (pago simulado)</option><option v-else value="">sin cobro en línea</option><option value="gateway">gateway (Mercado Pago)</option><option value="manual_confirm">transferencia con confirmación</option></select>
         <input v-else class="input" :id="'c' + r.ckey" :value="val(r)" @input="set(r, $event.target.value)" />
         <code class="tiny muted">{{ r.ckey }}</code></div></div></section>
 

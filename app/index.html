@@ -31,7 +31,7 @@
     // Cada rol ve su propio "Hoy" y su propio menú; las rutas se protegen en el servidor (esto es sólo UX).
     const R = (path, comp, title, roles) => ({ path, name: path, comp: 'pages/' + comp + '.vue', title, roles });
     const routes = [
-      R('/login', 'Login', 'Entrar'), R('/reset', 'Reset', 'Nueva contraseña'),
+      R('/login', 'Login', 'Entrar'), R('/reset', 'Reset', 'Nueva contraseña'), R('/setup', 'Setup', 'Configuración inicial'),
       R('/', 'Hoy', 'Hoy'), R('/perfil', 'Perfil', 'Mi perfil'),
       R('/cobrar', 'Cobrar', 'Cobrar abono', ['operator', 'admin']), R('/vender', 'Vender', 'Vender', ['operator', 'admin']),
       R('/paquetes', 'Paquetes', 'Paquetes', ['operator', 'admin']), R('/caja', 'Caja', 'Mi caja', ['operator']),
@@ -50,6 +50,7 @@
       notFound: { path: '*', name: 'nf', comp: 'pages/NotFound.vue', title: 'No encontrada' },
       routes,
       guard(route) {
+        if (route.name === '/setup') return null; // el asistente decide: crea el primer admin o exige serlo
         if (route.name === '/login' || route.name === '/reset') return EP.session.token ? '/' : null;
         if (!EP.session.token) return '/login';
         if (route.roles && !EP.isRole(...route.roles)) return '/';

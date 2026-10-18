@@ -6,6 +6,7 @@ RewriteBase /
 # El encabezado Authorization y X-API-Key deben llegar al binario
 RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
 SetEnvIf X-API-Key "(.+)" HTTP_X_API_KEY=$1
+SetEnvIf X-EP-Demo "(.+)" HTTP_X_EP_DEMO=$1
 
 # API
 RewriteRule ^api(/.*)?$ shim.php [L,QSA]
@@ -20,6 +21,17 @@ RewriteRule ^website/ website/index.html [L]
 RewriteCond %{REQUEST_FILENAME} !-f
 RewriteCond %{REQUEST_FILENAME} !-d
 RewriteRule ^app/ app/index.html [L]
+
+# Demostración: /demo (pide contraseña; usa una base de datos aparte). Sin indexar.
+RewriteRule ^demo$ demo/ [R=301,L]
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^demo/ demo/index.html [L]
+<IfModule mod_headers.c>
+  <If "%{REQUEST_URI} =~ m#^/demo#">
+    Header always set X-Robots-Tag "noindex, nofollow"
+  </If>
+</IfModule>
 
 # Seguridad básica
 <FilesMatch "\.(env|sql|v|sh|md)$">

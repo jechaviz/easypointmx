@@ -6,7 +6,11 @@ import os
 // carga perezosamente una vez por petición.
 pub struct App {
 pub mut:
-	db       &Db
+	db       &Db // entorno activo de la petición (real o demo)
+	real_db  &Db
+	demo_db  &Db
+	in_demo  bool
+	demo_on  bool
 	schema   &Schema
 	secret   string
 	base     string
@@ -32,12 +36,23 @@ pub fn new_app() !&App {
 		cfg:    cfg
 		schema: schema
 	}
+	demo_name := env_or('EP_DEMO_DB_NAME', cfg.name + '_demo')
+	demo_db := &Db{
+		cfg:    DbCfg{
+			...cfg
+			name: demo_name
+		}
+		schema: schema
+	}
 	secret := env_or('EP_JWT_SECRET', '')
 	if secret == '' {
 		return error('EP_JWT_SECRET requerido')
 	}
 	return &App{
 		db:       db
+		real_db:  db
+		demo_db:  demo_db
+		demo_on:  env_or('EP_DEMO', '1') != '0'
 		schema:   schema
 		secret:   secret
 		base:     env_or('EP_BASE_PATH', '')
@@ -110,4 +125,20 @@ fn (mut a App) set_cfg(key string, value string) {
 fn (mut a App) app_url() string {
 	u := env_or('EASYPOINT_APP_URL', a.cfg('brand.url', 'https://easypoint.mx'))
 	return u.trim_right('/')
+}
+
+// Secreto con el que se firman las sesiones del entorno activo: una sesión de la demo NUNCA vale en el entorno real.
+fn (a &App) tsec() string {
+	return if a.in_demo { a.secret + ':demo' } else { a.secret }
+}
+
+fn (mut a App) set_env(demo bool) {
+	if a.in_demo == demo {
+		return
+	}
+	a.in_demo = demo
+	a.db = if demo { a.demo_db } else { a.real_db }
+	a.cfgcache = map[string]string{}
+	a.cfgload = false
+	a.keyset = map[string]map[string]bool{}
 }

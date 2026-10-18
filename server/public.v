@@ -10,7 +10,9 @@ fn (mut a App) public_config() Resp {
 	o.write_string('{')
 	mut first := true
 	for k, v in a.cfgcache {
-		if k.starts_with('ops.') || k.starts_with('econ.') || k.starts_with('cash.') || k.starts_with('settlement.') {
+		if k.starts_with('ops.') || k.starts_with('econ.') || k.starts_with('cash.') || k.starts_with('settlement.')
+			|| k.starts_with('secret.') || k.starts_with('biz.') || k.starts_with('setup.') || k.starts_with('sys.')
+			|| k in ['payments.clabe', 'payments.bank', 'payments.beneficiary'] {
 			continue
 		}
 		if !first {
@@ -429,8 +431,11 @@ fn (mut a App) club_join(r &Req) Resp {
 	if phone10(phone).len < 10 || name.len < 2 {
 		return fail_code(400, 'invalid', 'Indica nombre y WhatsApp.')
 	}
-	mode := a.cfg('payments.mode', 'demo')
+	mode := a.pay_mode()
 	price := a.cfg_f('club.price_month', 99)
+	if mode == 'unset' {
+		return pay_unset()
+	}
 	if mode != 'demo' {
 		// en producción la membresía se activa al confirmar el pago (webhook / confirmación manual)
 		ref := 'CLUB-' + rand_code(6)
@@ -485,7 +490,7 @@ fn (mut a App) activate_club(phone string, name string, email string, price f64)
 
 // ── webhooks de pasarela ────────────────────────────────────────────────────
 fn (mut a App) webhook_mercadopago(r &Req) Resp {
-	tok := env_or('MERCADOPAGO_ACCESS_TOKEN', '')
+	tok := a.mp_token()
 	if tok == '' {
 		return fail(503, 'gateway_unavailable')
 	}

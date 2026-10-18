@@ -32,7 +32,7 @@ const config_defaults = [
 	['settlement', 'settlement.payout_days', '2', 'Días tras completar la salida para pagar al proveedor'],
 	['settlement', 'settlement.instant_fee_pct', '1.5', 'Comisión por pago anticipado al proveedor'],
 	['settlement', 'settlement.provider_cancel_bonus_pct', '10', 'Bono de crédito al cliente si el proveedor cancela la salida'],
-	['payments', 'payments.mode', 'demo', 'demo | gateway | manual_confirm'],
+	['payments', 'payments.mode', '', 'gateway | manual_confirm (vacío = sin cobro en línea; la demo siempre simula)'],
 	['payments', 'payments.instructions', 'Deposita a la CLABE que te enviamos por WhatsApp e indica tu referencia.', 'Instrucciones de transferencia'],
 	['growth', 'growth.winback_days', '120', 'Días sin viajar para campaña de recuperación'],
 	['growth', 'growth.review_delay_days', '1', 'Días después de completar para pedir reseña'],

@@ -53,7 +53,7 @@
     </footer>
 
     <a v-if="wa" class="wa-fab" :href="wa" target="_blank" rel="noopener" aria-label="Escríbenos por WhatsApp"><ep-ico name="message" :size="26" /></a>
-    <ep-dialogs />
+    <ep-dialogs /><ep-demobar />
   </div>
 </template>
 <script>

@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="es-MX">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Easypoint · Demostración</title>
+  <meta name="theme-color" content="#0b1220">
+  <meta name="robots" content="noindex, nofollow">
+  <link rel="icon" href="../website/icon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="../shared/ep-ui.css">
+  <script>try { var t = localStorage.getItem('ep-theme'); if (t && t !== 'auto') document.documentElement.setAttribute('data-theme', t); } catch (e) {}</script>
+</head>
+<body>
+  <div id="app"><div style="min-height:100vh;display:grid;place-items:center;font-family:system-ui;color:#64748b">Cargando…</div></div>
+  <script src="https://unpkg.com/vue@3.5.13/dist/vue.global.prod.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/vue3-sfc-loader@0.9.5/dist/vue3-sfc-loader.js"></script>
+  <script src="../runtime-config.js"></script>
+  <script src="../runtime-config.generated.js" onerror="void 0"></script>
+  <script src="../vendor/web-common/browser.js"></script>
+  <script src="../shared/ep-art.js"></script>
+  <script src="../shared/ep-core.js"></script>
+  <script>
+    EP.boot({
+      base: './components/', shell: './components/Shell.vue',
+      notFound: { path: '*', name: 'demo', comp: 'pages/Demo.vue', title: 'Demostración' },
+      routes: [{ path: '/', name: 'demo', comp: 'pages/Demo.vue', title: 'Demostración' }]
+    });
+  </script>
+</body>
+</html>

@@ -630,6 +630,7 @@ pub fn (mut a App) tick(full bool) Stats {
 	a.run_jobs(mut st)
 	a.run_outbox(mut st)
 	a.keys_on = false
+	a.set_cfg('sys.last_tick', now_dt())
 	return st
 }
 

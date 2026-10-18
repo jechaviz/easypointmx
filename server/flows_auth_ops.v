@@ -29,7 +29,7 @@ fn (mut a App) login(r &Req) Resp {
 	if u.point_id > 0 {
 		a.db.exec('UPDATE points SET last_activity_at=${q(now_dt())} WHERE id=${u.point_id}') or {}
 	}
-	tok := jwt_mint(a.secret, u.id, u.role, 14 * 86400)
+	tok := jwt_mint(a.tsec(), u.id, u.role, 14 * 86400)
 	return json_ok('{"token":${jstr(tok)},"user":${a.user_json(u)}}')
 }
 

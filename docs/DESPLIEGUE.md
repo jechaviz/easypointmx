@@ -55,8 +55,11 @@ install -m 755 easypoint ../shared/bin/easypoint
 export EP_ENV_FILE=~/apps/easypoint/shared/env/easypoint.env
 ~/apps/easypoint/shared/bin/easypoint --migrate           # esquema (idempotente)
 ~/apps/easypoint/shared/bin/easypoint --seed              # parámetros del negocio + catálogo de servicios + reglas base
-~/apps/easypoint/shared/bin/easypoint --make-admin tu@correo.mx   # imprime la clave una vez
-# solo para demos: ~/apps/easypoint/shared/bin/easypoint --seed-demo
+# primer administrador: lo crea el asistente en /app/ (recomendado), o por consola:
+# ~/apps/easypoint/shared/bin/easypoint --make-admin tu@correo.mx   # imprime la clave una vez
+# demostración (/demo): crea una SEGUNDA base (EP_DEMO_DB_NAME, por defecto <EP_DB_NAME>_demo) con permisos para el mismo usuario;
+# se siembra sola al entrar con la contraseña, o a mano: ~/apps/easypoint/shared/bin/easypoint --seed-demo   (nunca toca la real)
+# Detalle y variables (EP_DEMO, EP_DEMO_PASSWORD, EP_SETUP_TOKEN): docs/DEMO_Y_CONFIGURACION.md
 ```
 
 ## 4. Sitio y shim
@@ -79,8 +82,7 @@ Verifica: `curl https://easypoint.mx/api/health` → `{"ok":true,…}`.
 `--tick` entrega la bandeja de salida y los trabajos diferidos; `--tick-full` además corre todas las revisiones (vencimientos, recordatorios, tareas, riesgo). Son idempotentes: si se empalman o fallan una vez, no pasa nada.
 
 ## 6. Pasarela de pago y modos
-`payments.mode` (en **Automatización → Pagos**):
-* `demo` — pago simulado inmediato (sólo para demostraciones; **no usar en producción**).
+`payments.mode` (lo fija el asistente de configuración; también en **Automatización → Pagos**). En el entorno **real** sólo existen `gateway` y `manual_confirm`; mientras no se elija uno, el cobro en línea responde 503. El pago simulado ya **no es un modo**: ocurre únicamente dentro de `/demo` (base aparte).
 * `gateway` — Mercado Pago: se crea la preferencia por `curl` y el webhook `POST /api/webhooks/mercadopago` aplica el pago (idempotente por `gateway_ref`). Requiere `MERCADOPAGO_ACCESS_TOKEN` y una URL pública para el webhook.
 * `manual_confirm` — transferencia: se genera una referencia y una tarea al admin, que confirma el depósito.
 
@@ -103,12 +105,12 @@ gunzip -c ~/backups/easypoint-AAAA-MM-DD.sql.gz | mysql -u"$EP_DB_USER" -p"$EP_D
 # MariaDB local (una vez): mariadb-install-db --datadir=.data/mysql ; mariadbd --datadir=.data/mysql --port=3307
 # crear base/usuario, exportar EP_DB_* y EP_JWT_SECRET (ver .data/env.sh), y:
 C:\git\v\v.exe -o .data/ep.exe server
-.data/ep.exe --migrate && .data/ep.exe --seed-demo
-.data/ep.exe --serve 8081                       # API + sitio en http://127.0.0.1:8081/website/ y /app/
+.data/ep.exe --seed && .data/ep.exe --seed-demo   # real (sin datos de ejemplo) + demo (base *_demo)
+.data/ep.exe --serve 8081                       # API + sitio en http://127.0.0.1:8081/website/ · /app/ · /demo/
 # cadena real de producción (PHP → shim → binario):
 php -S 127.0.0.1:8090 -t . server/deploy/dev-router.php
 ```
-Cuentas demo: `admin@`, `soporte@`, `ventas@`, `chofer@`, `punto@`, `proveedor@easypoint.mx` / `Demo12345!`.
+Cuentas demo (sólo dentro de `/demo`): `admin@`, `soporte@`, `ventas@`, `chofer@`, `punto@`, `proveedor@easypoint.mx` / `Demo12345!`.
 
 ## 10. Problemas comunes
 | Síntoma | Causa y solución |
